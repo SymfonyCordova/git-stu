@@ -43,4 +43,11 @@ git merge 合并分支
 git clone git@116.62.48.176:/data/git/Project-GTMT-20181106.git
 ```
 
- 
+ ## 忽略文件
+创建.gitignore
+```
+	build/
+	out/
+	.idea/
+	/.gitignore
+```
