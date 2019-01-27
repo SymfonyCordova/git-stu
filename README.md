@@ -1,17 +1,18 @@
 # git-stu
 git small text
-Git 全局设置:
+
+## Git 全局设置:
 git config --global user.name "symfony"
 git config --global user.email "symfony@qq.com"
 
-生成私有和公钥
+## 生成私有和公钥
 ssh-keygen -t rsa -C “symfony@qq.com”
-查看生成的公钥和私钥
-linux
-cat ~/.ssh/id_rsa.pub
-windows
-C:\Users\symfony\.ssh
-
+## 查看生成的公钥和私钥
+```linux
+	cat ~/.ssh/id_rsa.pub
+	windows
+	C:\Users\symfony\.ssh
+```
 创建 git 仓库:
 	mkdir flake 创建一个项目
 	cd flake    打开这个项目
