@@ -483,7 +483,7 @@
                 }
             } 
             
-        负载均衡服务器
+        B负载均衡服务器
             upstream imocc { 
                 server 116.62.103.8001;
                 server 116.62.103.8002;
@@ -509,10 +509,114 @@
             }
     ```
 ## Nginx作为负载均衡服务_server参数讲解
+    ```
+        upstream backend {
+            server backend1.example.com weight=5;
+            server backend2.example.com:8080;
+            server unix:/tmp/backend3;
+            
+            server backup1.example.com:8080 backup;
+            server backup2.example.com:8080 backup;
+        }
+        
+        down            当前的server暂时不参与负载均衡
+        backup          预留的备份服务器
+        max_fails       允许请求失败的次数
+        fail_timeout    经过max_fails失败后,服务暂停的时间
+        max_conns       限制最大的接收的连接数
+    ```
 ## Nginx作为负载均衡服务_backup状态演示
+    ```
+        负载均衡服务器 
+            upstream imocc {
+                server 116.62.103.228:8001 down;
+                server 116.62.103.228:8002 backup;
+                server 116.62.103.228:8003 max_fails=1 fail_timeout=10s;
+            }
+            server {
+                listen 80;
+                server_name localhost zler.it.com;
+                access_log /var/log/nginx/test_proxy.access.log main;
+                resolver 8.8.8.8;
+                
+                location / {
+                    proxy_pass http://imocc;
+                    include proxy_params;
+                }
+                
+                error_page 500 502 503 504 /50x.html;
+                location = /50x.html { 
+                    root /usr/share/nginx/html;
+                }
+            }
+    ```
 ## Nginx作为负载均衡服务_轮询策略与加权轮询
+    ```
+        调度算法
+            轮询              按时间顺序逐一分配到不同的后端服务器(默认)
+            加权轮询           weight值越大,分配到的访问几率越高
+            ip_hash          每个请求按访问IP的hash结果分配,这样来自同一个IP的 固定访问一个后端服务器
+            url_hash         按照访问的URL的hash结果来分配请求,使每个URL定向到同一个后端服务器
+            least_conn       最少链接数,那个机器连接数少就分发
+            hash关键数值       hash自定义的key
+            
+        负载均衡服务器 加权轮询
+                    upstream imocc {
+                        server 116.62.103.228:8001;
+                        server 116.62.103.228:8002 weight=5;
+                        server 116.62.103.228:8003;
+                    }
+                    server {
+                        listen 80;
+                        server_name localhost zler.it.com;
+                        access_log /var/log/nginx/test_proxy.access.log main;
+                        resolver 8.8.8.8;
+                        
+                        location / {
+                            proxy_pass http://imocc;
+                            include proxy_params;
+                        }
+                        
+                        error_page 500 502 503 504 /50x.html;
+                        location = /50x.html { 
+                            root /usr/share/nginx/html;
+                        }
+                    }    
+    ```
 ## Nginx作为负载均衡服务_负载均衡策略ip_hash方式
+    ```
+        upstream imocc {
+            ip_hash;
+            server 116.62.103.228:8001;
+            server 116.62.103.228:8002;
+            server 116.62.103.228:8003;
+        }
+        server {
+            listen 80;
+            server_name localhost zler.it.com;
+            access_log /var/log/nginx/test_proxy.access.log main;
+            resolver 8.8.8.8;
+                                
+            location / {
+                proxy_pass http://imocc;
+                include proxy_params;
+            }
+                                
+            error_page 500 502 503 504 /50x.html;
+            location = /50x.html { 
+                root /usr/share/nginx/html;
+            }
+        } 
+    ```
 ## Nginx作为负载均衡服务_负载均衡策略url_hash策略
+    ```
+        Syntax: hash key [consistent];
+        Default: -
+        Context:upstream
+        This directive appeared in version 1.7.2
+        
+        
+    ```
 ## Nginx作为缓存服务_Nginx作为缓存服务
 ## Nginx作为缓存服务_缓存服务配置语法
 ## Nginx作为缓存服务_场景配置演示
