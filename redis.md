@@ -278,7 +278,7 @@ Jedis连接池
 Jedis连接池工具
 ```
 
-## redis-LinkedList【重点】
+## redis-LinkedList【双向链表重点】
 ```
 Java List 数组ArrayList
 链表LinkedList
@@ -350,4 +350,40 @@ redis操作中,最多的操作是进行元素的增删
     linsert key before|after pivot value: 在pivot元素前或元素后插入value的元素
     效率低下
     
+    rpoplpush resource destination：将链表中的尾部弹出并添加到头部【循环操作】
+    这个命令很常用
+    需求 两队排队 将一个链表的尾部添加到另一个链表的头部 
+    检查眼睛排队 list1
+    检查耳鼻喉排队 list2
+    
+    lpush list1 a b c d
+    rpoplpush list1 list2
+    
+    需求2 循环列表
+    早晨起床,中午吃饭,晚上敲代码
+    将自己的列表中的尾部放到头部 这样一直循环
+    rpoplpush list1 list1
+```
+
+
+## redis-set【set集合重点】
+```
+类似于Java HashSet 无序,不重复
+Redis操作中,涉及到两个大数据集合的并集,交集,差集运算
+
+赋值:
+    sadd key values[value1, value2 ...]
+    向set集合中添加数据,如果该key的值已经有了则不会重复添加
+ 
+取值:
+    smembers key:获取set中所有的成员
+    sismember key member：
+    判断参数中指定的成员是否在该set中 1表示存在,0表示不存在或者该key本身就不存在
+    
+
+删除:
+    srem key members[member1,member2...]
+    删除set指定的元素
+
+扩展:
 ```
