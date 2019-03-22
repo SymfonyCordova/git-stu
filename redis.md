@@ -278,7 +278,7 @@ Jedis连接池
 Jedis连接池工具
 ```
 
-## redis-LinkedList【双向链表重点】
+## redis-LinkedList【双向链表 重点】
 ```
 Java List 数组ArrayList
 链表LinkedList
@@ -366,7 +366,7 @@ redis操作中,最多的操作是进行元素的增删
 ```
 
 
-## redis-set【set集合重点】
+## redis-set【set无序,不重复集合 重点】
 ```
 类似于Java HashSet 无序,不重复
 Redis操作中,涉及到两个大数据集合的并集,交集,差集运算
@@ -376,14 +376,134 @@ Redis操作中,涉及到两个大数据集合的并集,交集,差集运算
     向set集合中添加数据,如果该key的值已经有了则不会重复添加
  
 取值:
-    smembers key:获取set中所有的成员
+    smembers key:
+    获取set中所有的成员
+    
     sismember key member：
     判断参数中指定的成员是否在该set中 1表示存在,0表示不存在或者该key本身就不存在
     
+    sdiff key1 key2...:
+    返回key1与key2中相差的成员,而且与key的顺序无关。即返回差集
+    差集运算
+    返回属于key1且不属于key2的元素构成的集合
+    
+    sinter key1 key2 key3 ...
+    返回交集
+    返回属于key1且属于key2且属于key3元素构成的集合
+    
+    sunion key1 key2 key3...
+    返回并集
+    返回把所有集合的数据放到一起 并且不能重复
 
 删除:
     srem key members[member1,member2...]
     删除set指定的元素
 
 扩展:
+    scard key:
+    获取集合成员的数量
+    
+    srandmember key：
+    随机返回set中一个成员
+    
+    sdiffstore destination key1 key2...
+    将key1，与key2相差的成员存储在destinantion上
+    
+    sinterstore destination key1 key2...
+    返回的交集存储在destination上
+    
+    sunionstore destination key1 key2...
+    返回的并集存储在destination上
+```
+
+## redis-set【set有序,不重复集合 了解】
+有序,不重复
+有序set集合,专门来做排行榜
+几乎所提的命令都是来做排行榜的
+
+赋值:
+    zadd key score member score member2...
+    将所有成员以及该成员的分数存放到sorted-set中。
+    如果该元素已经存在则会用新的分数替换原有的粉丝。
+    返回值是将新加入的集合的元素个数,不包含之前已经存在的元素
+    需求
+        [5000 xiaoming 1000 xiaohong 500 xiaozhang]
+        zadd set3 5000 xiaoming 1000 xiaohong 500 xiaozhan
+        填完之后已经排序了 默认是从小到大
+查看:
+    zscore key member
+    返回指定成员的分数
+        zscore set3 xiaoming
+    
+    zcard key
+    获取集合中的成员数量
+    
+    zrange key start end[withscores]
+    获取集合中脚本为start-end成员,[withscores]参数表明返回的成员包含其分数
+        查询所有的
+        zrange set3 0 -1
+        查询所有的并带上分数
+        zrange set3 0 -1 withscores
+        
+    反转过来倒序执行
+    zrevrange set1 0 -1 withscores
+    
+删除:
+    zrem key member[member...]
+    移除集合中指定的成员,可以指定多个成员
+        例如 zrem set3 xiaoming xiaohong
+扩展
+    zrevrange set1 0 -1 withscore 
+    反序
+    
+    zremrangebyrank key start stop 
+    返回按照排名范围删除元素
+        例如 zremrangebyrank set1 0 1删除前两名
+        
+    zremrangebyscore key min max 
+    返回按照分数范围删除元素
+        例如 zremrangebyscore set1 500 1500 
+        
+    zrangebyscore key min max [withscores] [limit offset count] 
+    返回分数在[min,max]的成员并按照分数从低到高排序
+    [withscores]:显示分数
+    [limit offset count]: 表名从脚标为offset的元素开始并返回count个成员
+    
+    zincrby key increment member
+    设置指定成员的增加的分数
+    返回值是更改后的分数
+    
+    zcount key mim max
+    获取分数在[min,max]之间的成员
+    
+    zrank key member
+    返回成员在集合中的排名。索引（从小到大）
+    
+    zrevrank key member
+    返回成员在集合中的排名。索引（从大到小）
+
+## redis的通用命令【重点】
+```
+Redis五种数据类型, String hash list set 有序set
+
+keys pattern
+获取所有与parent匹配的key,返回所有与该key匹配的keys
+    *表示任意一个或多个字符
+    ？表示任意一个字符
+
+    keys * 查询所有的key
+        例如 匹配带字母e的所有key的集合 keys *e*
+    keys ? 
+    
+del key1 key2...:删除一个key
+exits key: 判断该key是否存在 1存在 0不存在
+rename key newkey:为当前的key重命名
+type key: 获取指定key的类型。该命令将以字符串的格式返回。
+    返回的字符串为 string list set hash 和 zset
+    如果key不存在返回none
+expire key ：设置生存时间 单位,秒 默认是永久生存
+    如果某个key过期了,redis会将其删除
+    例如 expire set1 30
+ttl key: 获取该key的剩余超时时间,如果没有设置超时,返回-1 如果返回-2表示超时不存在
+    说白了就是查看key还有多少寿命
 ```
