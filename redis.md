@@ -207,6 +207,7 @@ String的使用环境:
 ```
 
 ## redis命令-hash【了解】
+```
 redis中的hash类型可以看成具有String Key和String value的map容器。所以该类型非常适合存储值对象的信息。如Username、Password和Age等。
 如果Hash中包含很少的字段,那么该类型的数据也将仅占用很少的磁盘空间。每一个Hash可以存储4294967295个键值对
 
@@ -278,6 +279,7 @@ Jedis连接池工具
 ```
 
 ## redis-LinkedList【重点】
+```
 Java List 数组ArrayList
 链表LinkedList
 双向链表
@@ -293,3 +295,59 @@ redis操作中,最多的操作是进行元素的增删
 检查口腔:小明,小红
 检查眼科: 小张,小李
 检查耳鼻喉:小刘
+
+链表是有两端的 头和尾
+在redis的头叫左端 尾叫右端
+
+赋值(也叫在两端操作):
+    lpush key values[value1 value2 ...]
+    在指定的key所关联的list的头部插入所有的values
+    如果该key不存在,该命令在插入之前创建一个与key关联的空链表,之后再向该链表的头部插入数据
+    插入成功，返回元素个数
+    所以lpush是反过来的
+    
+    rpush key value [value ...]
+    在key对应 list 的尾部添加元素
+
+取值:
+    lrange key start end
+    获取链表中从start到end的元素的值
+    start、end从0开始计数
+    也可以为负数,如为-1则表示链表的尾部元素 -2则倒数第二个,依次类推
+
+    查询其中一个值
+    lrange list1 1 1
+    查询所有
+    lrange 0 3
+    lrange list1 0 -1
+    
+删值(也叫两端操作,还叫做弹出):
+    lpop key
+    返回并弹出指定key关联链表的第一个元素,即头部元素。
+    如果该key不存在,返回nil
+    如果该key存在,则返回链表头部元素
+    
+    rpop key
+    从尾部弹出元素
+
+扩展
+    llen key: 返回指定的key关联的链表的元素的数量
+    
+    lrem key count value: 删除count个值为value的元素
+    如果count大于0,从头向尾遍历并删除count个值为value的元素
+    如果count小于0,从尾向头遍历并删除count个值为value的元素
+    如果count等于0,则删除链表中所有等于value的元素
+    效率低下
+    
+    del key 删除list
+    
+    lset key index value: 设置链表中的index的脚标的元素值
+    0代表链表的头部元素 
+    -1代表链表的尾部元素
+    操作的链表的脚标不存在,则抛出异常
+    效率低下
+    
+    linsert key before|after pivot value: 在pivot元素前或元素后插入value的元素
+    效率低下
+    
+```
