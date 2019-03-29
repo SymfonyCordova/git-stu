@@ -1,5 +1,4 @@
 ```
-```
  composer create-project symfony/framework-standard-edition my_project_name "2.8.*"
  php app/console server:run
  
@@ -140,4 +139,4 @@
  	TerminableInterface
  		terminate 终止 请求/响应 周期
 ```
-```
+
