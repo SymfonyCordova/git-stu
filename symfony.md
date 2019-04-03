@@ -763,38 +763,33 @@ symfony-security
         如果在注销后需要做一些更有趣的事情，可以通过添加success_handler键
            并将其指向实现LogoutSuccessHandlerInterface的类的服务ID来指定注销成功处理程序。
     
-    实战
-    自定义用户认证逻辑
-        处理用户信息获取逻辑和处理用户校验逻辑
-            文档 https://symfony.com/doc/2.8/security/custom_provider.html
-            1.创建用户类
-                
-                首先，无论您的用户数据来自何处，您都需要创建一个表示该数据的User类。
-                用户可以根据需要查看并包含任何数据。唯一的要求是该类实现了UserInterface。
-                因此，应在自定义用户类中定义此接口中的方法：
-                    getRoles（）
-                    getPassword（）
-                    getSalt（）
-                    getUsername（）
-                    eraseCredentials（）。仅用于清除可能存储的纯文本密码（或类似凭据）。
-						如果您的用户类也映射到数据库，请注意要擦除的内容，因为在请求期间可能会保留修改后的对象
-						
-                  实现EquatableInterface接口也可能很有用，该接口定义了一个检查用户是否等于当前用户的方法。
-                    此接口需要isEqualTo（）方法
-				
-				symfony给我们提供了AdvancedUserInterface接口继承了UserInterface
-				所以我们也可以使用AdvancedUserInterface接口
-					它提供了四个方法用来校验的  如果其中任何一个返回false，则不允许用户登录。
-						isAccountNonExpired() 检查用户的帐户是否已过期; 
-							可以永远返回true 就是没有账户过期的这种应用场景
-							怎么判断根据自己的数据结构来判断
-						isAccountNonLocked() 检查用户是否被锁定; 冻结的用户是可以恢复的
-						isCredentialsNonExpired() 检查用户的凭据（密码）是否已过期;
-						isEnabled() 检查用户是否已启用 比如数据库的标准位 用户假删除 删除的用户不能被恢复的
-				另外还要实现Serializable接口symfony会将当前的user序列化到session中
-				
-				
-            2.创建用户提供者
+    实战		
+    个性化用户认证流程（一）	
+		1.创建用户类 文档 https://symfony.com/doc/2.8/security/custom_provider.html       
+			首先，无论您的用户数据来自何处，您都需要创建一个表示该数据的User类。
+			用户可以根据需要查看并包含任何数据。唯一的要求是该类实现了UserInterface。
+			因此，应在自定义用户类中定义此接口中的方法：
+				getRoles（）
+				getPassword（）
+				getSalt（）
+				getUsername（）
+				eraseCredentials（）。仅用于清除可能存储的纯文本密码（或类似凭据）。
+					如果您的用户类也映射到数据库，请注意要擦除的内容，因为在请求期间可能会保留修改后的对象
+					
+			  实现EquatableInterface接口也可能很有用，该接口定义了一个检查用户是否等于当前用户的方法。
+				此接口需要isEqualTo（）方法
+			
+			symfony给我们提供了AdvancedUserInterface接口继承了UserInterface
+			所以我们也可以使用AdvancedUserInterface接口
+				它提供了四个方法用来校验的  如果其中任何一个返回false，则不允许用户登录。
+					isAccountNonExpired() 检查用户的帐户是否已过期; 
+						可以永远返回true 就是没有账户过期的这种应用场景
+						怎么判断根据自己的数据结构来判断
+					isAccountNonLocked() 检查用户是否被锁定; 冻结的用户是可以恢复的
+					isCredentialsNonExpired() 检查用户的凭据（密码）是否已过期;
+					isEnabled() 检查用户是否已启用 比如数据库的标准位 用户假删除 删除的用户不能被恢复的
+			另外还要实现Serializable接口symfony会将当前的user序列化到session中
+		2.创建用户提供者
                 现在你有了一个User类，你将创建一个用户提供程序，
                 它将从某些Web服务中获取用户信息，创建一个WebserviceUser对象，并用数据填充它。               
                 用户提供程序只是一个必须实现UserProviderInterface的普通PHP类，
@@ -806,41 +801,135 @@ symfony-security
                 services:
                     app.webservice_user_provider:
                         class: AppBundle\Security\User\WebserviceUserProvider
-        
-        处理密码加密解密
+						
+		3.处理密码加密解密
 			首先在security.yml配置加密方式
-			
 			然后在用户注册是进行加密算法
-			https://symfony.com/doc/2.8/security/password_encoding.html
-			
+			https://symfony.com/doc/2.8/security/password_encoding.html	
 			但是我们可以用symfony给我提供的 MessageDigestPasswordEncoder给我生成带salt的密码
+		
+		4.自定义登陆成功处理
+			比如打印日志 记录登陆ip 如果是ajax请求返回json格式,如果是html请求返回页面
+			继承一个Symfony\Component\Security\Http\Authentication\DefaultAuthenticationSuccessHandler
+			重写onAuthenticationSuccess方法即可
 			
-    个性化用户认证流程（一）
-		https://symfony.com/doc/2.8/components/security/authentication.html
+		5.自定义登陆失败处理
+			比如打印日志 记录登陆ip 如果是ajax请求返回json格式,如果是html请求返回页面
+			继承 Symfony\Component\Security\Http\Authentication\DefaultAuthenticationFailureHandler
+			重写onAuthenticationFailure方法即可
+			
+		6.请看整个的yml配置
+			parameters:
+				app.current_user.class: Biz\User\CurrentUserservices:
+			services:
+				app.user_provider:
+					class: Biz\User\UserProvider
+					arguments: ['@service_container']
+				app.admin_authenticator:
+					class: SomeSecurityBundle\GuardAuthenticator\AdminAuthenticator
+					arguments: ['@service_container']
 
-		安全组件提供4个相关的身份验证事件：
-			Name								Event Constant							Argument Passed to the Listener
-		security.authentication.success	AuthenticationEvents::AUTHENTICATION_SUCCESS		AuthenticationEvent
-			当提供程序对用户进行身份验证时，将调度security.authentication.success事件
-		security.authentication.failure	AuthenticationEvents::AUTHENTICATION_FAILURE		AuthenticationFailureEvent
-			当提供程序尝试身份验证但失败（即抛出AuthenticationException）时，将调度security.authentication.failure事件
-		security.interactive_login		SecurityEvents::INTERACTIVE_LOGIN					InteractiveLoginEvent
-			用户登陆网站后触发该事件
-		security.switch_user			SecurityEvents::SWITCH_USER							SwitchUserEvent	
-			每次激活switch_user防火墙侦听器时都会触发security.switch_user事件。
-		
-		自定义登陆页面
-		自定义登陆成功处理
-			如果是ajax请求返回json格式
-			如果是html请求跳转
-			只需要创建一个监听security.interactive_login的监听器
+			security:
+				providers:
+					user_provider:
+						id: app.user_provider
+				encoders:
+					"%app.current_user.class%":
+						algorithm: sha256
+						encode_as_base64: true
+						iterations: 5000
+				firewalls:
+					dev:
+						pattern: ^/(_(profiler|wdt)|css|images|js)/
+						security: false
+					disabled:
+						pattern: ^/(anon|callback)/
+						security: false
+					main:
+						pattern:    /.*
+						anonymous: true
+						form_login:
+							login_path: login
+							check_path: login
+							failure_handler: topxia.authentication.failure_handler
+							success_handler: topxia.authentication.success_handler
+				role_hierarchy:
+					ROLE_ADMIN:       ROLE_USER
+					ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
+				access_control:
+					- { path: ^/crontab, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+					- { path: ^/admin, roles: ROLE_ADMIN }
+					- { path: ^/.*, roles: IS_AUTHENTICATED_ANONYMOUSLY }
 			
-		自定义登陆失败处理
-		
-		
-    个性化用户认证流程（二）
+	个性化用户认证流程（二）
+		认证的逻辑
+			认证处理流程说明
+				登陆请求
+				|
+				UsernamePassword AuthenticationFilter    、
+				| 它负责表单的登陆请求将用户输入的用户名和密码创建了UsernamePasswordToken对象 UsernamePasswordToken是继承了TokenInterface接口
+				|  UsernamePasswordToken的构造方法
+				|  	UsernamePasswordAuthticationToken($user, $credentials, string $providerKey, array $roles = [])
+				| 	
+				|  new UsernamePassword($username, $password, $providerKey) 一开始是没有role权限的 所以Authentication(未认证)
+				| 
+				|
+				AuthenticationProviderManager 
+				|  
+				|  它负责收集所有的 AuthenticationProvider
+				|  它有一个authenticate(TokenInterface $token)方法 
+				|  拿到所有的AuthenticationProvider循环的所有的AuthenticationProvider
+				|  	  就挨个问所有的provider你支不支持我这种token登陆方法
+				|  它会跳出其中一个符合的这个token的AuthenticationProvider
+				|  
+				|  其中UsernamePasswordToken这种登陆方式(类型)的是 DaoAuthenticationProvider  DaoAuthenticationProvider继承了UserAuthenticationProvider
+				|  DaoAuthenticationProvider就调用了我们提供的UserProvider->loadUserByUsername($username);
+				|  如果拿到了我们的用户下信息还需要preAuthenticationChecks.check($user) 做预检查
+				|         检查之前我们的用户类CurrentUser实现UserInterface的制作这三个预检查
+				|                  isAccountNonLocked 
+				| 				   isEnabled
+				|                  isAccountNonExpired
+				|  检查预检查还要组加一个检查在DaoAuthenticationProvider具体的实现
+				|        就是我们之前的密码加密
+				|  还要后检查 postAuthenticationChecks.check($user)
+				|
+				|  所有的检查都通过过后,才认为登陆成功的
+				|
+				|  重新生成了 new UsernamePasswordToken()这个是认证过后的对象
+				|
+				AuthenticationProvider 它负责验证逻辑 其中有一个方法是supports()是否支持我传进来token的类型
+				| 不同的AuthenticationProvider支持的token是不同的
+				|
+				UserDetailsService
+				|
+				UserDetails->Authentication(已经认证)
+				|
+				认证完了成功调用我们自己写的Symfony\Component\Security\Http\Authentication\DefaultAuthenticationSuccessHandler
+			
+				上面的过程只要一处发生错误就会抛出异常 执行我们自己写的Symfony\Component\Security\Http\Authentication\DefaultAuthenticationFailureHandler
+			
+			认证结果如何在多个请求之间共享
+				SecurityContext PersistenceFilter
+				|
+				| 在DefaultAuthenticationSuccessHandler方法调用之前调用了它 
+				|	它把UsernamePasswordToken保证其唯一性 重写了 hash equest
+				|
+				SecurityContextHolder
+				|  线程级的全局变量保存这个UsernamePasswordToken或获取
+				|  进来的时候看看session里面有吗？有就拿出来用
+				|  出去的时候看看线程里面有吗? 有就存入session中
+				| 
+				SecurityContext
+				|
+				Authentication
+				
+		获取认证用户信息
+			$user = $this->getUser();
+			$this->get('security.token_storage')->getToken()->getUser();
+				
     认证流程源码级详解
     图片验证码
+		
     图片验证码重构
     添加记住我功能
     短信验证码接口开发
@@ -853,26 +942,151 @@ symfony-security
     开发QQ登录（中）
     开发QQ登录（下）
     处理注册逻辑
-    开发微信登录.mp4
-    绑定和解绑处理.mp4
-    单机Session管理.mp4
-    集群Session管理.mp4
-    退出登录.mp4
+    开发微信登录
+    绑定和解绑处
+    单机Session管理
+    集群Session管理
+    退出登录
     
     OAuth简介
-    实现标准的OAuth服务提供商.mp4
-    SpringSecurityOAuth核心源码解析.mp4
-    重构用户名密码登录.mp4
-    重构短信登录.mp4
-    重构社交登录.mp4
-    重构注册逻辑.mp4
-    令牌配置.mp4
-    使用JWT替换默认令牌.mp4
-    基于JWT实现SSO单点登录1.mp4
-    基于JWT实现SSO单点登录2.mp4
-    SpringSecurity授权简介.mp4
-    SpringSecurity源码解析.mp4
+    实现标准的OAuth服务提供商
+    SpringSecurityOAuth核心源码解析
+    重构用户名密码登录
+    重构短信登录
+    重构社交登录
+    重构注册逻辑
+    令牌配置
+    使用JWT替换默认令牌
+    基于JWT实现SSO单点登录1
+    基于JWT实现SSO单点登录2
+    SpringSecurity授权简介
+    SpringSecurity源码解析
     权限表达式.mp4
-     7-4 基于数据库Rbac数据模型控制权限.mp4
+     7-4 基于数据库Rbac数据模型控制权限
      8-1 课程总结.mp4
 ```
+
+		https://symfony.com/doc/2.8/components/security/authentication.html
+
+		1安全组件提供4个相关的身份验证事件：
+			Name								Event Constant							Argument Passed to the Listener
+		security.authentication.success	AuthenticationEvents::AUTHENTICATION_SUCCESS		AuthenticationEvent
+			当提供程序对用户进行身份验证时，将调度security.authentication.success事件
+		security.authentication.failure	AuthenticationEvents::AUTHENTICATION_FAILURE		AuthenticationFailureEvent
+			当提供程序尝试身份验证但失败（即抛出AuthenticationException）时，将调度security.authentication.failure事件
+		security.interactive_login		SecurityEvents::INTERACTIVE_LOGIN					InteractiveLoginEvent
+			用户登陆网站后触发该事件
+		security.switch_user			SecurityEvents::SWITCH_USER							SwitchUserEvent	
+			每次激活switch_user防火墙侦听器时都会触发security.switch_user事件。
+		
+		如果是ajax请求返回json格式,如果是html请求返回页面
+			如果是html请求跳转
+			只需要创建一个监听security.interactive_login的监听器
+		
+		
+	
+		
+		
+
+			php app/console config:dump-reference security
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		2.如何使用Guard创建自定义身份验证系统
+			需要实现GuardAuthenticatorInterface接口的四个方法
+				getCredentials(Request $request)
+					这是每次请求都会执行的方法，让开发者从 $request 对象中获取登录所需要的讯息，
+					比如常见表单登录的用户名和密码，或者微信登录的 code 参数。
+					返回的结果可以是任意的类型，但一般来说用数组
+					
+					如果返回null 那么 GuardAuthenticatorInterface::start 方法将会被执行
+					如果不是 null，则 GuardAuthenticatorInterface::getUser 方法将被执行
+							而 getCredentials 返回的结果将作为 getUser 的第一个参数。
+				start(Request $request, AuthenticationException $authException = null)
+					此方法可以理解成传统 Symfony 登录系统的 entry point，即让用户登录的地方。
+					看定义可以发现此方法返回一个 Response，你可以返回带登录表单的页面，或者跳转到微信 OAuth 获取 code 的接口。
+					当用户提交了账号密码，或者微信返回带 code 参数的链接，第二次请求开始，将又从 getCredentials 方法重新开始。
+				getUser($credentials, UserProviderInterface $userProvider)
+					此方法一般来说，都需要利用 UserProvider 的 loadUserByUsername 方法，
+					通过传入 $credentials 里的登录名，或者微信的 openId，返回 User 对象。
+					如果通过用户名找不到对应的 User 对象，既 UserProvider::loadUserByUsername 返回 null，
+						那么 GuardAuthenticatorInterface::onAuthenticationFailure 方法将会被调用；
+					如果 UserProvider::loadUserByUsername 能返回 User 对象，
+						那么 GuardAuthenticatorInterface::checkCredentials 方法将会被调用，
+							而 $user 对象会被作为第二参数被传入，第一参数仍是 $credentials。
+				checkCredentials($credentials, UserInterface $user)
+					此方法将检查用户和 $credentials 是否匹配。
+					比如表单登录，将 $credentials 里的密码信息和 $user 对象里的密码做对比，
+					如果密码不匹配，那么你将在此方法抛出 AuthenticationException 异常或者返回 false 来表示登录失败，
+					从而转向 GuardAuthenticatorInterface::onAuthenticationFailure 方法。
+				onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
+					当然，如果 checkCredentials 方法返回 true（即登录成功），
+					那么 GuardAuthenticatorInterface::onAuthenticationSuccess 方法将会被调用，
+					你可以在此方法做一些登录成功之后的事情。此方法需要返回 Response 或者 null，
+					如果返回 null 将继续执行当前路径应当执行的代码；
+					如果返回 Response，则此 Response 会立马发送。
+					比如如果要求用户登录成功都需要返回到首页，那么你就可以在此返回 new RedirectResponse('/')。
+				onAuthenticationFailure(Request $request, AuthenticationException $exception)
+					最后是登录失败的处理。类似于登录成功，此方法需要返回 Response，
+					比如显示登录失败的页面，或者继续显示登录表单让用户登录。
+				supportsRememberMe()
+				createAuthenticatedToken(UserInterface $user, string $providerKey)
+			例如微信登陆 参考: https://www.chrisyue.com/use-symfony-guard-as-authentication.html
+		有些是表单登陆 有些是微信登陆 有些是api登陆等等,那怎么办呢?
+			参考: https://symfony.com/doc/2.8/security/multiple_guard_authenticators.html
+	
+		防火墙的配置 使用 php app/console debug:config security 命令来检查
