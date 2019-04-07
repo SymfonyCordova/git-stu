@@ -928,8 +928,7 @@ symfony-security
 			$this->get('security.token_storage')->getToken()->getUser();
 				
     认证流程源码级详解
-    图片验证码
-		
+    图片验证码	
     图片验证码重构
     添加记住我功能
     短信验证码接口开发
@@ -966,29 +965,23 @@ symfony-security
      8-1 课程总结.mp4
 ```
 
-		https://symfony.com/doc/2.8/components/security/authentication.html
+https://symfony.com/doc/2.8/components/security/authentication.html
 
-		1安全组件提供4个相关的身份验证事件：
-			Name								Event Constant							Argument Passed to the Listener
-		security.authentication.success	AuthenticationEvents::AUTHENTICATION_SUCCESS		AuthenticationEvent
-			当提供程序对用户进行身份验证时，将调度security.authentication.success事件
-		security.authentication.failure	AuthenticationEvents::AUTHENTICATION_FAILURE		AuthenticationFailureEvent
-			当提供程序尝试身份验证但失败（即抛出AuthenticationException）时，将调度security.authentication.failure事件
-		security.interactive_login		SecurityEvents::INTERACTIVE_LOGIN					InteractiveLoginEvent
-			用户登陆网站后触发该事件
-		security.switch_user			SecurityEvents::SWITCH_USER							SwitchUserEvent	
-			每次激活switch_user防火墙侦听器时都会触发security.switch_user事件。
-		
-		如果是ajax请求返回json格式,如果是html请求返回页面
-			如果是html请求跳转
-			只需要创建一个监听security.interactive_login的监听器
-		
-		
-	
-		
-		
+1安全组件提供4个相关的身份验证事件：
+	Name								Event Constant							Argument Passed to the Listener
+security.authentication.success	AuthenticationEvents::AUTHENTICATION_SUCCESS		AuthenticationEvent
+	当提供程序对用户进行身份验证时，将调度security.authentication.success事件
+security.authentication.failure	AuthenticationEvents::AUTHENTICATION_FAILURE		AuthenticationFailureEvent
+	当提供程序尝试身份验证但失败（即抛出AuthenticationException）时，将调度security.authentication.failure事件
+security.interactive_login		SecurityEvents::INTERACTIVE_LOGIN					InteractiveLoginEvent
+	用户登陆网站后触发该事件
+security.switch_user			SecurityEvents::SWITCH_USER							SwitchUserEvent	
+	每次激活switch_user防火墙侦听器时都会触发security.switch_user事件。
 
-			php app/console config:dump-reference security
+如果是ajax请求返回json格式,如果是html请求返回页面
+	如果是html请求跳转
+	只需要创建一个监听security.interactive_login的监听器
+	php app/console config:dump-reference security
 
 
 
