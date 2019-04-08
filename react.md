@@ -168,4 +168,35 @@
      const [last,...initial] = [1,2,3].reverse()
            
 ```
+
+## Express+mongodb
+```
+Express+mongodb开放web后台接口
+  Express开放web接口
+  非关系型数据库mongodb
+  使用nodejs的mongoose模块连接和操作mongodb
   
+  安装express
+   npm install express --save
+
+  监听路由和响应内容,使用nodemon自动重启
+   npm install -g nodemon
+
+  app.get app.post分别开发get和post接口
+  app.use使用模块
+   项目复杂的时候功能进行分开 使用app.use进行引入即可
+  代res.send, res.json, res.sendfile 响应不同的内容
+
+mongodb
+  https://www.mongodb.com/下载安装mongodb
+  ubuntu安装 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+    /var/lib/mongodb
+    /var/log/mongodb 
+    /etc/mongod.conf
+  mongod --config /usr/local/etc/mongod.conf
+
+  sudo service mongod start/stop/restart
+
+  mongo
+
+```
