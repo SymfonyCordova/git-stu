@@ -12,3 +12,20 @@ OAuth授权模式
 	简化模式(implicit)
 	密码授权模式(resource owner password credentials)
 	客户端模式(client credentials)
+
+UserConnection
+	create table UserConnection(
+		userId varchar(255) not null,
+		providerId varchar(255) not null,
+		providerUserId varchar(255),
+		rank int not null,
+		displayName varchar(255),
+		profileUrl varchar(512),
+		imgageUrl varchar(512),
+		accessToken varchar(512) not null,
+		secret varchar(512),
+		refreshToken varchar(512),
+		expireTime bigint,
+		primary key (userId,providerId, providerUserId)
+	);
+	create unique index UserConnectionRank on UserConnection(userId,providerId,rank);
