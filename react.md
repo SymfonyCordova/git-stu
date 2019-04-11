@@ -433,6 +433,40 @@ class 一营 extends React.Component{
         Action可以返回函数,使用dispatch提交action
       2.npm install redux-devtools-extension 安装并且开启
       3.使用react-redux优雅的连接react和redux
+
+  4.chrome搜索redux安装调试工具
+    1.新建store的时候判断window.devToolsExtension
+    2.使用compose结合thunk和window.devToolsExtension
+    3.调试窗口的redux选项卡,实时看到state
+    注意新的是
+      window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+
+  5.使用react-redux
+    1.手动我们已经实现了react和redux，但是会陷入属性传递的陷阱厘米
+    2.使用react-redux自动的帮助我们连接react和reduxs
+      npm install react-redux --save
+      只要安装了react-redux 只需要忘记subscribe，也不需要属性传递了,记住reducer，action和dispatch即可
+      React-redux提供了Provider和connect两个接口来链接 
+    3.具体的使用
+      1.Provider组件在应用最外层,传入store即可,只用一次
+      2.Connect负责从外部获取组件需要的参数
+      3.Connect可以用装饰器的方式来写
+        弹出reatc配置文件 npm run eject
+        安装npm install babel-plugin-transform-decorators-legacy --save-dev （babel插件）支持装饰器写法
+          最新的不支持了 不需要安装 改变如下:
+        package.json里babel加上plugins配置
+          "babel": {
+            "plugins": [
+              //["transform-decorators-legacy"]
+              [
+                "@babel/plugin-proposal-decorators", //直接使用这个
+                {
+                  "legacy": true
+                }
+              ]
+            ]
+          }
+
 ```
 
 ## Redux代码
@@ -582,7 +616,7 @@ store.subscribe(render) //Subscribe订阅render函数,每次修改都重新渲�
   }
   render()
   store.subscribe(render)
-App.js文件:
+2.App.js文件:
   import React from 'react'
 
   class App extends React.Component{
@@ -607,7 +641,7 @@ App.js文件:
   }
 
   export default App
-index.redux.js文件
+3.index.redux.js文件
   const ADD_GUN = '加机关枪'
   const REMOVE_GUN = '减机关枪'
 
@@ -639,4 +673,190 @@ index.redux.js文件
       },2000)
     }
   }
+=================================================================================================
+1.index.js文件
+  import React from 'react'
+  import ReactDom from 'react-dom'
+  import App from './App'
+  import { createStore, applyMiddleware, compose } from 'redux' 
+  import thunk from 'redux-thunk'
+  import { counter,addGun,removeGun,addGunAsync } from './index.redux'
+
+  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+  //新建store的时候判断window.devToolsExtension
+
+  const store = createStore(counter,compose( //使用compose结合thunk和window.devToolsExtension
+    applyMiddleware(thunk), 
+    reduxDevtools
+  ))
+
+  function render(){
+    ReactDom.render(<App store={store} addGunAsync={addGunAsync} addGun={addGun} removeGun={removeGun}/>,document.getElementById('root')) 
+  }
+  render()
+  store.subscribe(render)
+==================================================================================
+1.index.js文件:  
+  import React from 'react'
+  import ReactDom from 'react-dom'
+  import App from './App'
+  import { createStore, applyMiddleware, compose } from 'redux'
+  import thunk from 'redux-thunk'
+  import { counter } from './index.redux'
+  import { Provider } from 'react-redux'
+
+  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+
+  const store = createStore(counter,compose(
+    applyMiddleware(thunk),
+    reduxDevtools
+  ))
+
+
+  ReactDom.render(
+    (<Provider store={store}> //Provider组件在应用最外层,传入store即可,只用一次
+      <App/>
+    </Provider>),
+    document.getElementById('root')
+  )
+
+2.App.js文件:
+  import React from 'react'
+  import { connect } from 'react-redux'
+  import {addGunAsync,addGun,removeGun} from './index.redux' 
+
+  class App extends React.Component{
+    render(){
+      return (
+        <div>
+          <h1>现在有机枪{this.props.num}把</h1>
+          <button onClick={this.props.addGun}>申请武器</button>
+          <button onClick={this.props.removeGun}>上缴武器</button>
+          <button onClick={this.props.addGunAsync}>托两天再给</button>
+        </div>
+      )
+    }
+  }
+
+  const mapStateProps = (state)=>{
+    return {num:state}
+  }
+  const actionCreators = {addGunAsync,addGun,removeGun}
+  //装饰器设计模式 装饰返回新的组件了
+
+  App = connect(mapStateProps,actionCreators)(App) //Connect负责从外部获取组件需要的参数
+  export default App
+======================================================================================
+App.js文件:
+  import React from 'react'
+  import { connect } from 'react-redux'
+  import {addGunAsync,addGun,removeGun} from './index.redux'
+
+
+  // const mapStateProps = (state)=>{
+  //  return {num:state}
+  // }
+  //const actionCreators = {addGunAsync,addGun,removeGun}
+
+  //App = connect(mapStateProps,actionCreators)(App)
+  @connect(//Connect可以用装饰器的方式来写
+    //你要什么属性放到props里面
+    state=>({num:state}),
+    //你要什么方法,放到props里,会自动dispatch
+    {addGunAsync,addGun,removeGun}
+  ) 
+  class App extends React.Component{
+    render(){
+      return (
+        <div>
+          <h1>现在有机枪{this.props.num}把</h1>
+          <button onClick={this.props.addGun}>申请武器</button>
+          <button onClick={this.props.removeGun}>上缴武器</button>
+          <button onClick={this.props.addGunAsync}>托两天再给</button>
+        </div>
+      )
+    }
+  }
+
+  export default App
+```
+
+## React-router4
+```
+React开发单页面应用必备,践行路由组件的概念
+核心概念:动态路由,Route，Link，Switch
+
+安装 npm install react-router-dom --save
+Router4使用react-router-dom作为流浪器的路由
+忘记Router2的内容,拥抱最新的Router4
+
+入门组件
+  BrowserRouter，包裹整个应用
+  Router路由对应渲染组件,可嵌套 
+  Link跳转专用
+
+其他组件
+  url参数,Router组件的参数可用冒号标识参数
+    this.props里面有三个属性
+      history 这个是历史属性
+        当需要js进行跳转页面是使用this.props.history.push('/')
+      location 包含当前页面信息的属性
+        比如pathname "/qibinglian" 
+      match 根路由的后面的参数有关 比如 是不是完全匹配 
+        path: "/:location" 原始定义的变量 比如一个里表的行的id
+        params: 现在的location变量值
+          location:"qibinglian" 
+        url:"/qibinglian" 当前页面访问实际的连接地址
+  Redirect组件 跳转
+  Switch只渲染第一个命中子Route组件
+```
+
+## React-router4 代码
+```
+index.js文件:
+  import React from 'react'
+  import ReactDom from 'react-dom'
+  import App from './App'
+  import { createStore, applyMiddleware, compose } from 'redux'
+  import thunk from 'redux-thunk'
+  import { counter } from './index.redux'
+  import { Provider } from 'react-redux'
+  import { BrowserRouter, Route, Link } from 'react-router-dom'
+
+  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+
+  const store = createStore(counter,compose(
+    applyMiddleware(thunk),
+    reduxDevtools
+  ))
+
+  function Erying(){
+    return <h2>二营</h2>
+  }
+
+  function Qibinglian(){
+    return <h2>骑兵连</h2>
+  }
+
+  ReactDom.render(
+    (<Provider store={store}>
+      <BrowserRouter>
+        <ul>
+          <li>
+            <Link to='/'>一营</Link> //点击跳转到指定路由
+          </li>
+          <li>
+            <Link to='/erying'>二营</Link>
+          </li>
+          <li>
+            <Link to='/qibinglian'>骑兵连</Link>
+          </li>
+        </ul>
+        <Route path='/' exact component={App}></Route> //exact表明完全匹配
+        <Route path='/erying' component={Erying}></Route>
+        <Route path='/qibinglian' component={Qibinglian}></Route> //路由对应渲染的模板
+      </BrowserRouter>
+    </Provider>),
+    document.getElementById('root')
+  )
 ```
