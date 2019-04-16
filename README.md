@@ -50,4 +50,11 @@ git clone git@116.62.48.176:/data/git/Project-GTMT-20181106.git
 	out/
 	.idea/
 	/.gitignore
+	
+```
+
+## git 放弃本地修改 强制更新
+```
+	git fetch --all
+	git reset --hard origin/master
 ```
