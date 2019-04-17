@@ -1028,3 +1028,18 @@ index.js文件:
 
   export default Dashboard
 ```
+## 前后台联调
+    如何发送,端口不一致,使用proxy配置转发
+    axios拦截器,统一loading处理
+    redux里使用异步数据,渲染页面
+
+
+    ajax请求是使用axios
+      npm install axios --save
+    在package.json文件中,加入
+      "proxy":"http://localhost:9003"
+      转发解决跨域问题
+
+    
+
+
