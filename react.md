@@ -273,7 +273,7 @@ mongodb
 
     加载js和css 手动直接import antd-mobile/dist/antd-mobile.css
     需要自动加载和按需加载的,需要安装 npm install babel-plugin-import --save
-    在package.json中配置,看官网就有
+    在package.json中的babel配置,看官网就有
      {
         "plugins": [
           ["import", { libraryName: "antd-mobile", style: "css" }] // `style: true` 会加载 less 文件
@@ -1039,6 +1039,151 @@ index.js文件:
     在package.json文件中,加入
       "proxy":"http://localhost:9003"
       转发解决跨域问题
+    axios.interceptors设置拦截器,比如全局的loading
+
+## 前后台联调代码
+```
+config.js文件下
+  import axios from 'axios'
+  import { Toast } from 'antd-mobile'
+
+  axios.interceptors.request.use(function(config){
+      Toast.loading('加载中', 0)
+      return config
+  })
+
+  axios.interceptors.response.use(function(config){
+      setTimeout(()=>{
+          Toast.hide()
+      }, 1000)
+      return config
+  })
+
+index.js文件下
+  import React from 'react'
+  import ReactDom from 'react-dom'
+  import { createStore, applyMiddleware, compose } from 'redux'
+  import thunk from 'redux-thunk'
+  import { Provider } from 'react-redux'
+  import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom'
+  import Auth from './Auth.js'
+  import Dashboard from './Dashboard.js'
+  import reducers from './reducer' 
+  import './config'
+
+  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+
+  const store = createStore(reducers, compose(
+    applyMiddleware(thunk),
+    reduxDevtools
+  ))
+
+  ReactDom.render(
+    (<Provider store={store}>
+      <BrowserRouter>
+        <Switch>
+          <Route path="/login" component={Auth}></Route>
+          <Route path="/dashboard" component={Dashboard}></Route>
+          <Redirect to="/dashboard"></Redirect>
+        </Switch>
+      </BrowserRouter>
+    </Provider>),
+    document.getElementById('root')
+  )
+
+Auth.redux.js文件下:
+  import axios from "axios";
+
+  const LOGIN = 'LOGIN'
+  const LOGOUT = 'LOGOUT'
+  const USER_DATA = 'USER_DATA'
+
+  const initState = {
+    age: 20,
+    isAuth: false,
+    user: '李云龙'
+  }
+
+  export function auth(state=initState,action){
+      switch(action.type){
+          case LOGIN:
+              return {...state, isAuth:true}
+          case LOGOUT:
+              return {...state, isAuth:false}
+          case USER_DATA:
+              return {...state, user:action.payload.user, age:action.payload.age}
+          default:
+              return state
+      }
+  }
+
+  export function getUserData(){
+      return dispatch=>{
+          axios.get('/data').then(res=>{
+              if(res.status === 200){
+                  dispatch(userData(res.data))
+              }
+          })
+      }
+  }
+
+  export function userData(data){
+      return {type:USER_DATA,payload:data}
+  }
+
+  export function login(){
+      return {type:LOGIN}
+  }
+
+  export function logout(){
+      return {type:LOGOUT}
+  }
+
+Auth.js文件
+  import React from 'react'
+  import { connect } from 'react-redux'
+  import { login, getUserData } from './Auth.redux' 
+  import { Redirect } from 'react-router-dom'
+  // import axios from 'axios'
+
+  @connect(
+      state=>state.auth,
+      {login, getUserData}
+  )
+  class Auth extends React.Component{
+      // constructor(props){
+      //     super(props)
+      //     this.state = {
+      //         data:{}
+      //     }
+      // }
+      componentDidMount(){
+          this.props.getUserData()
+          // axios.get('/data').then(res=>{
+          //     if(res.status === 200){
+          //         this.setState({data:res.data})
+          //     }
+          // })
+      }
+      render(){
+          return (
+              <div>
+                  <h2>我的名字是{this.props.user},年龄{this.props.age} </h2>
+                  { this.props.isAuth? <Redirect to='/dashboard'></Redirect> : null}
+                  <h2>你没有权限,需要登陆才能看</h2>
+                  <button onClick={this.props.login}>登陆</button>
+              </div>
+          )
+      }
+  }
+
+  export default Auth
+```
+
+## 开发模式
+  基于cookie用户验证
+    express依赖cookie-parser，需要 npm install cookie-parser --save 安装
+  页面cookie的管理流浪器会自动处理
 
     
 
