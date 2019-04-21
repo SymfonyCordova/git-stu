@@ -253,6 +253,10 @@ mongodb
       this引用的问题,需要在构造函数里面用bind绑定this
       this.setState修改state，记得返回新的state，而不是修改
 
+      也可以不用bind使用箭头函数
+         onClick={()=>this.函数名()}   
+         onClick={ v=>this.函数名(v)} 这个v可以是表单的value的实际值  
+
    React生命周期
     React组件有若干个钩子函数,在组件不同的状态执行
       初始化周期 (组件第一次渲染要执行的一些函数)
@@ -810,6 +814,8 @@ Router4使用react-router-dom作为流浪器的路由
         url:"/qibinglian" 当前页面访问实际的连接地址 实际的路由
   Redirect组件 跳转
   Switch只渲染第一个命中子Route组件
+  withRouter组件来包裹一个普通的组件使得普通组件属性具有history等属性
+    如果这个组件是react-router4子节点组件不需要加这个
 
 react-router与redux组合
   复杂redux应用,多个reducer，用combineReducers合并
@@ -1183,7 +1189,14 @@ Auth.js文件
 ## 开发模式
   基于cookie用户验证
     express依赖cookie-parser，需要 npm install cookie-parser --save 安装
+    body-parser插件来管理接收post数据
+      安装 npm install body-parser --save
+  
   页面cookie的管理流浪器会自动处理
+    npm install cookieparser  --save
+
+  md5加密
+    npm install utility --save
 
     
 
