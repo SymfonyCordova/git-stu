@@ -216,6 +216,15 @@
     docker-composre rm 把所有的都干掉
     docker-composer build 重新构建
 
-    
+## docker 安装gitlab
+    sudo docker pull gitlab/gitlab-ce:latest
+
+    sudo docker run \
+        --publish 443:443 --publish 80:80 --publish 22:22 \
+        --name gitlab \
+        --volume /home/zler/桌面/docker/gitlab/config:/etc/gitlab \
+        --volume /home/zler/桌面/docker/gitlab/logs:/var/log/gitlab \
+        --volume /home/zler/桌面/docker/gitlab/data:/var/opt/gitlab \
+        gitlab/gitlab-ce
     
     

@@ -1217,5 +1217,6 @@ Auth.js文件
           ......
         }
     
-
+  客户端操作cookie
+    npm install browser-cookies --save
 
