@@ -1,37 +1,26 @@
-# 第一章 课程前言
-
-## 课程介绍
-## 学习环境准备
-
-# 第二章 基础篇
-
 ## 什么是Nginx
-    ```
-        高性能 web服务器 中间件 代理服务器
-    ```
-## 常见的中间件服务
-## Nginx特性_实现优点
-    ```
+    nginx是一个开元且高性能,可靠的HTTP中间见,代理服务
+
+    Nginx特性_实现优点
         IO多路复用epoll
         功能模块少 代码模块化
         cpu亲和(affinity)
-            是一种把cpu核心和nginx工作进程绑定方式,每个worker进程固在一个cpu上执行,减少切换cpu的cache miss,获得更好的性能。
+                是一种把cpu核心和nginx工作进程绑定方式,每个worker进程固在一个cpu上执行,减少切换cpu的cache miss,获得更好的性能。
         sendfile
-    ```
-## Nginx快速安装
-```
-    Mainline version 开发版
-    Stable version 稳定版
-    Legacy version 历史版
     
-    安装方式nginx官方网址上面有详细的安装
-```
-## Nginx的目录和配置语法_Nginx安装目录
-```
+    Nginx快速安装
+        Mainline version 开发版
+        Stable version 稳定版
+        Legacy version 历史版
+        
+        安装方式nginx官方网址上面有详细的安装
+
+        建议docker安装
+
     对于centos 用yum源安装的可以使用: 
         命令:rpm -ql nginx
     来查看安装目录
-```
+
 |路径 | 类型  | 作用 |
 | ------------ | ------------ | ------------ |
 | /etc/logrotate.d/nginx | 配置文件 | nginx日志轮转,用于logrotate服务的日志切割 |
@@ -46,8 +35,7 @@
 | /var/cache/nginx | 目录 | Nginx的缓存目录 |
 | /var/log/nginx | 目录 | Nginx的日志目录 |
 
-## Nginx的目录和配置语法_Nginx编译配置参数
-```
+    Nginx的目录和配置语法_Nginx编译配置参数
     nginx -V
     nginx version: nginx/1.12.2
     built by gcc 4.8.5 20150623 (Red Hat 4.8.5-16) (GCC) 
@@ -99,19 +87,15 @@
         --with-google_perftools_module 
         --with-debug --with-cc-opt='-O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector-strong --param=ssp-buffer-size=4 -grecord-gcc-switches -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -m64 -mtune=generic' --with-ld-opt='-Wl,-z,relro -specs=/usr/lib/rpm/redhat/redhat-hardened-ld -Wl,-E'
 
-```
-
-## Nginx的目录和配置语法_默认配置语法
-```
+## Nginx的目录和配置语法与默认站点启动
     user                设置nginx服务的系统使用用户
-    worker_processess   工作进程数
+    worker_processess   工作进程数 设置和cpu个数一样
     error_log           nginx的错误日志
     pid                 nginx服务启动时候pid
     
     events
-        worker_connections  每个进程允许最大连接数
-        use                 工作进程数
-        
+        worker_connections  每个进程允许最大连接数 65535
+        use                 工作进程数 内和模型 epoll
     http{               每个server就是一个站点
         server{
             listen 80;     
@@ -131,70 +115,262 @@
         server{
             ......
         }
-    }   
-```
-## Nginx的目录和配置语法_默认配置与默认站点启动
+    }
+    =============================================
+    nginx.conf 文件代码:
+        user  nginx;
+        worker_processes  1;
+        error_log  /var/log/nginx/error.log warn;
+        pid        /var/run/nginx.pid;
+        events {
+            worker_connections  1024;
+        }
+        http {
+            include       /etc/nginx/mime.types;
+            default_type  application/octet-stream;
+
+            log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                            '$status $body_bytes_sent "$http_referer" '
+                            '"$http_user_agent" "$http_x_forwarded_for"';
+
+            access_log  /var/log/nginx/access.log  main;
+            sendfile        on;
+            #tcp_nopush     on;
+            keepalive_timeout  65;
+            #gzip  on;
+            include /etc/nginx/conf.d/*.conf;
+        }
+
+
+    default.conf文件代码:
+        server {
+            listen       80;
+            server_name  localhost;
+
+            #charset koi8-r;
+            #access_log  /var/log/nginx/host.access.log  main;
+
+            location / {
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+            }
+
+            #error_page  404              /404.html;
+
+            # redirect server error pages to the static page /50x.html
+            #
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   /usr/share/nginx/html;
+            }
+
+            # proxy the PHP scripts to Apache listening on 127.0.0.1:80
+            #
+            #location ~ \.php$ {
+            #    proxy_pass   http://127.0.0.1;
+            #}
+
+            # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+            #
+            #location ~ \.php$ {
+            #    root           html;
+            #    fastcgi_pass   127.0.0.1:9000;
+            #    fastcgi_index  index.php;
+            #    fastcgi_param  SCRIPT_FILENAME  /scripts$fastcgi_script_name;
+            #    include        fastcgi_params;
+            #}
+
+            # deny access to .htaccess files, if Apache's document root
+            # concurs with nginx's one
+            #
+            #location ~ /\.ht {
+            #    deny  all;
+            #}
+        }
+
 ## HTTP请求
-## Nginx日志_log_format
-```
+    request - 包括请求行,请求头,请求数据 
+    respone - 包含状态行,消息报文,响应正文
+
+    curl -v http://www.baidu.com
+
+
+## Nginx日志模块 log_format
     日志类型
         包括:error.log access_log
-        /var/log/nginx/error.log;
-        /var/log/nginx/access.log;
+        /var/log/nginx/error.log; 记录到请求的错误状态以及nginx本身的错误状态 会按照不同的级别记录到error.log里面
+        /var/log/nginx/access.log; 记录到每次http请求访问的状态
     
+    怎么配置日志
+        log_format
+        Syntax: log_format name [escape=default|json]string ...;
+        Default:log_format combined "...";
+        Context:http 必须配置在http模块下面
+
+        Nginx变量
+            Http请求变量: arg_PARAMETER、http_HEADER、sent_http_HEADER
+            内置变量: Nginx内置的 可以查看nginx内置变量 https://nginx.org/en/docs/http/ngx_http_log_module.html
+            自定义变量: 自己定义
     
-    log_format
-    Syntax: log_format name [escape=default|json]string ...;
-    Default:log_format combined "...";
-    Context:http
+        具体的配置参考:nginx.conf 文件代码
+            $remote_addr 客户端的地质
+            $remote_user 客户端认证请求nginx的用户名 默认没有开启认证模块 是不会记录的
+            $time_local 时间
+            $request 请求行
+            $status 服务器返回的状态
+            $body_bytes_sent 从服务器返回给客户段body的大小
+            $http_referer 上以及页面的url地址(用这个可以用来防盗链)
+            $http_user_agent 表示的客户端的内容 比如ie chrome curl ...
+            $http_x_forwarded_for 请求是每一集携带的信息
+
+        nginx -tc /etc/nginx/nginx.conf 检查nginx配置是否正确
+        nginx -s reload -c /etc/nginx/nginx.conf 重载服务不需要关闭nginx服务器
+
+## Nginx模块
+    模块介绍
+        Nginx官方模块
+        第三方模块
     
-    Nginx变量
-        Http请求变量: arg_PARAMETER、http_HEADER、sent_http_HEADER
-        内置变量: Nginx内置的
-        自定义变量: 自己定义
+    可以通过nginx-V 注意这个是大写的V 可以查看到有那些已经安装的模块
+
+    1. --with-http_stub_status_module模块 
+        作用: 监听nginx的客户端状态
+        语法:
+            http_stub_status_module配置
+                Syntax: stub_status;
+                Default: -- 默认是没有配置的
+                Context:server,location 位置在server和location下面进行配置
+        例子
+            location /mystatus {
+                stub_status;
+            }
+        效果
+            Active connections: 2 
+            server accepts handled requests
+            7 7 18 
+            Reading: 0 Writing: 1 Waiting: 1 
+
+    2. --with-http_random_index_module模块 
+        作用: 目录中选择一个随机主页
+        语法:
+            http_random_index_module配置
+                Syntax: random_index on|off;
+                Default: random_index off; 默认是关闭的
+                Context: location 位置在location下面进行配置 
+        例子
+            location / {
+                root   /usr/share/nginx/html;
+                random_index on;
+                # index  index.html index.htm;
+            }
+        效果
+            每次刷新看到主页是不一样的
+
     
-    
-    nginx -tc /etc/nginx/nginx.conf 检查nginx配置是否正确
-    nginx -s reload -c /etc/nginx/nginx.conf 重载服务不需要关闭nginx服务器
-```
-## Nginx模块讲解_模块介绍
-```
-    Nginx官方模块
-    第三方模块
-```
-## Nginx模块讲解_sub_status
-```
-    Nginx的客户端状态
-    http_stub_status_module配置
-```
-## Nginx模块讲解_random_index
-```
-    目录中选择一个随机主页
-    
-```
-## Nginx模块讲解_sub_module
-```
-    HTTP内容替换
-    
-```
-## Nginx模块讲解_sub_module配置演示
-## Nginx的连接请求限制_配置语法与原理
-```
-   HTTP请求建立在一次TCP连接基础上
-   一次TCP请求至少产生一次HTTP请求
-   
-   连接频率限制 limit_conn_module
-   请求频率限制 limit_req_module
-```
-## Nginx的访问控制_介绍实现访问控制的基本方式
+    3. --with-http_sub_module模块 
+        作用: HTTP内容替换 服务器发送给客户端的时候将程序员写好的response的内容进行替换后发送给客户端
+        语法:
+            http_sub_module配置语法1
+                Syntax: sub_filter string replacement;
+                Default: --; 默认是关闭的
+                Context: http, server, location
+            http_sub_module配置语法2 服务器段返回response的内容发现与上一次访问的内容不一样就返回新的,一样就不返回新的内容 主要用于缓存
+                Syntax: sub_filter_last_modified on|off;
+                Default: sub_filter_last_modified off; 默认是关闭的
+                Context: http, server, location
+            http_sub_module配置语法3 
+                Syntax: sub_filter_once on|off;
+                Default: sub_filter_once on; 默认是替换第一个
+                Context: http, server, location
+        例子
+            location / {
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+                sub_filter '<p>lei</p>' '<a>LEI</a>';
+                sub_filter_once off;
+            }
+        效果
+            就是将页面的 所有的<p>lei</p>替换了<a>LEI</a>
+
+    4. limit_conn_module模块 连接频率限制 (三次握手)
+       limit_req_module模块  请求频率限制
+        作用: 实现请求限制
+            HTTP请求建立在一次TCP连接基础上,一次TCP请求至少产生一次HTTP请求
+
+        语法:
+            limit_conn_module配置语法
+                Syntax: limit_conn_zone key zone=name:size; 开辟空间保存
+                Default: --; 默认是关闭的 
+                Context: http
+            
+                Syntax: limit_conn zone number;
+                Default: --; 默认是关闭的
+                Context: http, server, location
+            
+            limit_req_module配置语法
+                Syntax: limit_req_zone key zone=name:size rate=rate; 开辟空间保存
+                Default: --; 默认是关闭的 
+                Context: http
+            
+                Syntax: limit_req zone=name[burst=number][nodelay];
+                Default: --; 默认是关闭的
+                Context: http, server, location
+        
+        压力测试工具 ab -n 40 -c 20 http:www.baidu.com
+            -n 总共发起的次数
+            -c 同时并发的个数
+            tail -f 去监听log文件
+
+        例子
+            location / {
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+                sub_filter '<p>lei</p>' '<a>LEI</a>';
+                sub_filter_once off;
+            }
+        效果
+            就是将页面的 所有的<p>lei</p>替换了<a>LEI</a>
+
+## Nginx的访问控制
+    基于IP的访问控制 - http_access_module模块
+    基于用户的信任登陆 - http_auth_basic_module模块 2-23
 ## Nginx的访问控制—access_module配置语法介绍
 ## Nginx的访问控制—access_module配置
 ## Nginx的访问控制—access_module局限性
 ## Nginx的访问控制—auth_basic_module配置
 ## Nginx的访问控制—auth_basic_module局限性
 
-# 第三章 场景实践篇
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 第三章 场景实践篇
 ## 场景实践篇内容介绍
     ```
         静态资源WEB服务
