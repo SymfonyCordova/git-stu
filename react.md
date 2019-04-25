@@ -1220,3 +1220,100 @@ Auth.js文件
   客户端操作cookie
     npm install browser-cookies --save
 
+## 高阶组建
+  1.函数编程
+    函数可以当参数
+    函数可以当返回值
+      function() hello(){
+        console.log('react') 
+      }
+      function WrapperHello(fn){ //传递的是一个函数，返回另外一个函数 装饰器模式
+        return function(){
+          console.log('before')
+          fn()
+          console.log('after')  
+        }
+      }
+      hello=WrapperHello(hello)
+      hello()
+      其实组建本质上是一个函数 传递一个组建返回另一个组建
+  
+  2.传递一个组建返回一个新的组建
+    class Hello extends React.Componet{
+      render(){
+        return <h2>react</h2>
+      }
+    }
+    function WrapperHello(Component){
+      class WrapperComponent extends React.Component{
+        render(){
+          return (
+            <div>
+              <p>这是高洁组建</p>
+              <Component {...this.props}></Component>
+            </div>
+          )
+        }
+      }
+      return WrapperComponent
+    }
+    Hello = WrapperHello(Hello)
+  
+  3.2的简写形式类似于@connect
+    function WrapperHello(Component){ //把这个看成是从外部引入进来的
+      class WrapperComponent extends React.Component{
+        render(){
+          return (
+            <div>
+              <p>这是高洁组建</p>
+              <Component name='text' {...this.props}></Component> //我们可以加些属性 属性代理
+            </div>
+          )
+        }
+      }
+      return WrapperComponent
+    }
+
+    @WrapperHello
+    class Hello extends React.Componet{
+      render(){
+        return <h2>react</h2>
+      }
+    }
+    以上这个模式叫属性代理
+
+  4.还有一种叫反向继承
+    不继承React的,而是继承传入的组建 改写他的生命周期 改写他的渲染的流程
+    function WrapperHello(Comp){
+      class WrapperComponent extends Comp{
+        componentDidMount(){
+          console.log('高洁新增的生命周期,加载完成')
+        }
+        render(){
+          return <Comp></Comp>
+        }
+      }
+      return WrapperComponent
+    }
+
+
+## socket.io
+  基于事件的实施双向通信库
+    基于websocket
+    前后段通过事件进行双向通信
+    配合express，快速开放实施应用
+      npm install socket.io --save
+      io = require('socket.io')(http)
+      io.on监听事件
+      io.emit触发事件
+    前段api
+      npm install socket.io-client --save
+      import io from 'socket.io-client'
+        io.on监听事件
+        io.emit触发事件
+    
+  Ajax和Socket.io的区别
+    Ajax基于http协议,单项,实时获取数据只能轮询
+    socket.io基于websocket双向通信协议,后端可以主动推送数据
+    现代浏览器均支持websocket协议
+
