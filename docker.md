@@ -229,10 +229,10 @@
       
 ## docker 安装nginx
     sudo docker pull nginx
-    sudo docker run -p 8083:80 --name nginx-name-two \
-    -v /home/zler/桌面/docker/nginx-name-two/conf.d/:/etc/nginx/conf.d \
-    -v /home/zler/桌面/docker/nginx-name-two/log/:/var/log/nginx/ \
-    -v /home/zler/桌面/docker/nginx-name-two/html:/usr/share/nginx/html/  \
+    sudo docker run -p 8081:80 --name nginx-name-three \
+    -v /home/zler/桌面/docker/nginx-name-three/conf.d/:/etc/nginx/conf.d \
+    -v /home/zler/桌面/docker/nginx-name-three/log/:/var/log/nginx/ \
+    -v /home/zler/桌面/docker/nginx-name-three/html:/usr/share/nginx/html/  \
     -d nginx
     
     需要在conf.d配置虚拟主机比如默认的虚拟主机
@@ -281,3 +281,12 @@
             #    deny  all;
             #}
         }
+
+## docker link nginx和各个容器进行连接
+    sudo docker run -p 80:80 --name nginx-name-proxy \ 
+    --link=nginx-name-one:nginx-proxy1 \
+    --link=nginx-name-two:nginx-proxy2 \
+    -v /home/zler/桌面/docker/nginx-name-proxy/conf.d/:/etc/nginx/conf.d \
+    -v /home/zler/桌面/docker/nginx-name-proxy/log/:/var/log/nginx/ \
+    -v /home/zler/桌面/docker/nginx-name-proxy/html:/usr/share/nginx/html/  \
+    -d nginx

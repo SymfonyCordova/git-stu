@@ -502,208 +502,182 @@
         目的:防止资源被盗用
         配置语法
             基于http_refer防盗链配置模块
-                http_refer请求头
+                http_refer请求头保存了上一个页面的url地址
             Syntax: valid_referers none | blocked | server_names | string ...;
             Default: -
             Context: server,location
         例子
+            location ~ .*\.(jpg|gif|png)$ {
+                gzip on;
+                gzip_http_version 1.1;
+                gzip_comp_level 2;
+                gzip_types text/plain application/javascript application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;
+                root /usr/share/nginx/html/images;
+
+                valid_referers none blocked localhost;
+                if ($invalid_referer) {
+                    return 403;
+                }
+            }
 
     2.代理服务
-    3.负载均衡调度器SLB
-    4.动态缓存
-
-
-## Nginx作为代理服务_代理服务
-    ```
         可以用作HTTP,ICMP\POP\IMAP,HTTPS,RTMP代理
-        
         HTTP代理
             正向代理
+                如果我们有多台电脑，其中只有一台电脑可以上网，我们可以在我们的浏览器配置通过这台电脑上网络
+                还有就是翻墙
             反向代理
+                后段有很多服务器，其中用一台服务器可以作为代理服务器来配置访问多台服务器
             正向代理和反向代理的区别
                 区别在于代理的对象不一样
                 正向代理代理的对象是客户端
                 反向代理代理的对象是服务端
-            
-    ```
-## Nginx作为代理服务_配置语法及反向代理场景
-    ```
-       配置语法
-         Syntax: proxy_pass URL
-         Default: -
-         Context: location, if in location, limit_except
-         
-         http://location:8000/uri/
-         https://192.168.1.1:8000/uri/
-         http://unix:/tmp/backend.socket:/uri/;
-    ```
-## Nginx作为代理服务_正向代理配置场景
-    ```
-        location / {
-            if($http_x_forwarded_for !~* "^116\.62\.103\.228") { #$http_x_forwarded_for获取到所有客户端的ip,包括中间件的ip
-                return 403;
-            }
-            root /opt/app/code;
-            index index.html index.htm;
-        }
-        只允许特定的ip访问
         
-        在228这台机器配置正向代理
-        resolver 8.8.8.8; #DNS解析 谷歌的DNS解析
-        location / {
-            proxy_pass http://$http_host$request_uri;
-        }
-    ```
-## Nginx作为代理服务_代理配置语法补充
-    ```
-        其他配置语法 - 缓冲区
-            Syntax: proxy_buffering on | off;
-            Default: proxy_buffering on;
-            Context: http,server,location
+        反向代理
+            配置语法
+                Syntax: proxy_pass URL
+                Default: -
+                Context: location, if in location, limit_except
+                
+                http://location:8000/uri/
+                https://192.168.1.1:8000/uri/
+                http://unix:/tmp/backend.socket:/uri/;
+            例子
+                
+                location / {
+                    proxy_set_header  Host  $http_host;
+                    proxy_set_header  X-Real-IP  $remote_addr;
+                    proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_pass http://nginx-proxy1;
+                }
+                
+        正向代理
+            设置一台电脑只能被特定的IP访问到
+            location / {
+                if ( $http_x_forwared_for !~* "^122\.30\.103\.11" ) {
+                     #$http_x_forwarded_for获取到所有客户端的ip,包括中间件的ip
+                    return 403;
+                }
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+            }
+            到122.30.103.11电脑设置正向代理
+                resolver 8.8.8.8; #设置DNS解析这里使用的是google
+                location / {
+                    proxy_pass http://$http_host$request_uri;
+                }
+            在浏览器上设置代理
+                填写 122.30.103.11 端口
+
+        代理配置语法补充
+            缓冲区
+                作用: 代理转发给客户端时建立缓冲区 减少了IO的损耗 
+                Syntax: proxy_buffering on | off;
+                Default: proxy_buffering on;
+                Context: http,server,location
+                
+                扩展: proxy_buffer_size、proxy_buffers、proxy_busy_buffers_size
             
-            扩展: proxy_buffer_size、proxy_buffers、proxy_busy_buffers_size
-            
-        其他配置语法 - 跳转重定向
-            Syntax: proxy_redirect default;
-            proxy_redirect off; proxy_redirect redirect replacement;
-            Default: proxy_redirect default;
-            Context: http,server,location
-         
-        其他配置语法 - 头信息
-            Syntax: proxy_set_header field value;
-            Default: proxy_set_header Host $proxy_host;
+            跳转重定向
+                作用:当nginx作为代理服务器将后段服务返回给客户端的respon是301时, 需要重定向到另外一个地址
+                Syntax: proxy_redirect default;
+                proxy_redirect off; proxy_redirect redirect replacement;
+                Default: proxy_redirect default;
+                Context: http,server,location
+
+            头信息
+                作用:后段服务器如果获取的是从多层代理服务器发过来的信息中,是不知道最初的客户端的发送过来的头信息
+                    这个可以设置来获取到最初的真实的信息
+                Syntax: proxy_set_header field value;
+                Default: proxy_set_header Host $proxy_host;
                     proxy_set_hedaer Connection close;
-            Context:http,server,location
+                Context:http,server,location
         
-            扩展:proxy_hide_header, proxy_set_body
+                扩展:proxy_hide_header, proxy_set_body
             
-        其他配置语法 - 超时
-            Syntax: proxy_connect_timeout time;
-            Default: proxy_connect_tomeout 60s;
-            Context: http,server,location
-            
-            扩展: proxy_read_timeout, proxy_send_timeout
-    ```
-    
-## Nginx作为代理服务_代理补充配置和规范
-    ```
-        location / {
-            proxy_pass http://127.0.0.1:8080;
-            proxy_redirect default;
-            
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Real-IP $remote_addr;
-            
-            proxy_connect_timeout 30;
-            proxy_send_timeout 60;
-            proxy_read_timeout 60;
-            
-            proxy_buffer_size 32k;
-            proxy_bufferinng on;
-            proxy_buffers 4 128k;
-            proxy_busy_buffers_size 256k;
-            proxy_max_temp_file_size 256k;
-        }
-        
-        也可以将这些个参数存到proxy_params文件中 然后include这个配置文件proxy_params
-        location / {
-            proxy_pass http://127.0.0.1:8000;
-            include proxy_params;
-        }
-    ```
-## Nginx作为负载均衡服务_负载均衡与Nginx
-    ```
-        按地域分：   GSLB
-                    SLB
-        
-        四层负载均衡和七层负载均衡
-            nginx是典型的七层负载均衡SLB
-    ```
-## Nginx作为负载均衡服务_配置语法
-    ```
-       通过代理转发到一个upstream服务组
-       Syntax: upstream name { ... } 
-       Default: -
-       Context: http
-    ```
-## Nginx作为负载均衡服务_配置场景
-    ```
-        A台服务器
-            多个server配置文件分别对应3个不同的端口
-            server1 server2 server3
-        server1:
-            server{
-                listen 8001;
-                server_name localhost;
-                access_log /var/log/nginx/log/sever1.access.log main;
+            超时
+                作用:nginx作为代理服务器访问后段中间的这个过程的超时时间
+                Syntax: proxy_connect_timeout time;
+                Default: proxy_connect_tomeout 60s;
+                Context: http,server,location
+                
+                扩展: proxy_read_timeout, proxy_send_timeout
+            例子:
                 location / {
-                    root /opt/app/code1;
-                    index index.html index.htm;
+                    proxy_pass http://127.0.0.1:8080;
+                    proxy_redirect default;
+                    
+                    proxy_set_header Host $http_host; #用的很多哦 将真是的ip带到后段
+                    proxy_set_header X-Real-IP $remote_addr;
+                    
+                    proxy_connect_timeout 30;
+                    proxy_send_timeout 60;
+                    proxy_read_timeout 60;
+                    
+                    proxy_buffer_size 32k;
+                    proxy_buffering on;
+                    proxy_buffers 4 128k;
+                    proxy_busy_buffers_size 256k;
+                    proxy_max_temp_file_size 256k;
                 }
-                
-                error_page 500 502 503 504 404 /50x.html;
-                location = /50x.html{
-                    root /usr/share/nginx/html
-                }
-            }
-            
-        server2:
-            server{
-                listen 8002;
-                server_name localhost;
-                access_log /var/log/nginx/log/sever2.access.log main;
+
+                如果是有很多的服务器都需要这些参数,我们可以把公共的配置放到一个文件中，方便我们管理
+                也可以将这些个参数存到proxy_params文件中 然后include这个配置文件proxy_params
                 location / {
-                    root /opt/app/code2;
-                    index index.html index.htm;
-                }
-                
-                error_page 500 502 503 504 404 /50x.html;
-                location = /50x.html{
-                    root /usr/share/nginx/html
-                }
-            }
-            
-        server3:
-            server{
-                listen 8003;
-                server_name localhost;
-                access_log /var/log/nginx/log/sever3.access.log main;
-                location / {
-                    root /opt/app/code3;
-                    index index.html index.htm;
-                }
-                
-                error_page 500 502 503 504 404 /50x.html;
-                location = /50x.html{
-                    root /usr/share/nginx/html
-                }
-            } 
-            
-        B负载均衡服务器
-            upstream imocc { 
-                server 116.62.103.8001;
-                server 116.62.103.8002;
-                server 116.62.103.8003;
-            }
-            server {
-                listen 80;
-                server_name localhost zler.imocc.com;
-                
-                access_log /var/log/nginx/test_proxy.access.log main;
-                
-                location / {
-                    proxy_pass http://imocc; # 转发到imocc
+                    proxy_pass http://127.0.0.1:8000;
                     include proxy_params;
                 }
-                
-                
-                error_page 500 502 503 504 404 /50x.html;
-                location = /50x.html{
-                    root /usr/share/nginx/html
-                }              
-                
+
+    3.负载均衡调度器
+        负载均衡服务可以将我们的服务进行大量节点部署
+        多节点部署可以保证一台服务器死掉,其他的访问不会受到影响
+        按地域分：   GSLB
+                    SLB
+        四层负载均衡和七层负载均衡
+            nginx是典型的七层负载均衡SLB
+        配置语法:
+            通过代理转发到一个upstream服务组
+            Syntax: upstream name { ... } 
+            Default: -
+            Context: http
+        例子:
+                #注意这里要使用局域网IP或者公网IP，不能使用localhost或127.0.0.1
+                #在这里指定要负载均衡到哪几个服务器以及那些服务器的端口
+                upstream zler{
+                    server 116.62.103.8001;
+                    server 116.62.103.8002;
+                    server 116.62.103.8003;
+                }
+            server {
+                listen       80;
+                server_name  localhost;
+
+                location / {
+                    proxy_pass http://zler;
+                    proxy_redirect default;
+                                
+                    proxy_set_header Host $http_host; #用的很多哦 将真是的ip带到后段
+                    proxy_set_header X-Real-IP $remote_addr;
+                    
+                    proxy_connect_timeout 30;
+                    proxy_send_timeout 60;
+                    proxy_read_timeout 60;
+                    
+                    proxy_buffer_size 32k;
+                    proxy_buffering on;
+                    proxy_buffers 4 128k;
+                    proxy_busy_buffers_size 256k;
+                    proxy_max_temp_file_size 256k;
+                }
+
+                error_page   500 502 503 504  /50x.html;
+                location = /50x.html {
+                    root   /usr/share/nginx/html;
+                }
             }
-    ```
+            start 3-21
+        
+    4.动态缓存               
 ## Nginx作为负载均衡服务_server参数讲解
     ```
         upstream backend {
