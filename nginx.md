@@ -219,7 +219,7 @@
             $request 请求行
             $status 服务器返回的状态
             $body_bytes_sent 从服务器返回给客户段body的大小
-            $http_referer 上以及页面的url地址(用这个可以用来防盗链)
+            $http_referer 上一及页面的url地址(用这个可以用来防盗链)
             $http_user_agent 表示的客户端的内容 比如ie chrome curl ...
             $http_x_forwarded_for 请求是每一集携带的信息
 
@@ -322,177 +322,197 @@
             tail -f 去监听log文件
 
         例子
-            location / {
-                root   /usr/share/nginx/html;
-                index  index.html index.htm;
-                sub_filter '<p>lei</p>' '<a>LEI</a>';
-                sub_filter_once off;
+            limit_conn_zone $binary_remote_addr zone=conn_zone:1m;
+            limit_req_zone $binary_remote_addr zone=req_zone:1m rate=1r/s;
+            server {
+                location / {
+                    root   /usr/share/nginx/html;
+                    index  index.html index.htm;
+                    limit_conn conn_zone 1;
+                    #limit_req zone=req_zone burst=3 nodelay;
+                    #limit_req zone=req_zone burst=3;
+                    #limit_req zone=req_zone;
+                }
             }
+
         效果
-            就是将页面的 所有的<p>lei</p>替换了<a>LEI</a>
+            看access.log日至
 
 ## Nginx的访问控制
     基于IP的访问控制 - http_access_module模块
-    基于用户的信任登陆 - http_auth_basic_module模块 2-23
-## Nginx的访问控制—access_module配置语法介绍
-## Nginx的访问控制—access_module配置
-## Nginx的访问控制—access_module局限性
-## Nginx的访问控制—auth_basic_module配置
-## Nginx的访问控制—auth_basic_module局限性
+    基于用户的信任登陆 - http_auth_basic_module模块
 
+    http_access_module
+        语法:
+            Syntax: allow address|CIDR|unix:|all; 允许访问的
+            Default: --; 默认是关闭的
+            Context: http, server, location,limit_except
 
+            Syntax: deny address|CIDR|unix:|all; 不允许访问的
+            Default: --; 默认是关闭的
+            Context: http, server, location,limit_except
+        例子:
+            location ~ ^/admin.html {
+                root   /usr/share/nginx/html;
+                allow 172.17.0.1/24;
+                deny all;
+                index  index.html index.htm;
+            }
+            location ~ ^/admin.html {
+                root   /usr/share/nginx/html;
+                deny 172.17.0.1;
+                allow all;
+                index  index.html index.htm;
+            }
+        局限性:
+            如果不是客户端直接访问服务段，而是通过其他的中间件作方向代理的就有一个问题
+            $remote_addr只能识别上一层中间件的ip 无法识别到真正的客户段的ip
+            $http_x_forwarded_for 是nginx的http头变量 他包含了所有从客户端到服务端中间见的ip1,ip2,...
+                http_x_forwarded_for = ClientIp, Proxy(1)IP, Proxy(2)IP...
+            解决办法:
+                方法1:采用别的HTTP头信息控制访问,如: HTTP_X_FORWARD_FOR 但是这个其实也不性,因为头信息是可以修改的
+                方法2:结合geo模块作 
+                方法3:通过HTTP自定义变量传递
 
+    auth_basic_module
+         语法:
+            Syntax: auth_basic string|off;
+            Default: auth_basic off; 默认是关闭的
+            Context: http, server, location,limit_except
 
+            Syntax: auth_basic_user_file file; //文件路径存储了用户名和密码
+            Default: --; 默认是关闭的
+            Context: http, server, location,limit_except
+        例子:
+            location ~ ^/admin.html {
+                root   /usr/share/nginx/html;
+                index  index.html index.htm;
+                auth_basic "Auth access test!input you password!";
+                auth_basic_user_file /etc/nginx/conf.d/auth_user;
+            }
+        局限性:
+            1.用户信息依赖文件方式
+            2.操作管理机械,效率低下
+            解决办法:
+                方法1:nginx结合LUA实现高效验证
+                方法2:nginx和LDAP打通,利用nginx-auth-ldap模块
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 第三章 场景实践篇
-## 场景实践篇内容介绍
-    ```
-        静态资源WEB服务
-        代理服务
-        负载均衡调度器SLB
-        动态缓存
-    ```
-## Nginx作为静态资源web服务_静态资源类型
-## Nginx作为静态资源web服务_CDN场景
-## Nginx作为静态资源web服务_配置语法
-    ```
-        配置语法-文件读取
-            Syntax: sendfile on | off;
-            Default: sendfile off;
-            Context: http,server,location, if in location
-        
-        引读: --with-file-aio异步文件读取
-        
-        配置语法-tcp_nopush
-            Syntax: tcp_nopush on | off;
-            Default: tcp_nopush off;
-            Context: http, server, location
-        作用: sendfile开启的情况下,提高网络包的传输效率
-        
-        配置语法-tcp_nodelay
-            Syntax: tcp_nodelay on | off
-            Defaul: tcp_nodelay on;
-            Context:http,server,location
-        作用: keepalive连接下,提高网络包的传输实时性
-        
-        配置语法-压缩
-            Syntax: gzip on | off
-            Default: gzip off;
-            Context: http,server,location,if in location
-        作用: 压缩传输
-        
-        压缩比
-            Syntax: gzip_comp_level level;
-            Default: gzip_comp_level 1;
-            Context: http, server, location
-        
-        压缩版本
-            Syntax: gzip_http_version 1.0|1.1
-            Default: gzip_http_version 1.1
-            Context:http, server, location
-        
-        扩展Nginx压缩模块
-            http_gzip_static_module - 预读gzip功能
-            http_gunzip_module - 应用支持gunzip的压缩方式
-         
-    ```
-## Nginx作为静态资源web服务_场景演示
-    ```
-        server {
-            listen 8081;
-            server_name localhost;
-            sendfile on;
-            access_log  /var/log/nginx/access.log  main;
             
+## 场景
+    1.静态资源WEB服务
+        html,css,js,jpeg,gif,png,flv,mpeg,txt等任意下载文件
+        场景:CDN
+        配置语法:
+            文件读取:
+                作用: 高效的读取文件
+                Syntax: sendfile on | off; 
+                Default: sendfile off; # 默认是关闭的
+                Context: http,server,location, if in location
+                
+                引读: --with-file-aio异步文件读取(目前没怎么用)
+            
+            tcp_nopush:
+                作用: sendfile开启的情况下,提高网络包的传输效率
+                Syntax: tcp_nopush on | off;
+                Default: tcp_nopush off; # 默认是关闭的
+                Context: http, server, location
+
+            tcp_nodelay:
+                作用: keepalive连接下,提高网络包的传输实时性
+                Syntax: tcp_nodelay on | off
+                Defaul: tcp_nodelay on; # 默认是开启的
+                Context:http,server,location
+            
+            压缩:
+                作用: 压缩传输
+                Syntax: gzip on | off
+                Default: gzip off; # 默认是关闭的
+                Context: http,server,location,if in location
+            压缩比
+                Syntax: gzip_comp_level level;
+                Default: gzip_comp_level 1;
+                Context: http, server, location
+            压缩版本:
+                Syntax: gzip_http_version 1.0|1.1;
+                Default: gzip_http_version 1.1;
+                Context: http, server, location
+            扩展Nginx压缩模块
+                http_gzip_static_module - 预读gzip功能
+                http_gunzip_module - 应用支持gunzip的压缩方式(解决有些浏览器不支持gzip)
+
+        例子:
             location ~ .*\.(jpg|gif|png)$ {
                 gzip on;
                 gzip_http_version 1.1;
                 gzip_comp_level 2;
                 gzip_types text/plain application/javascript application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;
-                root /opt/app/code/images;
+                root /usr/share/nginx/html/images;
             }
-        
+
             location ~ .*\.(txt|xml)$ {
                 gzip on;
                 gzip_http_version 1.1;
                 gzip_comp_level 1;
                 gzip_types text/plain application/javascript application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;
-                root /opt/app/code/doc;
+                root /usr/share/nginx/html/doc;
             }
-        
+
             location ~ ^/download {
                 gzip_static on;
                 tcp_nopush on;
-                root /opt/app/code;
+                root /usr/share/nginx/html/code;
             }
-        }
 
-    ```
-## Nginx作为静态资源web服务_浏览器缓存原理
-## Nginx作为静态资源web服务_浏览器缓存场景演示
-    ```
+    浏览器缓存
+        Http协议定义的缓存机制 头信息(如:Expries;Cache-control等)
+        校验是否过期 Expries;Cache-control(max-age)
+        协议中Etag头信息校验 Etag
+        Last-Modified头信息校验
+        
         配置语法-expires
-        添加Cache-Control、Expires头
-        Syntax: expires [modified] time;
-                expires epoch | max | off;
-        Default: expires off
-        Context: http, server, location, if in location
-        
-         location ~ .*\.(htm|html)$ {
-        	expires 24h;
-            root /opt/app/code;
-         }
-    ```
-## Nginx作为静态资源web服务_跨站访问
-    ```
-        Syntax: add_header name value [always];
-        Default: -
-        Context: http, server, location, if in location
-        
-        Access-Control-Allow-Origin
-    ```
-## Nginx作为静态资源web服务_跨域访问场景配置
-    ```
-        location ~ .*\.(htm|html)$ {
-            add_header Access-Control-Allow-Origin *;
-            add_header Access-Control-Allow-Methods GET,POST,PUT,DELETE,OPTIONS;
-            root /opt/app/code;
-        }
+            作用:添加Cache-Control、Expires头
+            Syntax: expires [modified] time;
+                    expires epoch | max | off;
+            Default: expires off
+            Context: http, server, location, if in location  
+        例子
+            location ~ .*\.(html|htm)$ {
+                expires 24h;
+                root   /usr/share/nginx/html/code;
+            }
 
-    ```
-## Nginx作为静态资源web服务_防盗链
-    ```
-        基于http_refer防盗链配置模块
-        Syntax: valid_referers none | blocked | server_names | string ...;
-        Default: -
-        Context: server,location
-    ```
+    跨站访问
+        处于安全考虑
+            容易出现CFRS攻击
+
+        配置语法
+            Syntax: add_header name value [always];
+            Default: -
+            Context: http, server, location, if in location
+            
+            Access-Control-Allow-Origin
+        例子
+            location ~ .*\.(html|htm)$ {
+                add_header Access-COntrol-Allow-Origin http://localhost:8082;
+                add_header Access-COntrol-Allow-Methods GET,POST,PUT,DELETE,OPTIONS;
+                root   /usr/share/nginx/html/code;
+            }
+        
+    防盗链
+        目的:防止资源被盗用
+        配置语法
+            基于http_refer防盗链配置模块
+                http_refer请求头
+            Syntax: valid_referers none | blocked | server_names | string ...;
+            Default: -
+            Context: server,location
+        例子
+
+    2.代理服务
+    3.负载均衡调度器SLB
+    4.动态缓存
+
+
 ## Nginx作为代理服务_代理服务
     ```
         可以用作HTTP,ICMP\POP\IMAP,HTTPS,RTMP代理
