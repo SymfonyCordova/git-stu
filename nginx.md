@@ -644,9 +644,9 @@
                 #注意这里要使用局域网IP或者公网IP，不能使用localhost或127.0.0.1
                 #在这里指定要负载均衡到哪几个服务器以及那些服务器的端口
                 upstream zler{
-                    server 116.62.103.8001;
-                    server 116.62.103.8002;
-                    server 116.62.103.8003;
+                    server 172.17.0.2:80;
+                    server 172.17.0.3:80;
+                    server 172.17.0.4:80;
                 }
             server {
                 listen       80;
@@ -675,134 +675,209 @@
                     root   /usr/share/nginx/html;
                 }
             }
-            start 3-21
-        
-    4.动态缓存               
-## Nginx作为负载均衡服务_server参数讲解
-    ```
-        upstream backend {
-            server backend1.example.com weight=5;
-            server backend2.example.com:8080;
-            server unix:/tmp/backend3;
-            
-            server backup1.example.com:8080 backup;
-            server backup2.example.com:8080 backup;
-        }
-        
-        down            当前的server暂时不参与负载均衡
-        backup          预留的备份服务器
-        max_fails       允许请求失败的次数
-        fail_timeout    经过max_fails失败后,服务暂停的时间
-        max_conns       限制最大的接收的连接数
-    ```
-## Nginx作为负载均衡服务_backup状态演示
-    ```
-        负载均衡服务器 
-            upstream imocc {
-                server 116.62.103.228:8001 down;
-                server 116.62.103.228:8002 backup;
-                server 116.62.103.228:8003 max_fails=1 fail_timeout=10s;
-            }
-            server {
-                listen 80;
-                server_name localhost zler.it.com;
-                access_log /var/log/nginx/test_proxy.access.log main;
-                resolver 8.8.8.8;
+
+        3.1 负载均衡 upstream server参数讲解 
+            upstream backend {
+                server backend1.example.com weight=5;
+                server backend2.example.com:8080;
+                server unix:/tmp/backend3;
                 
-                location / {
-                    proxy_pass http://imocc;
-                    include proxy_params;
-                }
-                
-                error_page 500 502 503 504 /50x.html;
-                location = /50x.html { 
-                    root /usr/share/nginx/html;
-                }
+                server backup1.example.com:8080 backup;
+                server backup2.example.com:8080 backup;
             }
-    ```
-## Nginx作为负载均衡服务_轮询策略与加权轮询
-    ```
-        调度算法
+            weight          权重 权重越大,访问到这台服务器的概率越大
+            down            当前的server暂时不参与负载均衡
+            backup          预留的备份服务器
+            max_fails       允许请求失败的次数
+            fail_timeout    经过max_fails失败后,服务暂停的时间
+            max_conns       限制最大的接收的连接数
+
+            例子
+                backup
+                    upstream zler{
+                        server 172.17.0.2:80 down;
+                        server 172.17.0.3:80 backup;
+                        server 172.17.0.4:80 max_fails=1 fail_timeout=10s;
+                    }
+                    upstream zler{
+                        server 172.17.0.2:80;
+                        server 172.17.0.3:80 weight=5;
+                        server 172.17.0.4:80;
+                    }
+
+        3.2 负载均衡 轮询策略与加权轮询
+            调度算法
             轮询              按时间顺序逐一分配到不同的后端服务器(默认)
             加权轮询           weight值越大,分配到的访问几率越高
             ip_hash          每个请求按访问IP的hash结果分配,这样来自同一个IP的 固定访问一个后端服务器
-            url_hash         按照访问的URL的hash结果来分配请求,使每个URL定向到同一个后端服务器
             least_conn       最少链接数,那个机器连接数少就分发
+            url_hash         按照访问的URL的hash结果来分配请求,使每个URL定向到同一个后端服务器
             hash关键数值       hash自定义的key
+
+            轮询和加权轮询都是根据访问次数来分配的 但是web项目是基于cookie时,这种策略会导致cookie获取不到,容易出现掉线、
+            ip_hash可以解决这个问题,但是前段如果经过几层代理,那么获取到的就不是真是的ip了
+            还有就是用户在多台服务器中都缓存数据,那么每次访问看到的结果是不一样的,这个也是有问题的
+            url_hash
+                Syntax: hash key [consistent];
+                Default: --
+                Context:upstream
+                This directive appeared in version 1.7.2.
+
+            例子
+                upstream zler {
+                    ip_hash;
+                    server 172.17.0.2:80;
+                    server 172.17.0.3:80;
+                    server 172.17.0.4:80;
+                }
+
+                upstream zler{
+                    # hash $request_uri; # $request_uri访问地址出去域名后面的url 比如 /user/name?name=1&age=2
+                    # 这里是hash $request_uri 来定位到一个服务器 第一次访问到一个服务器,接下来因为hash值是一样的每次都会定位到同一台服务器上
+                    server 172.17.0.2:80;
+                    server 172.17.0.3:80;
+                    server 172.17.0.4:80;
+                }#实际使用的时候,因为后面的url参数是很多的而且也不一样,这个时候我们自定义一个变量来hash制定到一台服务器
             
-        负载均衡服务器 加权轮询
-                    upstream imocc {
-                        server 116.62.103.228:8001;
-                        server 116.62.103.228:8002 weight=5;
-                        server 116.62.103.228:8003;
-                    }
-                    server {
-                        listen 80;
-                        server_name localhost zler.it.com;
-                        access_log /var/log/nginx/test_proxy.access.log main;
-                        resolver 8.8.8.8;
-                        
-                        location / {
-                            proxy_pass http://imocc;
-                            include proxy_params;
-                        }
-                        
-                        error_page 500 502 503 504 /50x.html;
-                        location = /50x.html { 
-                            root /usr/share/nginx/html;
-                        }
-                    }    
-    ```
-## Nginx作为负载均衡服务_负载均衡策略ip_hash方式
-    ```
-        upstream imocc {
-            ip_hash;
-            server 116.62.103.228:8001;
-            server 116.62.103.228:8002;
-            server 116.62.103.228:8003;
-        }
-        server {
-            listen 80;
-            server_name localhost zler.it.com;
-            access_log /var/log/nginx/test_proxy.access.log main;
-            resolver 8.8.8.8;
-                                
-            location / {
-                proxy_pass http://imocc;
-                include proxy_params;
-            }
-                                
-            error_page 500 502 503 504 /50x.html;
-            location = /50x.html { 
-                root /usr/share/nginx/html;
-            }
-        } 
-    ```
-## Nginx作为负载均衡服务_负载均衡策略url_hash策略
-    ```
-        Syntax: hash key [consistent];
-        Default: -
-        Context:upstream
-        This directive appeared in version 1.7.2
-        
-        
-    ```
-## Nginx作为缓存服务_Nginx作为缓存服务
-## Nginx作为缓存服务_缓存服务配置语法
-## Nginx作为缓存服务_场景配置演示
-## Nginx作为缓存服务_场景配置补充说明
-## Nginx作为缓存服务_分片请求
 
-# 第四章 深度学习篇
+    4.动态缓存
+        缓存类型
+            服务端缓存 比如缓存放在了redis上面
+            代理缓存 比如缓存放在了nginx上面
+            客户端缓存 比如缓存放在了浏览器上面
+        
+        nginx作为代理缓存
+            配置语法
+                Syntax: proxy_cache_path path [levels=levels]
+                    [use_temp_path=on|off] keys_zone=name:size[inactive=time]
+                    [max_size=size][manager_files=number][manager_sleep=time]
+                    [manager_threshold=time][loader_files=number]
+                    [loader_sleep=time][loader_threshold=time][purger=on|off]
+                    [purger_files=number][purger_sleep=time]
+                    [purger_threshold=time]
+                Default:-------
+                Context:http
 
-## Nginx动静分离_动静分离场景演示
-## Rewrite规则_rewrite规则作用
-## Rewrite规则_rewrite配置语法
-## Rewrite规则_rewrite正则表达式
-## Rewrite规则_rewrite规则中的flag
-## Rewrite规则_redirect和permanent区别
-## Rewrite规则_rewrite规则场景
-## Rewrite规则_rewrite规则书写
+            proxy_cache
+                Syntax: proxy_cache zone | off;
+                Default: proxy_cache off;
+                Context:http,server,location
+            
+            缓存过期周期
+                Syntax: proxy_cache_valid [code...] time;
+                Default: --;
+                Context:http,server,location
+            
+            缓存的纬度
+                Syntax: proxy_cache_key string;
+                Default: proxy_cache_key $scheme$proxy_host$request_uri;
+                Context:http,server,location
+        
+        例子
+            upstream zler{
+                server 172.17.0.2:80;
+                server 172.17.0.3:80;
+                server 172.17.0.4:80;
+            }
+            proxy_cache_path /usr/share/nginx/html/cache levels=1:2 keys_zone=zler_cache:10m max_size=10g inactive=60m use_temp_path=off;
+            server {
+                listen       80;
+                server_name  localhost;
+
+                location / {
+                    proxy_cache zler_cache;
+                    #proxy_cache off; #关闭缓存
+                    proxy_pass http://zler; #upstream定义的名称zler
+                    proxy_cache_valid 200 304 12h;
+                    proxy_cache_valid any 10m;
+                    proxy_cache_key $host$uri$is_args$args;
+                    add_header Nginx-Cache "$upstream_cache_status";
+                    proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+
+                    proxy_redirect default;  
+                    proxy_set_header Host $http_host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_connect_timeout 30;
+                    proxy_send_timeout 60;
+                    proxy_read_timeout 60;
+                    proxy_buffer_size 32k;
+                    proxy_buffering on;
+                    proxy_buffers 4 128k;
+                    proxy_busy_buffers_size 256k;
+                    proxy_max_temp_file_size 256k;
+                }
+                error_page   500 502 503 504  /50x.html;
+                location = /50x.html {
+                    root   /usr/share/nginx/html;
+                }
+            }
+
+        如何清理制定缓存?
+            方式1 rm -rf 缓存目录内容
+            方法2 第三方扩展模块ngx_cache_purge
+
+        如何让部分页面不缓存
+            Syntax: proxy_no_cache string...;
+            Default: --
+            Context:http, server, location;
+            例子:
+                upstream zler{
+                    server 172.17.0.2:80;
+                    server 172.17.0.3:80;
+                    server 172.17.0.4:80;
+                }
+                proxy_cache_path /usr/share/nginx/html/cache levels=1:2 keys_zone=zler_cache:10m max_size=10g inactive=60m use_temp_path=off;
+            server {
+                listen       80;
+                server_name  localhost;
+
+                if ($request_uri ~ ^/(url3|login|register|password\/reset)) {
+                    set $cookie_nocache 1; #制定这些路由时设置cookie_nocache 为1时 不缓存这些页面
+                }
+
+                location / {
+                    proxy_cache zler_cache;
+                    #proxy_cache off;
+                    proxy_pass http://zler; #upstream定义的名称zler
+                    proxy_cache_valid 200 304 12h;
+                    proxy_cache_valid any 10m;
+                    proxy_cache_key $host$uri$is_args$args;
+                    add_header Nginx-Cache "$upstream_cache_status";
+                    proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+                    proxy_no_cache $cookie_nocache $arg_nocache $arg_comment;
+                    proxy_no_cache $http_pragma $http_authorization;
+
+                    proxy_redirect default;  
+                    proxy_set_header Host $http_host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_connect_timeout 30;
+                    proxy_send_timeout 60;
+                    proxy_read_timeout 60;
+                    proxy_buffer_size 32k;
+                    proxy_buffering on;
+                    proxy_buffers 4 128k;
+                    proxy_busy_buffers_size 256k;
+                    proxy_max_temp_file_size 256k;
+                }
+                error_page   500 502 503 504  /50x.html;
+                location = /50x.html {
+                    root   /usr/share/nginx/html;
+                }
+            }
+        分片请求
+            大文件分片请求 分割小请求
+            优势:每个子请求受到的数据都会形成一个独立的文件,其他请求不受影响
+            缺点:当文件很大或slice很小的时候，肯能会导致文件描述符耗尽等情况存在
+            http_slice_module 
+
+## 动静分离
+    rewrite规则作用
+    rewrite配置语法
+    rewrite正则表达式
+    rewrite规则中的flag
+    redirect和permanent区别
+    rewrite规则场景
+    rewrite规则书写
 ## Nginx进阶高级模块_secure_link模块作用原理
 ## Nginx进阶高级模块_secure_link模块实现请求资源验证
 ## Nginx进阶高级模块_Geoip读取地域信息模块介绍
@@ -818,8 +893,6 @@
 ## Nginx与Lua的开发_Nginx调用Lua的指令及Nginx的Luaapi接口
 ## Nginx与Lua的开发_实战场景灰度发布
 ## Nginx与Lua的开发_实战场景灰度发布场景演示
-
-# 第五章 Nginx架构篇
 
 ## Nginx常见问题_架构篇介绍
 ## Nginx常见问题__多个server_name中虚拟主机读取的优先级
