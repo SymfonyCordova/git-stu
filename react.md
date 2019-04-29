@@ -807,6 +807,7 @@ Router4使用react-router-dom作为流浪器的路由
     this.props里面有三个属性
       history 这个是历史属性
         当需要js进行跳转页面是使用this.props.history.push('/')
+        如果想要返回上一页使用 this.props.history.goBack()
       location 包含当前页面信息的属性
         比如pathname "/qibinglian" 
       match 根路由的后面的参数有关 比如 是不是完全匹配 
@@ -1317,3 +1318,5 @@ Auth.js文件
     socket.io基于websocket双向通信协议,后端可以主动推送数据
     现代浏览器均支持websocket协议
 
+# emoji表情
+  https://emojipedia.org

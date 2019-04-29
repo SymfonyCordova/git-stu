@@ -225,7 +225,7 @@
         --volume /home/zler/桌面/docker/gitlab/config:/etc/gitlab \
         --volume /home/zler/桌面/docker/gitlab/logs:/var/log/gitlab \
         --volume /home/zler/桌面/docker/gitlab/data:/var/opt/gitlab \
-        gitlab/gitlab-ce
+        -d gitlab/gitlab-ce
       
 ## docker 安装nginx
     sudo docker pull nginx
@@ -233,6 +233,19 @@
     -v /home/zler/桌面/docker/nginx-name-three/conf.d/:/etc/nginx/conf.d \
     -v /home/zler/桌面/docker/nginx-name-three/log/:/var/log/nginx/ \
     -v /home/zler/桌面/docker/nginx-name-three/html:/usr/share/nginx/html/  \
+    -d nginx
+
+    其实也比暴露所有容器的端口 只需要代理nginx 80和443暴露出去就好了
+    sudo docker run --name nginx-one \
+    -v /home/zler/桌面/docker/nginx-one/conf.d/:/etc/nginx/conf.d \
+    -v /home/zler/桌面/docker/nginx-one/log/:/var/log/nginx/ \
+    -v /home/zler/桌面/docker/nginx-one/html:/usr/share/nginx/html/  \
+    -d nginx
+
+    sudo docker run -p 80:80 --name nginx-proxy \
+    -v /home/zler/桌面/docker/nginx-proxy/conf.d/:/etc/nginx/conf.d \
+    -v /home/zler/桌面/docker/nginx-proxy/log/:/var/log/nginx/ \
+    -v /home/zler/桌面/docker/nginx-proxy/html:/usr/share/nginx/html/  \
     -d nginx
     
     需要在conf.d配置虚拟主机比如默认的虚拟主机
@@ -281,6 +294,9 @@
             #    deny  all;
             #}
         }
+
+## docker 安装tomcat
+    sudo docker run  --name tomcat-one  -v /home/zler/桌面/docker/tomcat-one/webapps/:/usr/local/tomcat/webapps -d tomcat
 
 ## docker link nginx和各个容器进行连接
     sudo docker run -p 80:80 --name nginx-name-proxy \ 

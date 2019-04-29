@@ -871,13 +871,100 @@
             http_slice_module 
 
 ## 动静分离
-    rewrite规则作用
-    rewrite配置语法
-    rewrite正则表达式
-    rewrite规则中的flag
-    redirect和permanent区别
+    通过中间件将动态请求和静态请求分离
+    为什么?
+        分离资源,减少不必要的请求消耗,减少请求延迟
+        我们的请求有可能经过 中间件 程序框架(ssh,ssm,symfony) 程序逻辑(dao, service) 数据资源(redis,mysql)
+        如果每个请求都是经过这样的一个过程是非常消耗资源的 应该静态请求不走这个流程,而动态资源走这个流程
+        即使动态资源死掉了,那么也不会影响到静态资源的请求
+    
+    例子
+            upstream zler{
+                server 172.17.0.2:8080;
+            }
+        server {
+            listen       80;
+            server_name  localhost;
+            root /usr/share/nginx/html;
+
+            location / {
+                index index.html index.htm;
+            }
+
+            location ~ \.jsp$ {
+                proxy_pass http://zler;
+                index index.html index.htm;
+            }
+
+            location ~ \.(jpg|png|gif)$ {
+                expires 1h;
+                gzip on;
+            }
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   /usr/share/nginx/html;
+            }
+    }
+
+##rewrite
+    规则作用:
+        实现url重写以及重定向
+    场景:
+        1.url访问跳转,支持开放设计
+            页面跳转,兼容性支持,展示效果等.
+        2.seo优化
+        3.维护
+            后段维护,流量转发
+        4.安全
+    配置语法:
+        Syntax: rewrite regex replacement [flag];
+        Default: --
+        Context:server, location, if
+
+        rewrite ^(.*)$/pages/maintain.html break;
+
+        正则表达式regex:
+            . 匹配换行符以外的任意字符
+            ? 重复0次和1次
+            + 重复1次和多次
+            * 有多少就匹配多少
+            \d 匹配数字
+
+            ^ 匹配字符串的开始
+            $ 匹配字符串的结尾
+            {n} 重复n次
+            {n,} 重复n次或更多次
+            [c] 匹配单个字符c
+            [a-z]匹配a-z小写字母的任意一个
+
+            \ 转义字符
+                rewrite index\.php$/pages/maintain.html break;
+            () 用于匹配括号之间的内容,通过$1,$2调用
+                if ($http_user_agent ~ MSIE) {
+                    rewrite ^(.*)$ /msie/$1 break;
+                }
+            linux终端测试
+                pcretest
+
+        flag
+            标记nginx rewrite的类型
+            类型有:
+                last 停止rewrite检测
+                break 停止rewrite检测
+                redirect 返回302临时重定向,地址栏显示跳转后的地址
+                permanent 返回301永久重定向,地址栏显示跳转后的地址
+            
+            last和break的区别
+                last匹配到后会继续下去匹配location
+                break匹配当前的,不会继续匹配
+            redirect和permanent区别
+
+            4-8 start
     rewrite规则场景
     rewrite规则书写
+
+
+
 ## Nginx进阶高级模块_secure_link模块作用原理
 ## Nginx进阶高级模块_secure_link模块实现请求资源验证
 ## Nginx进阶高级模块_Geoip读取地域信息模块介绍
