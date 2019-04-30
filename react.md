@@ -6,7 +6,7 @@
   create-react-app test1
 启动项目
   cd test1
-  npm run start
+  npm run start 
 安装第三方库
   npm install redux --save 
 弹出配置文件,可以自定义配置webpack  

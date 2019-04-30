@@ -306,3 +306,9 @@
     -v /home/zler/桌面/docker/nginx-name-proxy/log/:/var/log/nginx/ \
     -v /home/zler/桌面/docker/nginx-name-proxy/html:/usr/share/nginx/html/  \
     -d nginx
+
+## docker 安装 mysql
+    sudo docker run --name mysql56 -d \
+    -v /home/zler/桌面/docker/mysql/conf:/etc/mysql/conf.d \
+    -v /home/zler/桌面/docker/mysql/data:/var/lib/mysql \
+    -e MYSQL_ROOT_PASSWORD=root mysql:5.6
