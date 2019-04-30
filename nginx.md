@@ -955,25 +955,126 @@
                 permanent 返回301永久重定向,地址栏显示跳转后的地址
             
             last和break的区别
-                last匹配到后会继续下去匹配location
+                last匹配到后会继续下去匹配location 相当于继续发送了请求
                 break匹配当前的,不会继续匹配
+                例子    
+                    server {
+                        listen       80;
+                        server_name  localhost;
+                        
+                        root /usr/share/nginx/html;
+                        location ~ ^/break {
+                            rewrite ^/break /test/ break;
+                        }
+
+                        location ~ ^/last {
+                            rewrite ^/last /test/ last;
+                        }
+
+                        location ~ ^/test/ {
+                        default_type application/json;
+                        return 200 '{"status":"success"}'; 
+                        }
+                    }
             redirect和permanent区别
+                permanent永久重定向会浏览器会保存之前的访问访问地址,不会向服务器发送请求
+                redirect临时重定向还是会向服务器发送请求
+                例子
+                    server {
+                        listen       80;
+                        server_name  localhost;
+                        
+                        root /usr/share/nginx/html;
+                        location ~ ^/break {
+                            rewrite ^/break /test/ break;
+                        }
 
-            4-8 start
-    rewrite规则场景
-    rewrite规则书写
+                        location ~ ^/last {
+                            #rewrite ^/last /test/ last;
+                            rewrite ^/last /test/ redirect;
+                        }
+
+                        location ~ ^/zler {
+                            # rewrite ^/zler http://localhost/ permanent;
+                            # rewrite ^/zler http://localhost/ redirect;
+                        }
+
+                        location ~ ^/test/ {
+                        default_type application/json;
+                        return 200 '{"status":"success"}'; 
+                        }
+                    }
+    场景
+        打开一个url真正的访问是修改过的url 隐蔽了实际的路由
+        server {
+            listen       80;
+            server_name  localhost;
+            
+            root /usr/share/nginx/html;
+            location / {
+                rewrite ^/course-(\d+)-(\d+)-(\d+)\.html$ /course/$1/$2/course_$3.html break;
+
+                if ($http_user_agent ~* Chrome) { #如果是Chrome浏览器 其实我们在业务当中也可以根据不同浏览器来作出不同的行为
+                    rewrite ^/nginx http://coding.zler.com/class/code.html redirect;
+                }
+
+                if (!-f $request_filename) { 
+                    rewrite ^/(.*)$ http://www.baidu.com/$1 redirect;
+                }
+
+                index index.html index.htm;
+            }
+        }
 
 
+    规则书写
+        rewrite规则优先级
+            执行server块的rewrite指令 > 执行location匹配 > 执行选定的location的rewrite
+        要写出优雅的规则来
 
-## Nginx进阶高级模块_secure_link模块作用原理
-## Nginx进阶高级模块_secure_link模块实现请求资源验证
-## Nginx进阶高级模块_Geoip读取地域信息模块介绍
-## Nginx进阶高级模块_Geoip读取地域信息场景展示
-## 基于Nginx的HTTPS服务_HTTPS原理和作用
-## 基于Nginx的HTTPS服务_证书签名生成CA证书
-## 基于Nginx的HTTPS服务_证书签名生成和Nginx的HTTPS服务场景演示
-## 基于Nginx的HTTPS服务_实战场景配置苹果要求的openssl后台HTTPS服务
-## 基于Nginx的HTTPS服务_HTTPS服务优化
+## Nginx高级模块
+    secure_link安全连接模块
+        作用:
+            1.制定并允许检查请求的连接的真实性以及保护资源免遭未经授权的访问
+            2.限制链接生效周期
+        配置语法:
+            Syntax: secure_link expression;
+            Default: --
+            Context: http,server,location
+
+            Syntax: secure_link_md5 expression;
+            Default: --
+            Context: http,server,location
+        
+        例子；实现请求资源验证
+            server {
+                listen       80;
+                server_name  localhost;
+                
+                root /usr/share/nginx/html;
+                location / {
+                    secure_link $arg_md5,$arg_expires;
+                    secure_link_md5 "$secure_link_expires$uri zler";
+
+                    if ($secure_link = "") {
+                        return 403;
+                    }
+
+                    if ($secure_link = "0") {
+                        return 410;
+                    }
+                }
+            }
+        start 4-14
+    Geoip读取地域信息模块介绍
+    Geoip读取地域信息场景展示
+
+## 基于Nginx的HTTPS服务
+    HTTPS原理和作用
+    证书签名生成CA证书
+    证书签名生成和Nginx的HTTPS服务场景演示
+    实战场景配置苹果要求的openssl后台HTTPS服务
+    HTTPS服务优化
 ## Nginx与Lua的开发_Nginx与Lua特性与优势
 ## Nginx与Lua的开发_Lua基础开发语法
 ## Nginx与Lua的开发_Nginx与Lua的开发环境
