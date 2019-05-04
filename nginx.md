@@ -1065,24 +1065,187 @@
                     }
                 }
             }
-        start 4-14
-    Geoip读取地域信息模块介绍
-    Geoip读取地域信息场景展示
 
+    Geoip读取地域信息
+        作用:基于IP地址匹配MaxMind GeoIP二进制文件,读取IP所在地域信息
+        安装:yum install nginx-module-geoip
+        场景
+            区别国内外作HTTP访问规则
+            区别国内城市地域作HTTP访问规则
+        例子
+            需要下载地域文件 写一个脚本
+            #!/bin/sh
+            wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCountryGeoIP.dat.gz
+            wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+            下载后 解压
+            
+            nginx.conf文件添加扩展
+                load_module "modules/ngx_http_geoip_module.so";
+                load_module "modules/ngx_stream_geoip_module.so";
+                user nginx;
+                worker_processes 1;
+                error_log /var/log/nginx/error.log warn;
+                pid /var/run/nginx.pid;
+                events {
+                    worker_connection 1024;
+                }
+
+                http {
+                    include /etc/nginx/mime.types;
+                    default_type application/octet-stream;
+                    log_format main '$remote_addr - $remote_user [$time_local] "$request"'
+                                    '$status $body_bytes_sent "$http_referer" '
+                                    '"$http_user_agent" "$http_x_forwarded_for"';
+                    access_log /var/log/nginx/access.log main;
+                }
+            
+            test_geo.conf添加下载和解压后的文件
+                geoip_country /etc/nginx/geoip/GeoIP.dat;
+                geoip_city /etc/nginx/geoip/GeoLiteCity.dat;
+                server{
+                    listen 80;
+                    server_name localhost;
+                    location / {
+                        if ($geoip_country_code != CN) {
+                            return 403;
+                        }
+                        root /usr/share/nginx/html;
+                        index index.html index.htm;
+                    }
+                    location /myip {
+                        default_type text/plain;
+                        return 200 "$remote_addr" $geoip_country_name $geoip_country_code $geoip_city";
+                    }
+                }
+            
 ## 基于Nginx的HTTPS服务
     HTTPS原理和作用
+        HTTP不安全
+            1.传输数据被中间人盗用,信息泄漏
+            2.数据内容劫持，篡改
+        HTTPS加密
+            先进行一次非对称加密 服务器将公钥发送给客户端,服务器保留私匙
+            利用对称加密传输数据
+            服务器发送CA证书保证中间人无法劫持
     证书签名生成CA证书
-    证书签名生成和Nginx的HTTPS服务场景演示
-    实战场景配置苹果要求的openssl后台HTTPS服务
-    HTTPS服务优化
-## Nginx与Lua的开发_Nginx与Lua特性与优势
-## Nginx与Lua的开发_Lua基础开发语法
-## Nginx与Lua的开发_Nginx与Lua的开发环境
-## Nginx与Lua的开发_Nginx调用Lua的指令及Nginx的Luaapi接口
-## Nginx与Lua的开发_实战场景灰度发布
-## Nginx与Lua的开发_实战场景灰度发布场景演示
+        先要确认系统有没有安装Openssl
+            在自己的操作系统上执行openssl
+        确认nginx是否安装了http_ssl_moudule
+            在自己的操作系统上执行nginx -V
 
-## Nginx常见问题_架构篇介绍
+        步骤1:生成key密钥
+            mkdir ssl_key
+            openssl genrsa -idea -out zler.key 1024
+            >Enter pass phrase for zler.key:1234
+            ls
+            zler.key
+        步骤2:生成证书签名请求文件(csr文件)
+            openssl req -new -key zler.key -out zler.csr
+            >Enter pass phrase for zler.key:1234
+            >Country Name [XXX]:CN
+            >State or Province Name []:zhejiang
+            >Locality Name (eg, city) [Default City]:hangzhou
+            >Organization Name (eg, company) [Default Company Ltd]:CN
+            >Organization Unit name [Default Company Ltd]:zkyj
+            >Company name (eg, your name or your servers hostname):zler.com
+            >Email Address []:c18755680552@gmail.com
+            >A Challlenge password: 123456 //修改证书的密码
+            >An optional company name []: zkyj
+            ls
+            zler.csr zler.key
+        步骤3:生成证书签名文件(CA文件)
+            对公司而言 将生成的文件交给第三方签名机构对应的签名请求
+            对个人而言 自己生存一个自签名的证书
+                openssl x509 -req -days 3650 -in zler.csr -signkey zler.key -out zler.crt
+    配置语法
+        Syntax: ssl on | off;
+        Default: ssl off;
+        Context:http.server
+
+        Syntax: ssl_certificate file;
+        Default: --;
+        Context:http.server
+
+        Syntax: ssl_certificate_key file;
+        Default: --;
+        Context:http.server
+        
+    例子:
+        server {
+            listen       443 ssl;
+            server_name  localhost;
+            
+            ssl_certificate /usr/share/nginx/html/ssl_key/zler.crt;
+            ssl_certificate_key /usr/share/nginx/html/ssl_key/zler.key;
+            #ssl_certificate /usr/share/nginx/html/ssl_key/zler.crt;
+            
+            location / {
+                index index.html index.htm;
+                root /usr/share/nginx/html;
+            }
+        }
+    实战场景配置苹果要求的openssl后台HTTPS服务
+        a.服务器所有的连接使用TLS1.2版本以上版本(openssl 1.0.2)
+        b.HTTPS证书必须使用SHA256以上哈希算法签名
+        c.HTTPS证书必须使用RSA 2048位或ECC 256位以上公钥算法
+        d.使用前向加密技术
+
+        步骤一样只需要重新生存crt文件
+        openssl req -days 36500 -x509 -sha256 -nodes -newkey rsa:2048 -keyout zler.key -out zler_apple.crt
+
+        如果希望重新拷贝生存key,以下命令
+        openssl rsa -in ./zler.key -out ./zler_apper.key 设置完成后就不需要输入保护吗了
+        
+        server {
+            listen       443 ssl;
+            server_name  localhost;
+            
+            #ssl_certificate /usr/share/nginx/html/ssl_key/zler.crt;
+            ssl_certificate /usr/share/nginx/html/ssl_key/zler_apple.crt;
+            ssl_certificate_key /usr/share/nginx/html/ssl_key/zler.key;
+            #ssl_certificate /usr/share/nginx/html/ssl_key/zler.crt;
+            
+            location / {
+                index index.html index.htm;
+                root /usr/share/nginx/html;
+            }
+        }
+
+    HTTPS服务优化
+        方法一: 激活keepalive长连接
+        方法二: 设置ssl session缓存
+
+        例子
+            server {
+                listen       443 ssl;
+                server_name  localhost;
+
+                keepalive_timeout 100;
+
+                ssl_session_cache shared:SSL:10m;
+                ssl_session_timeout 10m;
+                
+                #ssl_certificate /usr/share/nginx/html/ssl_key/zler.crt;
+                ssl_certificate /usr/share/nginx/html/ssl_key/zler_apple.crt;
+                ssl_certificate_key /usr/share/nginx/html/ssl_key/zler.key;
+                #ssl_certificate /usr/share/nginx/html/ssl_key/zler.crt;
+                
+                location / {
+                    index index.html index.htm;
+                    root /usr/share/nginx/html;
+                }
+            }
+            
+            start-4-25
+## Nginx与Lua的开发
+    Nginx与Lua特性与优势
+    Lua基础开发语法
+    Nginx与Lua的开发环境
+    Nginx调用Lua的指令及Nginx的Luaapi接口
+    实战场景灰度发布
+    实战场景灰度发布场景演示
+
+
 ## Nginx常见问题__多个server_name中虚拟主机读取的优先级
 ## Nginx常见问题_多个location匹配的优先级
 ## Nginx常见问题_try_files使用

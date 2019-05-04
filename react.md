@@ -159,6 +159,10 @@
      [...new Set(arr)]
      //数组找出第一个符合条件的数组成员
      [1,4,-5,10].find(n=>n<0) //-5
+     //排序
+     [3,4,5,6,10,23].sort((a,b)=>{
+        return a-b
+      })
      
      //获取对象里数据的数量
      Object.keys({name:'react', age；1}).length
@@ -1320,3 +1324,17 @@ Auth.js文件
 
 # emoji表情
   https://emojipedia.org
+
+# react进阶
+  jquery
+    $('#test').find('img') //性能好一些的
+    $('#test img')
+  react原理
+    虚拟Dom
+      比较前后节点,只需要改变变化的节点
+    生命周期
+      shouldCompoentUpdate(nextProps, nextState)
+      如果返回true,才渲染,返回false不会渲染,这是很重要的一个特性
+    setState
+  redux原理
+  react+redux常见的性能优化

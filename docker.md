@@ -242,7 +242,8 @@
     -v /home/zler/桌面/docker/nginx-one/html:/usr/share/nginx/html/  \
     -d nginx
 
-    sudo docker run -p 80:80 --name nginx-proxy \
+    作为代理服务器最好需要把443也暴露出去
+    sudo docker run -p 80:80 -p 443:443 --name nginx-proxy \
     -v /home/zler/桌面/docker/nginx-proxy/conf.d/:/etc/nginx/conf.d \
     -v /home/zler/桌面/docker/nginx-proxy/log/:/var/log/nginx/ \
     -v /home/zler/桌面/docker/nginx-proxy/html:/usr/share/nginx/html/  \
