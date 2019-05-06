@@ -1236,34 +1236,209 @@
                 }
             }
             
-            start-4-25
 ## Nginx与Lua的开发
-    Nginx与Lua特性与优势
+    Lua
+        是一个简洁,轻量,可扩展的脚本语言
+    nginx+Lua优势
+        充分的结合Nginx的并发处理epoll优势和Lua的轻量实现简单的功能且高并发的场景
     Lua基础开发语法
+        1.安装
+            yum install lua
+        2.运行lua
     Nginx与Lua的开发环境
-    Nginx调用Lua的指令及Nginx的Luaapi接口
-    实战场景灰度发布
-    实战场景灰度发布场景演示
+        1.LuaJIT
+        2.ngx_devel_kit和lua-nginx-module
+        3.重新编译nginx
+    Nginx调用Lua的指令
+        作用:nginx调用lua的变量
+        nginx的可插拔模块化加载执行,共11个处理阶段
+            set_by_lua
+            set_by_lua_file 设置nginx变量,可以实现复杂的赋值逻辑
+            access_by_lua
+            access_by_lua_file 请求访问阶段处理,用于访问控制
+            content_by_lua
+            content_by_lua_file 内容处理器,请求处理并输出响应
+    Nginx的Luaapi接口
+        作用:lua调用nginx的变量
+        ngx.var nginx的变量
+        ngx.req.get_headers 获取请求头
+        ngx.req.get_uri_args 获取url请求参数
+        ngx.redirect 重定向
+        ngx.print 输出响应内容体
+        ngx.say 通ngx.print，但是会最后输出一个换行符
+        ngx.header 输出响应头
+        ......
 
+    实战场景
+        灰度发布:按照一定的关系区别,分部分的代码进行上线,使代码的发布能平滑过渡上线
+        1.用户的信息cookie等信息区别
+        2.根据用户的ip地址
+        server {
+            listen 80;
+            server_name localhost;
+            access_log /var/log/nginx/log/host.access.log main;
 
-## Nginx常见问题__多个server_name中虚拟主机读取的优先级
-## Nginx常见问题_多个location匹配的优先级
-## Nginx常见问题_try_files使用
-## Nginx常见问题_alias和root的使用区别
-## Nginx常见问题_如何获取用户真实的ip信息
-## Nginx常见问题_Nginx中常见错误码
-## Nginx的性能优化_内容介绍及性能优化考虑
-## Nginx的性能优化_ab压测工具
-## Nginx的性能优化_系统与Nginx性能优化
-## Nginx的性能优化_文件句柄设置
-## Nginx的性能优化_CPU亲和配置
-## Nginx的性能优化_Nginx通用配置优化
-## Nginx安全_基于Nginx的安全章节内容介绍
-## Nginx安全_恶意行为控制手段
-## Nginx安全_攻击手段之暴力破解
-## Nginx安全_文件上传漏洞
-## Nginx安全_SQL注入
-## Nginx安全_SQL注入场景说明
+            location /hello {
+                default_type 'text/plain';
+                content_by_lua 'ngx.say("hello, lua")';
+            }
+
+            location /myip {
+                default_type 'text/plain';
+                content_by_lua 'ngx.req.get_headers()["x_forwared_for"]
+                ngx.say("IP",clientIP)
+                ';
+            }
+
+            localhost / {
+                default_type "text/html";
+                content_by_lua_file /usr/share/nginx/html/lua/dep.lua;
+            }
+
+            location @server {
+                proxy_pass http://127.0.0.1:9000;
+            }
+
+            location @server_test {
+                proxy_pass http://127.0.0.1:8000;
+            }
+
+            error_page 500 502 503 504 404 /50x.html;
+            location = /50x.html {
+                /usr/share/nginx/html;
+            }
+        }
+        
+## Nginx常见问题
+    1.多个server_name中虚拟主机读取的优先级
+        server {
+            listen 80;
+            server_name testserver1 www.zler.com
+            location {
+                ...
+            }
+        }
+
+        server {
+            listen 80;
+            server_name testserver2 www.zler.com
+            location {
+                ...
+            }
+        }
+        优先读取最先读取的配置
+
+    2.多个location匹配的优先级
+        =       进行普通字符精确匹配,也就是完全匹配  
+        ^~      表示普通字符匹配,使用前缀匹配        
+        ~ \~*    表示执行一个正则匹配() 正则匹配优先级最底 ～*区分大小写         
+        
+        = 高于 ^ 高于 ~
+        例子
+            server {
+                listen       443 ssl;
+                server_name  localhost;
+
+                keepalive_timeout 100;
+
+                ssl_session_cache shared:SSL:10m;
+                ssl_session_timeout 10m;
+                
+                #ssl_certificate /usr/share/nginx/html/ssl_key/zler.crt;
+                ssl_certificate /usr/share/nginx/html/ssl_key/zler_apple.crt;
+                ssl_certificate_key /usr/share/nginx/html/ssl_key/zler.key;
+                #ssl_certificate /usr/share/nginx/html/ssl_key/zler.crt;
+
+                root /usr/share/nginx/html;
+
+                location / {
+                    index index.html index.htm;
+                }
+
+                location = /code1/ {
+                    rewrite ^(.*)$ /code1/index.html break;
+                }
+
+                location ~ /code.* {
+                    rewrite ^(.*)$ /code3/index.html break;
+                }
+
+                location ^~ /code {
+                    rewrite ^(.*)$ /code2/index.html break;
+                }
+
+                error_page 500 502 503 504 404 /50x.html;
+                location = /50x.html {
+                }
+            }
+
+    3.try_files使用
+        按顺序检查文件是否存在
+        实际使用是缓存,比如访问到一个资源,nginx先到静态资源找一下,如果发现没有,再转发到动态服务上
+        例子
+            server {
+                listen       443 ssl;
+                server_name  localhost;
+
+                keepalive_timeout 100;
+
+                ssl_session_cache shared:SSL:10m;
+                ssl_session_timeout 10m;
+                ssl_certificate /usr/share/nginx/html/ssl_key/zler_apple.crt;
+                ssl_certificate_key /usr/share/nginx/html/ssl_key/zler.key;
+
+                root /usr/share/nginx/html;
+
+                location / {
+                    try_files $uri @java_page;
+                }
+
+                location @java_page {
+                    proxy_pass http://172.17.0.3:8080;
+                }
+
+                error_page 500 502 503 504 404 /50x.html;
+                location = /50x.html {
+                }
+            }
+
+    4.alias和root的使用区别
+        root 是将root本地的路径+location匹配的路径
+        alias 是直接到alias指定的路径下面寻找
+
+    5.如何获取用户真实的ip信息
+        http_x_forwarded_for 这个是头信息是能被程序员手动修改的,所以不靠谱
+        最可靠的方式是在第一级代理上加入 set x_real_ip=$remote_addr 我们约定一个头
+
+    6.Nginx中常见错误码
+        413 Request Entity Too Large
+            用户上传文件限制 client_max_body_size
+        502 bad gateway
+            后段服务无响应
+        504 Gateway Time-out
+            后段服务执行超时 默认60s
+
+## Nginx的性能优化
+    内容介绍及性能优化考虑
+        1.当前系统结构瓶颈
+            观察指标、压力测试
+        2.了解业务模式
+            接口业务类型,系统层次化结构
+        3.性能与安全
+            start 5-10
+    ab压测工具
+    系统与Nginx性能优化
+    文件句柄设置
+    CPU亲和配置
+    Nginx通用配置优化
+
+## Nginx安全
+    基于Nginx的安全章节内容介绍
+    恶意行为控制手段
+    攻击手段之暴力破解
+    文件上传漏洞
+    SQL注入
+    SQL注入场景说明
 ## Nginx安全_场景准备mariadb和lnmp环境
 ## Nginx安全_模拟SQL注入场景
 ## Nginx安全_Nginx+LUA防火墙功能

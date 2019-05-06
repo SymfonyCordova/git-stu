@@ -1337,4 +1337,267 @@ Auth.js文件
       如果返回true,才渲染,返回false不会渲染,这是很重要的一个特性
     setState
   redux原理
-  react+redux常见的性能优化
+    手写redux
+      export function createStore(reducer, enhancer){
+        if(enhancer){
+          return enhancer(createStore)(reducer)
+        }
+        let currentState = {}
+        let currentListeners = []
+
+        function getState(){
+          return currentState
+        }
+        function subscribe(listener){
+          currentListeners.push(listener)
+        }
+        function dispatch(action){
+          currentState = reducer(currentState, )
+        }
+        dispatch({type:'@ZLER/ZLER-REDUX'})
+        return { getState, subscribe, dispatch }
+      }
+
+      function bindActionCreator(creator, dispatch){
+        return (...args) => dispatch(creator(...args))
+      }
+
+      //{addGun removeGun addGunAsync}
+      export function bindActionCreators(creators, dispatch){
+        let bound = {}
+        Object.keys(creators).forEach(v=>{
+          let cretor = creators[v]
+          bound[v] = bindActionCreator(creator, dispatch)
+        })
+        return bound
+
+        //简写形式return Object.keys(creators).reduce((ret,item)=>{
+          ret[item] = bindActionCreator(creators[item], dispatch)
+          return ret
+        },{})
+      }
+
+      //加入中间件的函数
+      export function applyMiddleware(...middlewares){
+        return createStore=>(...args)=>{
+          const store = createStore(...args)
+          let dispatch = store.dispatch
+
+          const midApi = {
+            getState:store.getState,
+            dispatch:(...args)=>dispatch(...args)
+          }
+          const middlewareChain = middlewares.map(middleware=>middleware(midApi))
+          dispatch = compose(...middlewareChain)(store.dispacth)
+          //dispatch = middleware(midApi)(store.dispatch)
+          //middleware(midApi)(store.dispatch)(action)
+          return {
+            ...store,
+            dispatch
+          }
+        }
+      }
+
+      export function compose(...funcs){
+        if(funcs.length===0){
+          return arg=>arg
+        }
+        if(funcs.length===1){
+          return funcs[0]
+        }
+        return funcs.reduce((ret,item)=>(...args)=>ret(item(...args))) //fn1(fn2(fn3))
+      }
+    使用全局的context属性传递
+      使用this.props一级一级的往向传,很不好
+      context是全局的,组件里声明,所有子元素都可以直接获取
+      使用context属性是必须要校验的
+        安装npm install prop-types --save
+      
+      class Fu extends React.Component{
+        static childContextTypes = {
+          user:PropTypes.string
+        }
+        constructor(props){
+          super(props)
+          this.state = {user:'蜗牛'}
+        }
+        getChildContext(){ //让所有子组件都能使用context
+          return this.state
+        }
+        render(){
+          return (
+            <div>
+              <p>我是{this.state.user}</p>
+              <Zi></Zi>
+            </div>
+          )
+        }
+      }
+
+      class Zi extends React.Conmponent{
+        static contextTypes = {
+          user:PropTypes.string
+        }
+        render(){
+          return (
+            <div>
+              我的名字叫{this.context.user}
+            </div>
+          )
+        }
+      }
+        
+    手写react-redux
+      //connect负责链接组件,给到redux里面的数据放到组件的属性里面
+      //1.负责接受一个组件,把state里的一些数据放进去,返回一个组件
+      //2.数据变化的时候,能够通知组件
+      export function connect(mapStateToProps, mapDispatchToProps){
+        return function(WrapComponent){
+          return class ConnectComponent extends React.Component{
+
+          }
+        }
+      }
+      //两层箭头写法
+      export const connect = (mapStateToProps=state=>state, mapDispatchToProps={})=>(WrapComponent)=>{
+        return class ConnectComponent extends React.Component{
+            static contextTypes = {
+              store:PropTypes.object
+            }
+            constructor(props, context){
+              super(props, context)
+              this.state = {
+                props:{}
+              }
+            }
+            componentDidMount(){
+              const {store} = this.context
+              store.subscribe(()=>this.update())
+              this.update()
+            }
+            update(){
+              //获取mapStateToProps和mapDispatchToProps 放入this.props里
+              const {store} = this.context
+              const stateProps = mapStateToProps(store.getState())
+              const dispatchProps = bindActionCreators(mapDispatchToProps, store.dispatch)
+              this.setState({
+                props:{
+                  ...this.state.props,
+                  ...stateProps,
+                  ...dispatchProps
+                }
+              })
+            }
+            render(){
+              return <WrapComponent {...this.state.props} />
+            }
+        }
+      }
+
+      //Provider,把store放到context里,所有的子元素可以直接取到store
+      export Provider extends React.Component{
+        static childContextTypes = {
+          store: PropTypes.object
+        }
+        constructor(props, context){
+          super(props, context)
+          this.store = props.store
+        }
+        getChildContext(){ //让所有子组件都能使用context
+          return {store:this.store}
+        }
+        render(){
+          return this.props.children //获取当前组件的子组件
+        }
+      }
+      
+    手写一个thunk中间件
+      const thunk = ({dispatch,getState})=>next=>action=>{
+        if(typeof action === 'function'){//如果是函数,执行一下,参数是dispatch， getState
+          return action(dispatch, getState)
+        }
+        //默认是对象
+        return next(action)
+      }
+      export default thunk
+
+      手写一个arrayThunk中间件
+        const arrayThunk = ({dispatch,getState})=>next=>action=>{
+          if(Array.isArray(action)){
+            return action.forEach(v=>dispatch(v))
+          }
+          //默认是对象
+          return next(action)
+        }
+        export default arrayThunk
+
+  自己写的迷你版本的总结
+    redux: createStore bindActionCreators applyMiddleware compose
+    react-redux: Provider connect
+    react-thunk: thunk arrayThunk
+
+# 代码优化和进阶
+  react组件性能优化
+    单个组件属性传递优化
+      1.不要在组件上面加入对象，因为每一次都会生成新的对象传递，最好放在构造方法里面的this或者this.state,this.state不要展开到组件上
+      2.函数绑定要写在构造方法里面,或者使用箭头函数,构造函数只会执行一次
+    多组件优化
+      react性能检测 localhost:3000/?react_perf
+      父组件更新时每次都会触发render函数,而子组件由于写在了render里面,导致不必要的子组件也执行了一片，非常的不好
+      可以在react的生命周期函数shouleComponentUpdate将需要更新的进行更新,那些不需要更新的就不要更新
+      shouleComponentUpdate(nextProps, nextState){
+        for(let key in nextProps){ //循环的对比
+          if(this.props.title === nextProps.title){
+            return false
+          }
+        }
+        if(this.props.title === nextProps.title){
+          return false
+        }
+        return true
+      }
+      //手写不合适,使用PureComponent(纯净的组件)
+      class Demo extends PureComponent{
+
+      }
+      递归对比和循环对比都是很消耗资源的,react建议只做浅对比和浅拷贝，无论怎么使用比较都是不好的
+      immutable-js存在的意义和使用
+        不可变的数据结构
+        npm install immutable --save
+        用hash值进行比较
+        class Demo extends PureComponent{
+          constructor(props){
+            this.state = Map({
+              num:1
+            })
+          }
+          setNum(){
+            this.setState(this.state.set("num",this.state.get('num')+1))
+          }
+          shouleComponentUpdate(nextProps, nextState){
+            if(is(nextProps, this.props)){
+              return false
+            }
+            return true
+          }
+          render(
+            return (
+              <div>{this.state.get('num')}</div>
+            )
+          )
+        }
+        优点:
+          1.减少内存使用 
+          2.并发安全 
+          3.降低项目复杂度 
+          4.便于比较复杂数据,定制shouleComponentUpdate方便
+          5.时间旅行功能方便
+          6.函数式编成
+        缺点:
+          1.学习成本
+          2.库的大小 seamless-immutable.js
+          3.对现有的项目入侵太严重
+            新项目使用,老项目不使用
+    key
+  redux性能优化
+  react同构
