@@ -1194,18 +1194,18 @@ Auth.js文件
 ```
 
 ## 开发模式
-  基于cookie用户验证
-    express依赖cookie-parser，需要 npm install cookie-parser --save 安装
-    body-parser插件来管理接收post数据
-      安装 npm install body-parser --save
+基于cookie用户验证
+  express依赖cookie-parser，需要 npm install cookie-parser --save 安装
+  body-parser插件来管理接收post数据
+    安装 npm install body-parser --save
   
-  页面cookie的管理流浪器会自动处理
+页面cookie的管理流浪器会自动处理
     npm install cookieparser  --save
 
-  md5加密
+md5加密
     npm install utility --save
 
-  子组建如何改变父组建的state,父组建将方法(方法内部改变父组建的state)传给子组建 子组件调用该方法
+子组建如何改变父组建的state,父组建将方法(方法内部改变父组建的state)传给子组建 子组件调用该方法
     子组件对外暴露了一个属性 如果传入的不是一个方法 那么这是有问题的 
     react给我们提供了prop-types来判断传入的属性类型
       安装 npm install prop-types --save
@@ -1222,8 +1222,8 @@ Auth.js文件
           ......
         }
     
-  客户端操作cookie
-    npm install browser-cookies --save
+客户端操作cookie
+  npm install browser-cookies --save
 
 ## 高阶组建
   1.函数编程
