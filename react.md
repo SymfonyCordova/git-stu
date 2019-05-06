@@ -1194,6 +1194,7 @@ Auth.js文件
 ```
 
 ## 开发模式
+```
 基于cookie用户验证
   express依赖cookie-parser，需要 npm install cookie-parser --save 安装
   body-parser插件来管理接收post数据
@@ -1224,8 +1225,10 @@ md5加密
     
 客户端操作cookie
   npm install browser-cookies --save
+```
 
 ## 高阶组建
+```
   1.函数编程
     函数可以当参数
     函数可以当返回值
@@ -1300,9 +1303,10 @@ md5加密
       }
       return WrapperComponent
     }
-
+```
 
 ## socket.io
+```
   基于事件的实施双向通信库
     基于websocket
     前后段通过事件进行双向通信
@@ -1321,11 +1325,13 @@ md5加密
     Ajax基于http协议,单项,实时获取数据只能轮询
     socket.io基于websocket双向通信协议,后端可以主动推送数据
     现代浏览器均支持websocket协议
+```
 
 # emoji表情
   https://emojipedia.org
 
 # react进阶
+```
   jquery
     $('#test').find('img') //性能好一些的
     $('#test img')
@@ -1535,8 +1541,10 @@ md5加密
     redux: createStore bindActionCreators applyMiddleware compose
     react-redux: Provider connect
     react-thunk: thunk arrayThunk
+```
 
 # 代码优化和进阶
+```
   react组件性能优化
     单个组件属性传递优化
       1.不要在组件上面加入对象，因为每一次都会生成新的对象传递，最好放在构造方法里面的this或者this.state,this.state不要展开到组件上
@@ -1601,3 +1609,4 @@ md5加密
     key
   redux性能优化
   react同构
+```
