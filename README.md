@@ -42,7 +42,8 @@ git merge 合并分支
 
 git clone git@116.62.48.176:/data/git/Project-GTMT-20181106.git
 
-git remote set-url origin git@github.com:SymfonyCordova/git-stu.git
+使用ssh协议url
+	git remote set-url origin git@github.com:SymfonyCordova/git-stu.git
 ```
 
  ## 忽略文件
