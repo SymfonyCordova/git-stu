@@ -55,7 +55,7 @@ HBase
 分布式文件系统
 以列簇式存储,将同一列数据存在一起
 查找速度快,可扩展性强,更容易进行分布式扩展
-功能相对局限,使用极大的内存才可调配,且系统处理算法时将有数秒甚至更长的时间的		不可用,导致大量处理超时
+功能相对局限,使用极大的内存才可调配,且系统处理算法时将有数秒甚至更长的时间的 不可用,导致大量处理超时
 文档型数据库(淘汰)
 MongoDB
 图形(Graph)数据库
@@ -78,77 +78,77 @@ Redis非常擅长做大量数据的排行榜
 
 ## Redis的安装
 ```
-1.redis是c语言开发,安装redis需要先将官网下载的源码进行编译,编译依赖gcc环境。
-如果没有gcc环境需要先安装gcc
-yum install gcc-c++
+    1.redis是c语言开发,安装redis需要先将官网下载的源码进行编译,编译依赖gcc环境。
+    如果没有gcc环境需要先安装gcc
+    yum install gcc-c++
 
-2.下载wget http://download.redis.io/releases/redis-5.0.4.tar.gz
+    2.下载wget http://download.redis.io/releases/redis-5.0.4.tar.gz
 
-3.解压tar -zxvf redis-5.0.4.tar.gz
+    3.解压tar -zxvf redis-5.0.4.tar.gz
 
-4.进入解压后的文件夹 make编译
+    4.进入解压后的文件夹 make编译
 
-5.安装 make PREFIX=/usr/local/redis install
+    5.安装 make PREFIX=/usr/local/redis install
 
-6.查看进入/usr/local/redis/bin 
-redis-cli  
-redis-server
+    6.查看进入/usr/local/redis/bin 
+    redis-cli  
+    redis-server
 
-7.复制文件
-回到解压后的文件夹redis-5.0.4下面有一个redis.conf
-cp  redis.conf  /usr/local/redis
-    如果没有配置文件redis也可以启动,不过将启动默认配置,这样不方便我们修改端口
+    7.复制文件
+    回到解压后的文件夹redis-5.0.4下面有一个redis.conf
+    cp  redis.conf  /usr/local/redis
+        如果没有配置文件redis也可以启动,不过将启动默认配置,这样不方便我们修改端口
 ```
 
 ## Redis启动分前端启动和后端启动
 ```
-前端启动
-进入安装文件
-启动服务
-./bin/redis-server
-启动客户端
-./bin/redis-cli 默认的连接了本机的6379端口
-./bin/redis-cli -h ip地址 -p端口
-   ./bin/redis-cli -h 127.0.0.1 -p 6379
-缺点
-  无法部署集群
+    前端启动
+    进入安装文件
+    启动服务
+    ./bin/redis-server
+    启动客户端
+    ./bin/redis-cli 默认的连接了本机的6379端口
+    ./bin/redis-cli -h ip地址 -p端口
+    ./bin/redis-cli -h 127.0.0.1 -p 6379
+    缺点
+    无法部署集群
 
-后端启动
-后端启动需要修改redis.conf配置文件,daemonize yes 以后端模式启动
-vim /usr/local/redis/redis.conf
-  daemonize yes
-启动时指定配置文件
-  cd /usr/local/redis/
-  ./bin/redis-server ./redis.conf
-启动完了查看一下redis进程
-ps -ef | grep -i redis
-好处:
-  可以在配置文件改一下端口号,可以启动多个redis 这样就能部署一个redis集群
+    后端启动
+    后端启动需要修改redis.conf配置文件,daemonize yes 以后端模式启动
+    vim /usr/local/redis/redis.conf
+    daemonize yes
+    启动时指定配置文件
+    cd /usr/local/redis/
+    ./bin/redis-server ./redis.conf
+    启动完了查看一下redis进程
+    ps -ef | grep -i redis
+    好处:
+    可以在配置文件改一下端口号,可以启动多个redis 这样就能部署一个redis集群
 ```
 
 ## redis的关闭
 ```
-1查询到PID,kill - 9 pid 【断电,非正常关闭,一般不用,否则造成数据丢失】
-2正常关闭【正常关闭,数据保存】
-./bin/redis-cli shutdown
+    1查询到PID,kill - 9 pid 【断电,非正常关闭,一般不用,否则造成数据丢失】
+    2正常关闭【正常关闭,数据保存】
+    ./bin/redis-cli shutdown
 ```
 
 ## redis 数据类型
 ```
-redis使用的是键值对 保存数据(map)
-  key:全部都是字符串
-  key名不要过长否则影响使用效率
-  key名起一个有意义的
-  value: 有5种数据类型
-    string  “小红,小明”
-    hash 很类似于json格式 可以存javaBean
-       {uname:”张三”,age:”18”}
-    list 类似于链表 添加和删除效率高 类似于java的LinkedList
-       [1,2,3,4,5]
-    set 集合 类似于Java的HashSest
-       [‘a’, ‘b’]
-    有序的set集合 类似于排行榜
-       [5000  ‘a’,  1000  ‘b’, 10  c]
+    redis使用的是键值对 保存数据(map)
+    key:全部都是字符串
+    key名不要过长否则影响使用效率
+    key名起一个有意义的
+    value: 有5种数据类型
+        string  “小红,小明”
+        hash 很类似于json格式 可以存javaBean
+        {uname:”张三”,age:”18”}
+        list 类似于链表 添加和删除效率高 类似于java的LinkedList
+        [1,2,3,4,5]
+        set 集合 类似于Java的HashSest
+        [‘a’, ‘b’]
+        有序的set集合 类似于排行榜
+        [5000  ‘a’,  1000  ‘b’, 10  c]
 ```
 
 ## redis命令-String命令【重点】
