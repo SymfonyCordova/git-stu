@@ -790,252 +790,252 @@
 
 ## React-router4
 
-React开发单页面应用必备,践行路由组件的概念
-核心概念:动态路由,Route，Link，Switch
+    React开发单页面应用必备,践行路由组件的概念
+    核心概念:动态路由,Route，Link，Switch
 
-安装 npm install react-router-dom --save
-Router4使用react-router-dom作为流浪器的路由
-忘记Router2的内容,拥抱最新的Router4
+    安装 npm install react-router-dom --save
+    Router4使用react-router-dom作为流浪器的路由
+    忘记Router2的内容,拥抱最新的Router4
 
-入门组件
-  BrowserRouter，包裹整个应用
-  Router路由对应渲染组件,可嵌套 
-  Link跳转专用
+    入门组件
+      BrowserRouter，包裹整个应用
+      Router路由对应渲染组件,可嵌套 
+      Link跳转专用
 
-其他组件
-  url参数,Router组件的参数可用冒号标识参数
-    this.props里面有三个属性
-      history 这个是历史属性
-        当需要js进行跳转页面是使用this.props.history.push('/')
-        如果想要返回上一页使用 this.props.history.goBack()
-      location 包含当前页面信息的属性
-        比如pathname "/qibinglian" 
-      match 根路由的后面的参数有关 比如 是不是完全匹配 
-        path: "/:location" 原始定义的变量 比如一个里表的行的id 是我们定义的路由
-        params: 现在的location变量值
-          location:"qibinglian" 
-        url:"/qibinglian" 当前页面访问实际的连接地址 实际的路由
-  Redirect组件 跳转
-  Switch只渲染第一个命中子Route组件
-  withRouter组件来包裹一个普通的组件使得普通组件属性具有history等属性
-    如果这个组件是react-router4子节点组件不需要加这个
+    其他组件
+      url参数,Router组件的参数可用冒号标识参数
+        this.props里面有三个属性
+          history 这个是历史属性
+            当需要js进行跳转页面是使用this.props.history.push('/')
+            如果想要返回上一页使用 this.props.history.goBack()
+          location 包含当前页面信息的属性
+            比如pathname "/qibinglian" 
+          match 根路由的后面的参数有关 比如 是不是完全匹配 
+            path: "/:location" 原始定义的变量 比如一个里表的行的id 是我们定义的路由
+            params: 现在的location变量值
+              location:"qibinglian" 
+            url:"/qibinglian" 当前页面访问实际的连接地址 实际的路由
+      Redirect组件 跳转
+      Switch只渲染第一个命中子Route组件
+      withRouter组件来包裹一个普通的组件使得普通组件属性具有history等属性
+        如果这个组件是react-router4子节点组件不需要加这个
 
-react-router与redux组合
-  复杂redux应用,多个reducer，用combineReducers合并
+    react-router与redux组合
+      复杂redux应用,多个reducer，用combineReducers合并
 
 
 ## React-router4 代码
 
-index.js文件:
-  import React from 'react'
-  import ReactDom from 'react-dom'
-  import App from './App'
-  import { createStore, applyMiddleware, compose } from 'redux'
-  import thunk from 'redux-thunk'
-  import { counter } from './index.redux'
-  import { Provider } from 'react-redux'
-  import { BrowserRouter, Route, Link } from 'react-router-dom'
+    index.js文件:
+      import React from 'react'
+      import ReactDom from 'react-dom'
+      import App from './App'
+      import { createStore, applyMiddleware, compose } from 'redux'
+      import thunk from 'redux-thunk'
+      import { counter } from './index.redux'
+      import { Provider } from 'react-redux'
+      import { BrowserRouter, Route, Link } from 'react-router-dom'
 
-  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+      const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 
-  const store = createStore(counter,compose(
-    applyMiddleware(thunk),
-    reduxDevtools
-  ))
+      const store = createStore(counter,compose(
+        applyMiddleware(thunk),
+        reduxDevtools
+      ))
 
-  function Erying(){
-    return <h2>二营</h2>
-  }
+      function Erying(){
+        return <h2>二营</h2>
+      }
 
-  function Qibinglian(){
-    return <h2>骑兵连</h2>
-  }
+      function Qibinglian(){
+        return <h2>骑兵连</h2>
+      }
 
-  ReactDom.render(
-    (<Provider store={store}>
-      <BrowserRouter>
-        <ul>
-          <li>
-            <Link to='/'>一营</Link> //点击跳转到指定路由
-          </li>
-          <li>
-            <Link to='/erying'>二营</Link>
-          </li>
-          <li>
-            <Link to='/qibinglian'>骑兵连</Link>
-          </li>
-        </ul>
-        <Route path='/' exact component={App}></Route> //exact表明完全匹配
-        <Route path='/erying' component={Erying}></Route>
-        <Route path='/qibinglian' component={Qibinglian}></Route> //路由对应渲染的模板
-      </BrowserRouter>
-    </Provider>),
-    document.getElementById('root')
-  )
-=====================================================================================
-1.index.redux.js文件
-  const ADD_GUN = '加机关枪'
-  const REMOVE_GUN = '减机关枪'
+      ReactDom.render(
+        (<Provider store={store}>
+          <BrowserRouter>
+            <ul>
+              <li>
+                <Link to='/'>一营</Link> //点击跳转到指定路由
+              </li>
+              <li>
+                <Link to='/erying'>二营</Link>
+              </li>
+              <li>
+                <Link to='/qibinglian'>骑兵连</Link>
+              </li>
+            </ul>
+            <Route path='/' exact component={App}></Route> //exact表明完全匹配
+            <Route path='/erying' component={Erying}></Route>
+            <Route path='/qibinglian' component={Qibinglian}></Route> //路由对应渲染的模板
+          </BrowserRouter>
+        </Provider>),
+        document.getElementById('root')
+      )
+    =====================================================================================
+    1.index.redux.js文件
+      const ADD_GUN = '加机关枪'
+      const REMOVE_GUN = '减机关枪'
 
-  export function counter(state=0,action){
-    switch(action.type){
-      case ADD_GUN:
-        return state + 1
-      case REMOVE_GUN:
-        return state-1
-      default:
-        return state
-    }
-  }
-
-  export function addGun(){
-    return {type:ADD_GUN}
-  }
-
-  export function removeGun(){
-    return {type:REMOVE_GUN}
-  }
-
-  export function addGunAsync(){
-    return dispatch=>{
-      setTimeout(()=>{
-        dispatch(addGun())
-      },2000)
-    }
-  }
-
-2.Auth.redux.js文件
-  const LOGIN = 'LOGIN'
-  const LOGOUT = 'LOGOUT'
-
-  export function auth(state={isAuth:false,user:'李云龙'},action){
-      switch(action.type){
-          case LOGIN:
-              return {...state, isAuth:true}
-          case LOGOUT:
-              return {...state, isAuth:false}
+      export function counter(state=0,action){
+        switch(action.type){
+          case ADD_GUN:
+            return state + 1
+          case REMOVE_GUN:
+            return state-1
           default:
-              return state
+            return state
+        }
       }
-  }
 
-  export function login(){
-      return {type:LOGIN}
-  }
-
-  export function logout(){
-      return {type:LOGOUT}
-  }
-
-
-3.reducer.js文件
-  //合并所有的reducer 并且返回
-  import { combineReducers } from 'redux'
-  import { counter } from './index.redux'
-  import { auth } from './Auth.redux'
-
-
-  export default combineReducers({counter, auth})
-
-4.index.js文件:
-  import React from 'react'
-  import ReactDom from 'react-dom'
-  import { createStore, applyMiddleware, compose } from 'redux'
-  import thunk from 'redux-thunk'
-  import { Provider } from 'react-redux'
-  import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom'
-  import Auth from './Auth.js'
-  import Dashboard from './Dashboard.js'
-  import reducers from './reducer' 
-
-  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-
-  const store = createStore(reducers, compose(
-    applyMiddleware(thunk),
-    reduxDevtools
-  ))
-
-  ReactDom.render(
-    (<Provider store={store}>
-      <BrowserRouter>
-        <Switch>
-          <Route path="/login" component={Auth}></Route>
-          <Route path="/dashboard" component={Dashboard}></Route>
-          <Redirect to="/dashboard"></Redirect>
-        </Switch>
-      </BrowserRouter>
-    </Provider>),
-    document.getElementById('root')
-  )
-
-5.Auth.js文件:
-  import React from 'react'
-  import { connect } from 'react-redux'
-  import { login } from './Auth.redux' 
-  import { Redirect } from 'react-router-dom'
-
-  @connect(
-      state=>state.auth,
-      {login}
-  )
-  class Auth extends React.Component{
-      render(){
-          return (
-              <div>
-                  { this.props.isAuth? <Redirect to='/dashboard'></Redirect> : null}
-                  <h2>你没有权限,需要登陆才能看</h2>
-                  <button onClick={this.props.login}>登陆</button>
-              </div>
-          )
+      export function addGun(){
+        return {type:ADD_GUN}
       }
-  }
 
-  export default Auth
-
-6.Dashboard.js文件：
-  import React from 'react'
-  import { Link, Route, Redirect } from 'react-router-dom'
-  import App from './App.js'
-  import { connect } from 'react-redux'
-  import { logout } from './Auth.redux'
-
-  function Erying(){
-    return <h2>二营</h2>
-  }
-
-  function Qibinglian(){
-    return <h2>骑兵连</h2>
-  }
-
-  @connect(
-      state=>state.auth,
-      {logout}
-  )
-  class Dashboard extends React.Component{
-      render(){
-          const redirectToLogin = <Redirect to='/login'></Redirect> 
-          const app = (<div>
-              <h1>独立团</h1>
-              { this.props.isAuth ? <button onClick={this.props.logout}>注销</button> : null}
-              <ul>
-                  <li>
-                      <Link to={`${this.props.match.url}`}>一营</Link>
-                  <li>
-                      <Link to={`${this.props.match.url}/erying`}>二营</Link>
-                  </li>
-                  <li>
-                      <Link to={`${this.props.match.url}/qibinglian`}>骑兵连</Link>
-                  </li>
-              </ul>
-              <Route path={`${this.props.match.url}/`} exact component={App}></Route>
-              <Route path={`${this.props.match.url}/erying`} component={Erying}></Route>
-              <Route path={`${this.props.match.url}/qibinglian`} component={Qibinglian}></Route>
-          </div>)
-          return this.props.isAuth?app:redirectToLogin 
+      export function removeGun(){
+        return {type:REMOVE_GUN}
       }
-  }
 
-  export default Dashboard
+      export function addGunAsync(){
+        return dispatch=>{
+          setTimeout(()=>{
+            dispatch(addGun())
+          },2000)
+        }
+      }
+
+    2.Auth.redux.js文件
+      const LOGIN = 'LOGIN'
+      const LOGOUT = 'LOGOUT'
+
+      export function auth(state={isAuth:false,user:'李云龙'},action){
+          switch(action.type){
+              case LOGIN:
+                  return {...state, isAuth:true}
+              case LOGOUT:
+                  return {...state, isAuth:false}
+              default:
+                  return state
+          }
+      }
+
+      export function login(){
+          return {type:LOGIN}
+      }
+
+      export function logout(){
+          return {type:LOGOUT}
+      }
+
+
+    3.reducer.js文件
+      //合并所有的reducer 并且返回
+      import { combineReducers } from 'redux'
+      import { counter } from './index.redux'
+      import { auth } from './Auth.redux'
+
+
+      export default combineReducers({counter, auth})
+
+    4.index.js文件:
+      import React from 'react'
+      import ReactDom from 'react-dom'
+      import { createStore, applyMiddleware, compose } from 'redux'
+      import thunk from 'redux-thunk'
+      import { Provider } from 'react-redux'
+      import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom'
+      import Auth from './Auth.js'
+      import Dashboard from './Dashboard.js'
+      import reducers from './reducer' 
+
+      const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+
+      const store = createStore(reducers, compose(
+        applyMiddleware(thunk),
+        reduxDevtools
+      ))
+
+      ReactDom.render(
+        (<Provider store={store}>
+          <BrowserRouter>
+            <Switch>
+              <Route path="/login" component={Auth}></Route>
+              <Route path="/dashboard" component={Dashboard}></Route>
+              <Redirect to="/dashboard"></Redirect>
+            </Switch>
+          </BrowserRouter>
+        </Provider>),
+        document.getElementById('root')
+      )
+
+    5.Auth.js文件:
+      import React from 'react'
+      import { connect } from 'react-redux'
+      import { login } from './Auth.redux' 
+      import { Redirect } from 'react-router-dom'
+
+      @connect(
+          state=>state.auth,
+          {login}
+      )
+      class Auth extends React.Component{
+          render(){
+              return (
+                  <div>
+                      { this.props.isAuth? <Redirect to='/dashboard'></Redirect> : null}
+                      <h2>你没有权限,需要登陆才能看</h2>
+                      <button onClick={this.props.login}>登陆</button>
+                  </div>
+              )
+          }
+      }
+
+      export default Auth
+
+    6.Dashboard.js文件：
+      import React from 'react'
+      import { Link, Route, Redirect } from 'react-router-dom'
+      import App from './App.js'
+      import { connect } from 'react-redux'
+      import { logout } from './Auth.redux'
+
+      function Erying(){
+        return <h2>二营</h2>
+      }
+
+      function Qibinglian(){
+        return <h2>骑兵连</h2>
+      }
+
+      @connect(
+          state=>state.auth,
+          {logout}
+      )
+      class Dashboard extends React.Component{
+          render(){
+              const redirectToLogin = <Redirect to='/login'></Redirect> 
+              const app = (<div>
+                  <h1>独立团</h1>
+                  { this.props.isAuth ? <button onClick={this.props.logout}>注销</button> : null}
+                  <ul>
+                      <li>
+                          <Link to={`${this.props.match.url}`}>一营</Link>
+                      <li>
+                          <Link to={`${this.props.match.url}/erying`}>二营</Link>
+                      </li>
+                      <li>
+                          <Link to={`${this.props.match.url}/qibinglian`}>骑兵连</Link>
+                      </li>
+                  </ul>
+                  <Route path={`${this.props.match.url}/`} exact component={App}></Route>
+                  <Route path={`${this.props.match.url}/erying`} component={Erying}></Route>
+                  <Route path={`${this.props.match.url}/qibinglian`} component={Qibinglian}></Route>
+              </div>)
+              return this.props.isAuth?app:redirectToLogin 
+          }
+      }
+
+      export default Dashboard
 
 ## 前后台联调
     如何发送,端口不一致,使用proxy配置转发
