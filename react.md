@@ -173,306 +173,306 @@
 
 ## Express+mongodb
 
-Express+mongodb开放web后台接口
-  Express开放web接口
-  非关系型数据库mongodb
-  使用nodejs的mongoose模块连接和操作mongodb
-  
-  安装express
-   npm install express --save
+    Express+mongodb开放web后台接口
+      Express开放web接口
+      非关系型数据库mongodb
+      使用nodejs的mongoose模块连接和操作mongodb
+      
+      安装express
+      npm install express --save
 
-  监听路由和响应内容,使用nodemon自动重启
-   npm install -g nodemon
-   然后使用nodemon代替node启动服务器   
+      监听路由和响应内容,使用nodemon自动重启
+      npm install -g nodemon
+      然后使用nodemon代替node启动服务器   
 
-  app.get app.post分别开发get和post接口
-  app.use使用模块
-   项目复杂的时候功能进行分开 使用app.use进行引入即可
-  代res.send, res.json, res.sendfile 响应不同的内容
+      app.get app.post分别开发get和post接口
+      app.use使用模块
+      项目复杂的时候功能进行分开 使用app.use进行引入即可
+      代res.send, res.json, res.sendfile 响应不同的内容
 
-mongodb
-  https://www.mongodb.com/下载安装mongodb
-  ubuntu安装 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
-    /var/lib/mongodb
-    /var/log/mongodb 
-    /etc/mongod.conf
-  mongod --config /usr/local/etc/mongod.conf
+    mongodb
+      https://www.mongodb.com/下载安装mongodb
+      ubuntu安装 https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+        /var/lib/mongodb
+        /var/log/mongodb 
+        /etc/mongod.conf
+      mongod --config /usr/local/etc/mongod.conf
 
-  sudo service mongod start/stop/restart
+      sudo service mongod start/stop/restart
 
-  mongo测试
+      mongo测试
 
-  安装 mongoose
-    npm install mongoose --save
-    通过mongoose操作mongodb，存储的就是json，相对于mysql来说,要易用的多
+      安装 mongoose
+        npm install mongoose --save
+        通过mongoose操作mongodb，存储的就是json，相对于mysql来说,要易用的多
 
-  基础操作
-    connect连接数据库
-    定义文档模型,Schema和model新建模型
-  Mongoose文档类型
-    String,Number等数据结构
-    定create,remove,update分别用来增，删，改的操作
-    find和findOne用来查询数据
+      基础操作
+        connect连接数据库
+        定义文档模型,Schema和model新建模型
+      Mongoose文档类型
+        String,Number等数据结构
+        定create,remove,update分别用来增，删，改的操作
+        find和findOne用来查询数据
 
-  mongodb独立工具函数
-  express使用body-parser支持post参数
-  使用cookie-parser存储登陆信息cookie
+      mongodb独立工具函数
+      express使用body-parser支持post参数
+      使用cookie-parser存储登陆信息cookie
 
 
 ## react基础知识
 
-  React是什么
-  使用React实现组件化
-  React进阶的使用
-  
-   import React
-   class语法新建组件,render里直接使用
-   render函数返回值就是输出JSX语法,会把JSX转成js执行
-   
-   Js里面直接写html
-   class要写成className
-   变量用{}包裹即可
-
-   块一切都是组件
-   对组件间通讯通过属性传递
-   类实现组件,使用JSX语法
+    React是什么
+    使用React实现组件化
+    React进阶的使用
     
-   组件之间使用props传递数据
-    使用<组件 数据="值" >的形式传递
-    组件里使用this.props获取值
-    如果组件只有render函数,还可以用函数的形式写组件,也叫无状态组件
+    import React
+    class语法新建组件,render里直接使用
+    render函数返回值就是输出JSX语法,会把JSX转成js执行
+    
+    Js里面直接写html
+    class要写成className
+    变量用{}包裹即可
 
-   组件内部state
-    组件内部通过 state管理状态
-     JSX本质就是js，所以直接数组.map渲染列表
-     constructor设置初始状态,记得执行super(props)
-     如state就是一个不可变的对象,使用this.state获取 this.setState()来修改
+    块一切都是组件
+    对组件间通讯通过属性传递
+    类实现组件,使用JSX语法
+      
+    组件之间使用props传递数据
+      使用<组件 数据="值" >的形式传递
+      组件里使用this.props获取值
+      如果组件只有render函数,还可以用函数的形式写组件,也叫无状态组件
 
-   事件
-    onClick点击事件
-      JSX里,onClick={this.函数名}来绑定事件
-      this引用的问题,需要在构造函数里面用bind绑定this
-      this.setState修改state，记得返回新的state，而不是修改
+    组件内部state
+      组件内部通过 state管理状态
+      JSX本质就是js，所以直接数组.map渲染列表
+      constructor设置初始状态,记得执行super(props)
+      如state就是一个不可变的对象,使用this.state获取 this.setState()来修改
 
-      也可以不用bind使用箭头函数
-         onClick={()=>this.函数名()}   
-         onClick={ v=>this.函数名(v)} 这个v可以是表单的value的实际值  
+    事件
+      onClick点击事件
+        JSX里,onClick={this.函数名}来绑定事件
+        this引用的问题,需要在构造函数里面用bind绑定this
+        this.setState修改state，记得返回新的state，而不是修改
 
-   React生命周期
-    React组件有若干个钩子函数,在组件不同的状态执行
-      初始化周期 (组件第一次渲染要执行的一些函数)
-      组件重新渲染生命周期 (组件重新渲染要执行的一些函数)
-        比如props发生改变
-        比如state发生改变
-        都会导致重新加载 场景就是在ajax请求时可以放在这个进行判断 过滤 修改等等操作
-      组件卸载生命周期 
-      (看图 这个生命周期图是很重要)
-      ![image](https://github.com/SymfonyCordova/git-stu/tree/master/img/react生命周期.jpeg)
-   
-   React调试工具 
-     安装chrome插件
-       更多工具->扩展程序->chrome 网上应用店 搜索react
+        也可以不用bind使用箭头函数
+          onClick={()=>this.函数名()}   
+          onClick={ v=>this.函数名(v)} 这个v可以是表单的value的实际值  
 
-   蚂蚁金服出品的UI组件库
-    http://beta.mobile.ant.design/
-    npm install antd-mobile --save 安装
+    React生命周期
+      React组件有若干个钩子函数,在组件不同的状态执行
+        初始化周期 (组件第一次渲染要执行的一些函数)
+        组件重新渲染生命周期 (组件重新渲染要执行的一些函数)
+          比如props发生改变
+          比如state发生改变
+          都会导致重新加载 场景就是在ajax请求时可以放在这个进行判断 过滤 修改等等操作
+        组件卸载生命周期 
+        (看图 这个生命周期图是很重要)
+        ![image](https://github.com/SymfonyCordova/git-stu/tree/master/img/react生命周期.jpeg)
+    
+    React调试工具 
+      安装chrome插件
+        更多工具->扩展程序->chrome 网上应用店 搜索react
 
-    加载js和css 手动直接import antd-mobile/dist/antd-mobile.css
-    需要自动加载和按需加载的,需要安装 npm install babel-plugin-import --save
-    在package.json中的babel配置,看官网就有
-     {
-        "plugins": [
-          ["import", { libraryName: "antd-mobile", style: "css" }] // `style: true` 会加载 less 文件
-        ]
-      }
+    蚂蚁金服出品的UI组件库
+      http://beta.mobile.ant.design/
+      npm install antd-mobile --save 安装
 
-    常用的组件
-      Layout布局组件
-      表单组件,数据显示组件,选择器等等
-      操作组件
+      加载js和css 手动直接import antd-mobile/dist/antd-mobile.css
+      需要自动加载和按需加载的,需要安装 npm install babel-plugin-import --save
+      在package.json中的babel配置,看官网就有
+      {
+          "plugins": [
+            ["import", { libraryName: "antd-mobile", style: "css" }] // `style: true` 会加载 less 文件
+          ]
+        }
+
+      常用的组件
+        Layout布局组件
+        表单组件,数据显示组件,选择器等等
+        操作组件
 
 
 ## react基础知识代码
 
-import React from 'react'
+    import React from 'react'
 
-class App extends React.Component{
-  render(){
-    const boss = '李云龙'
-    return (
-       <div> //Js里面直接写html
-        <h2>独立团 团长{boss}</h2> //变量用{}包裹即可
-        <一营 老大='张大喵'></一营>
-        <骑兵连 老大='孙德胜'></骑兵连> //使用<组件 数据="值" >的形式传递 @1
-       </div>
-      )
-  }
-}
-
-function 骑兵连(props){ //如果组件只有render函数,还可以用函数的形式写组件,也叫无状态组件
-  return <h2>骑兵连连长{props.老大},冲啊</h2>
-}
-
-class 一营 extends React.Component{
-  render(){
-    return <h2>一营营长, {this.props.老大}</h2> //组件里使用this.props获取值 @2
-  }
-}
-
-export default App
-
-===============================================================================
-
-class 一营 extends React.Component{
-  constructor(props){
-    super(props) //constructor设置初始状态,记得执行super(props)
-    this.state = {  //组件内部通过 state管理状态
-      solders:['虎子','柱子','王根生']
+    class App extends React.Component{
+      render(){
+        const boss = '李云龙'
+        return (
+          <div> //Js里面直接写html
+            <h2>独立团 团长{boss}</h2> //变量用{}包裹即可
+            <一营 老大='张大喵'></一营>
+            <骑兵连 老大='孙德胜'></骑兵连> //使用<组件 数据="值" >的形式传递 @1
+          </div>
+          )
+      }
     }
-  }
-  render(){
-    return (
-     <div>
-      <h2>一营营长, {this.props.老大}</h2>
-      <ul>
-       {this.state.solders.map(v=>{  //JSX本质就是js，所以直接数组.map映射渲染列表
-        return <li key={v}>{v}</li>
-       })}
-      </ul>
-     </div>
-    )
-  }
-}
 
-================================================================================
-class 一营 extends React.Component{
-  constructor(props){
-    super(props)
-    this.state = {
-      solders:['虎子','柱子','王根生']
+    function 骑兵连(props){ //如果组件只有render函数,还可以用函数的形式写组件,也叫无状态组件
+      return <h2>骑兵连连长{props.老大},冲啊</h2>
     }
-    //this.addSolder = this.addSolder.bind(this) //this引用的问题,需要在构造函数里面用bind绑定this @1
-  }
-  addSolder(){
-    console.log('hello add solder')
-    this.setState({
-      solders:[...this.state.solders, '新兵蛋子'+Math.random()] //this.setState修改state，记得返回新的state，而不是修改
-    })
-  }
-  render(){
-    return (
-     <div>
-      <h2>一营营长, {this.props.老大}</h2> 
-      {/* <button onClick={this.addSolder}>新兵入伍</button> JSX里,onClick={this.函数名}来绑定事件 @2*/}
-      <button onClick={()=>this.addSolder()}>新兵入伍</button> {/*直接调用的方式 不需要绑定*/}
-      <ul>
-       {this.state.solders.map(v=>{
-        return <li key={v}>{v}</li>
-       })}
-      </ul>
-     </div>
-    )
-  }
-}
 
-================================================================================
-这里演示了初次加载执行的生命周期函数
-class 一营 extends React.Component{
-  constructor(props){
-    super(props)
-    this.state = {
-      solders:['虎子','柱子','王根生']
+    class 一营 extends React.Component{
+      render(){
+        return <h2>一营营长, {this.props.老大}</h2> //组件里使用this.props获取值 @2
+      }
     }
-  }
-  addSolder(){
-    console.log('hello add solder')
-    this.setState({
-      solders:[...this.state.solders, '新兵蛋子'+Math.random()]
-    })
-  }
-  componentWillMount(){
-    console.log('组件马上就要加载了')
-  }
-  componentDidMount(){
-    console.log('组件加载完毕')
-  }
-  render(){
-    console.log('组件正在加载 ')
-    return (
-     <div>
-      <h2>一营营长, {this.props.老大}</h2>
-      <button onClick={()=>this.addSolder()}>新兵入伍</button>
-      <ul>
-       {this.state.solders.map(v=>{
-        return <li key={v}>{v}</li>
-       })}
-      </ul>
-     </div>
-    )
-  }
-}
+
+    export default App
+
+    ===============================================================================
+
+    class 一营 extends React.Component{
+      constructor(props){
+        super(props) //constructor设置初始状态,记得执行super(props)
+        this.state = {  //组件内部通过 state管理状态
+          solders:['虎子','柱子','王根生']
+        }
+      }
+      render(){
+        return (
+        <div>
+          <h2>一营营长, {this.props.老大}</h2>
+          <ul>
+          {this.state.solders.map(v=>{  //JSX本质就是js，所以直接数组.map映射渲染列表
+            return <li key={v}>{v}</li>
+          })}
+          </ul>
+        </div>
+        )
+      }
+    }
+
+    ================================================================================
+    class 一营 extends React.Component{
+      constructor(props){
+        super(props)
+        this.state = {
+          solders:['虎子','柱子','王根生']
+        }
+        //this.addSolder = this.addSolder.bind(this) //this引用的问题,需要在构造函数里面用bind绑定this @1
+      }
+      addSolder(){
+        console.log('hello add solder')
+        this.setState({
+          solders:[...this.state.solders, '新兵蛋子'+Math.random()] //this.setState修改state，记得返回新的state，而不是修改
+        })
+      }
+      render(){
+        return (
+        <div>
+          <h2>一营营长, {this.props.老大}</h2> 
+          {/* <button onClick={this.addSolder}>新兵入伍</button> JSX里,onClick={this.函数名}来绑定事件 @2*/}
+          <button onClick={()=>this.addSolder()}>新兵入伍</button> {/*直接调用的方式 不需要绑定*/}
+          <ul>
+          {this.state.solders.map(v=>{
+            return <li key={v}>{v}</li>
+          })}
+          </ul>
+        </div>
+        )
+      }
+    }
+
+    ================================================================================
+    这里演示了初次加载执行的生命周期函数
+    class 一营 extends React.Component{
+      constructor(props){
+        super(props)
+        this.state = {
+          solders:['虎子','柱子','王根生']
+        }
+      }
+      addSolder(){
+        console.log('hello add solder')
+        this.setState({
+          solders:[...this.state.solders, '新兵蛋子'+Math.random()]
+        })
+      }
+      componentWillMount(){
+        console.log('组件马上就要加载了')
+      }
+      componentDidMount(){
+        console.log('组件加载完毕')
+      }
+      render(){
+        console.log('组件正在加载 ')
+        return (
+        <div>
+          <h2>一营营长, {this.props.老大}</h2>
+          <button onClick={()=>this.addSolder()}>新兵入伍</button>
+          <ul>
+          {this.state.solders.map(v=>{
+            return <li key={v}>{v}</li>
+          })}
+          </ul>
+        </div>
+        )
+      }
+    }
 
 
 ## Redux
 
-  1.Redux专注于状态管理,和react解耦
-    单一状态,单向数据流
-    核心概念:store,state,action,reducer
+    1.Redux专注于状态管理,和react解耦
+      单一状态,单向数据流
+      核心概念:store,state,action,reducer
 
-    1.首先通过reducer新建store，随时通过store.getState获取状态
-    2.需要状态变更,store.dispatch(action)来修改状态
-    3.reducer函数接受state和action，返回新的state，可以用store.subscribe监听每次修改
+      1.首先通过reducer新建store，随时通过store.getState获取状态
+      2.需要状态变更,store.dispatch(action)来修改状态
+      3.reducer函数接受state和action，返回新的state，可以用store.subscribe监听每次修改
 
-    安装 npm install redux --save
+      安装 npm install redux --save
 
-  2.Redux如何和React一起使用
-    手动连接
-      1.把store.dispatch方法传递给组件,内部可以调用修改状态
-      2.Subscribe订阅render函数,每次修改都重新渲染
-      3.Redux相关内容,移动单独的文件index.redux.js单独管理
+    2.Redux如何和React一起使用
+      手动连接
+        1.把store.dispatch方法传递给组件,内部可以调用修改状态
+        2.Subscribe订阅render函数,每次修改都重新渲染
+        3.Redux相关内容,移动单独的文件index.redux.js单独管理
 
-  3.组件解藕
-    组件解藕
-    处理异步,调试工具，更优雅的和react结合
-      1.Redux处理异步,需要redux-thunk插件
-        npm install redux-thunk --save
-        使用applyMiddleware开启thunk中间件
-        Action可以返回函数,使用dispatch提交action
-      2.npm install redux-devtools-extension 安装并且开启
-      3.使用react-redux优雅的连接react和redux
+    3.组件解藕
+      组件解藕
+      处理异步,调试工具，更优雅的和react结合
+        1.Redux处理异步,需要redux-thunk插件
+          npm install redux-thunk --save
+          使用applyMiddleware开启thunk中间件
+          Action可以返回函数,使用dispatch提交action
+        2.npm install redux-devtools-extension 安装并且开启
+        3.使用react-redux优雅的连接react和redux
 
-  4.chrome搜索redux安装调试工具
-    1.新建store的时候判断window.devToolsExtension
-    2.使用compose结合thunk和window.devToolsExtension
-    3.调试窗口的redux选项卡,实时看到state
-    注意新的是
-      window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+    4.chrome搜索redux安装调试工具
+      1.新建store的时候判断window.devToolsExtension
+      2.使用compose结合thunk和window.devToolsExtension
+      3.调试窗口的redux选项卡,实时看到state
+      注意新的是
+        window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 
-  5.使用react-redux
-    1.手动我们已经实现了react和redux，但是会陷入属性传递的陷阱厘米
-    2.使用react-redux自动的帮助我们连接react和reduxs
-      npm install react-redux --save
-      只要安装了react-redux 只需要忘记subscribe，也不需要属性传递了,记住reducer，action和dispatch即可
-      React-redux提供了Provider和connect两个接口来链接 
-    3.具体的使用
-      1.Provider组件在应用最外层,传入store即可,只用一次
-      2.Connect负责从外部获取组件需要的参数
-      3.Connect可以用装饰器的方式来写
-        弹出reatc配置文件 npm run eject
-        安装npm install babel-plugin-transform-decorators-legacy --save-dev （babel插件）支持装饰器写法
-          最新的不支持了 不需要安装 改变如下:
-        package.json里babel加上plugins配置
-          "babel": {
-            "plugins": [
-              //["transform-decorators-legacy"]
-              [
-                "@babel/plugin-proposal-decorators", //直接使用这个
-                {
-                  "legacy": true
-                }
+    5.使用react-redux
+      1.手动我们已经实现了react和redux，但是会陷入属性传递的陷阱厘米
+      2.使用react-redux自动的帮助我们连接react和reduxs
+        npm install react-redux --save
+        只要安装了react-redux 只需要忘记subscribe，也不需要属性传递了,记住reducer，action和dispatch即可
+        React-redux提供了Provider和connect两个接口来链接 
+      3.具体的使用
+        1.Provider组件在应用最外层,传入store即可,只用一次
+        2.Connect负责从外部获取组件需要的参数
+        3.Connect可以用装饰器的方式来写
+          弹出reatc配置文件 npm run eject
+          安装npm install babel-plugin-transform-decorators-legacy --save-dev （babel插件）支持装饰器写法
+            最新的不支持了 不需要安装 改变如下:
+          package.json里babel加上plugins配置
+            "babel": {
+              "plugins": [
+                //["transform-decorators-legacy"]
+                [
+                  "@babel/plugin-proposal-decorators", //直接使用这个
+                  {
+                    "legacy": true
+                  }
+                ]
               ]
-            ]
-          }
+            }
 
 
 
