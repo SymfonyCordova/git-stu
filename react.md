@@ -1,16 +1,16 @@
 # react学习
-  官方脚手架
-    安装nodejs
-    npm install -g create-react-app
-    create-react-app test1
-  启动项目
-    cd test1
-    npm run start 
-  安装第三方库
-    npm install redux --save 
-  弹出配置文件,可以自定义配置webpack  
-    npm run eject
-    扩展package.json里的script字段,扩展npm run 命令
+    官方脚手架
+        安装nodejs
+        npm install -g create-react-app
+        create-react-app test1
+    启动项目
+        cd test1
+        npm run start 
+    安装第三方库
+        npm install redux --save 
+    弹出配置文件,可以自定义配置webpack  
+        npm run eject
+        扩展package.json里的script字段,扩展npm run 命令
 
 ## es6
 
