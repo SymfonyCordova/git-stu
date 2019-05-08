@@ -1052,279 +1052,279 @@
 
 ## 前后台联调代码
 
-config.js文件下
-  import axios from 'axios'
-  import { Toast } from 'antd-mobile'
+    config.js文件下
+      import axios from 'axios'
+      import { Toast } from 'antd-mobile'
 
-  axios.interceptors.request.use(function(config){
-      Toast.loading('加载中', 0)
-      return config
-  })
+      axios.interceptors.request.use(function(config){
+          Toast.loading('加载中', 0)
+          return config
+      })
 
-  axios.interceptors.response.use(function(config){
-      setTimeout(()=>{
-          Toast.hide()
-      }, 1000)
-      return config
-  })
+      axios.interceptors.response.use(function(config){
+          setTimeout(()=>{
+              Toast.hide()
+          }, 1000)
+          return config
+      })
 
-index.js文件下
-  import React from 'react'
-  import ReactDom from 'react-dom'
-  import { createStore, applyMiddleware, compose } from 'redux'
-  import thunk from 'redux-thunk'
-  import { Provider } from 'react-redux'
-  import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom'
-  import Auth from './Auth.js'
-  import Dashboard from './Dashboard.js'
-  import reducers from './reducer' 
-  import './config'
+    index.js文件下
+      import React from 'react'
+      import ReactDom from 'react-dom'
+      import { createStore, applyMiddleware, compose } from 'redux'
+      import thunk from 'redux-thunk'
+      import { Provider } from 'react-redux'
+      import { BrowserRouter, Route, Switch, Redirect } from 'react-router-dom'
+      import Auth from './Auth.js'
+      import Dashboard from './Dashboard.js'
+      import reducers from './reducer' 
+      import './config'
 
-  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+      const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 
-  const store = createStore(reducers, compose(
-    applyMiddleware(thunk),
-    reduxDevtools
-  ))
+      const store = createStore(reducers, compose(
+        applyMiddleware(thunk),
+        reduxDevtools
+      ))
 
-  ReactDom.render(
-    (<Provider store={store}>
-      <BrowserRouter>
-        <Switch>
-          <Route path="/login" component={Auth}></Route>
-          <Route path="/dashboard" component={Dashboard}></Route>
-          <Redirect to="/dashboard"></Redirect>
-        </Switch>
-      </BrowserRouter>
-    </Provider>),
-    document.getElementById('root')
-  )
+      ReactDom.render(
+        (<Provider store={store}>
+          <BrowserRouter>
+            <Switch>
+              <Route path="/login" component={Auth}></Route>
+              <Route path="/dashboard" component={Dashboard}></Route>
+              <Redirect to="/dashboard"></Redirect>
+            </Switch>
+          </BrowserRouter>
+        </Provider>),
+        document.getElementById('root')
+      )
 
-Auth.redux.js文件下:
-  import axios from "axios";
+    Auth.redux.js文件下:
+      import axios from "axios";
 
-  const LOGIN = 'LOGIN'
-  const LOGOUT = 'LOGOUT'
-  const USER_DATA = 'USER_DATA'
+      const LOGIN = 'LOGIN'
+      const LOGOUT = 'LOGOUT'
+      const USER_DATA = 'USER_DATA'
 
-  const initState = {
-    age: 20,
-    isAuth: false,
-    user: '李云龙'
-  }
-
-  export function auth(state=initState,action){
-      switch(action.type){
-          case LOGIN:
-              return {...state, isAuth:true}
-          case LOGOUT:
-              return {...state, isAuth:false}
-          case USER_DATA:
-              return {...state, user:action.payload.user, age:action.payload.age}
-          default:
-              return state
+      const initState = {
+        age: 20,
+        isAuth: false,
+        user: '李云龙'
       }
-  }
 
-  export function getUserData(){
-      return dispatch=>{
-          axios.get('/data').then(res=>{
-              if(res.status === 200){
-                  dispatch(userData(res.data))
-              }
-          })
+      export function auth(state=initState,action){
+          switch(action.type){
+              case LOGIN:
+                  return {...state, isAuth:true}
+              case LOGOUT:
+                  return {...state, isAuth:false}
+              case USER_DATA:
+                  return {...state, user:action.payload.user, age:action.payload.age}
+              default:
+                  return state
+          }
       }
-  }
 
-  export function userData(data){
-      return {type:USER_DATA,payload:data}
-  }
+      export function getUserData(){
+          return dispatch=>{
+              axios.get('/data').then(res=>{
+                  if(res.status === 200){
+                      dispatch(userData(res.data))
+                  }
+              })
+          }
+      }
 
-  export function login(){
-      return {type:LOGIN}
-  }
+      export function userData(data){
+          return {type:USER_DATA,payload:data}
+      }
 
-  export function logout(){
-      return {type:LOGOUT}
-  }
+      export function login(){
+          return {type:LOGIN}
+      }
 
-Auth.js文件
-  import React from 'react'
-  import { connect } from 'react-redux'
-  import { login, getUserData } from './Auth.redux' 
-  import { Redirect } from 'react-router-dom'
-  // import axios from 'axios'
+      export function logout(){
+          return {type:LOGOUT}
+      }
 
-  @connect(
-      state=>state.auth,
-      {login, getUserData}
-  )
-  class Auth extends React.Component{
-      // constructor(props){
-      //     super(props)
-      //     this.state = {
-      //         data:{}
-      //     }
-      // }
-      componentDidMount(){
-          this.props.getUserData()
-          // axios.get('/data').then(res=>{
-          //     if(res.status === 200){
-          //         this.setState({data:res.data})
+    Auth.js文件
+      import React from 'react'
+      import { connect } from 'react-redux'
+      import { login, getUserData } from './Auth.redux' 
+      import { Redirect } from 'react-router-dom'
+      // import axios from 'axios'
+
+      @connect(
+          state=>state.auth,
+          {login, getUserData}
+      )
+      class Auth extends React.Component{
+          // constructor(props){
+          //     super(props)
+          //     this.state = {
+          //         data:{}
           //     }
-          // })
+          // }
+          componentDidMount(){
+              this.props.getUserData()
+              // axios.get('/data').then(res=>{
+              //     if(res.status === 200){
+              //         this.setState({data:res.data})
+              //     }
+              // })
+          }
+          render(){
+              return (
+                  <div>
+                      <h2>我的名字是{this.props.user},年龄{this.props.age} </h2>
+                      { this.props.isAuth? <Redirect to='/dashboard'></Redirect> : null}
+                      <h2>你没有权限,需要登陆才能看</h2>
+                      <button onClick={this.props.login}>登陆</button>
+                  </div>
+              )
+          }
       }
-      render(){
-          return (
-              <div>
-                  <h2>我的名字是{this.props.user},年龄{this.props.age} </h2>
-                  { this.props.isAuth? <Redirect to='/dashboard'></Redirect> : null}
-                  <h2>你没有权限,需要登陆才能看</h2>
-                  <button onClick={this.props.login}>登陆</button>
-              </div>
-          )
-      }
-  }
 
-  export default Auth
+      export default Auth
 
 
 ## 开发模式
 
-基于cookie用户验证
-  express依赖cookie-parser，需要 npm install cookie-parser --save 安装
-  body-parser插件来管理接收post数据
-    安装 npm install body-parser --save
-  
-页面cookie的管理流浪器会自动处理
-    npm install cookieparser  --save
+    基于cookie用户验证
+      express依赖cookie-parser，需要 npm install cookie-parser --save 安装
+      body-parser插件来管理接收post数据
+        安装 npm install body-parser --save
+      
+    页面cookie的管理流浪器会自动处理
+        npm install cookieparser  --save
 
-md5加密
-    npm install utility --save
+    md5加密
+        npm install utility --save
 
-子组建如何改变父组建的state,父组建将方法(方法内部改变父组建的state)传给子组建 子组件调用该方法
-    子组件对外暴露了一个属性 如果传入的不是一个方法 那么这是有问题的 
-    react给我们提供了prop-types来判断传入的属性类型
-      安装 npm install prop-types --save
-      使用
-        import PropTypes from 'prop-types'
-        class AvatarSelector extends React.Component{
-          static propTypes = {
-              selectAvatar: PropTypes.func.isRequired
-          }
-          constructor(props){
-              super(props)
-              this.state = {}
-          }
-          ......
-        }
-    
-客户端操作cookie
-  npm install browser-cookies --save
+    子组建如何改变父组建的state,父组建将方法(方法内部改变父组建的state)传给子组建 子组件调用该方法
+        子组件对外暴露了一个属性 如果传入的不是一个方法 那么这是有问题的 
+        react给我们提供了prop-types来判断传入的属性类型
+          安装 npm install prop-types --save
+          使用
+            import PropTypes from 'prop-types'
+            class AvatarSelector extends React.Component{
+              static propTypes = {
+                  selectAvatar: PropTypes.func.isRequired
+              }
+              constructor(props){
+                  super(props)
+                  this.state = {}
+              }
+              ......
+            }
+        
+    客户端操作cookie
+      npm install browser-cookies --save
 
 
 ## 高阶组建
 
-  1.函数编程
-    函数可以当参数
-    函数可以当返回值
-      function() hello(){
-        console.log('react') 
-      }
-      function WrapperHello(fn){ //传递的是一个函数，返回另外一个函数 装饰器模式
-        return function(){
-          console.log('before')
-          fn()
-          console.log('after')  
+      1.函数编程
+        函数可以当参数
+        函数可以当返回值
+          function() hello(){
+            console.log('react') 
+          }
+          function WrapperHello(fn){ //传递的是一个函数，返回另外一个函数 装饰器模式
+            return function(){
+              console.log('before')
+              fn()
+              console.log('after')  
+            }
+          }
+          hello=WrapperHello(hello)
+          hello()
+          其实组建本质上是一个函数 传递一个组建返回另一个组建
+      
+      2.传递一个组建返回一个新的组建
+        class Hello extends React.Componet{
+          render(){
+            return <h2>react</h2>
+          }
         }
-      }
-      hello=WrapperHello(hello)
-      hello()
-      其实组建本质上是一个函数 传递一个组建返回另一个组建
-  
-  2.传递一个组建返回一个新的组建
-    class Hello extends React.Componet{
-      render(){
-        return <h2>react</h2>
-      }
-    }
-    function WrapperHello(Component){
-      class WrapperComponent extends React.Component{
-        render(){
-          return (
-            <div>
-              <p>这是高洁组建</p>
-              <Component {...this.props}></Component>
-            </div>
-          )
+        function WrapperHello(Component){
+          class WrapperComponent extends React.Component{
+            render(){
+              return (
+                <div>
+                  <p>这是高洁组建</p>
+                  <Component {...this.props}></Component>
+                </div>
+              )
+            }
+          }
+          return WrapperComponent
         }
-      }
-      return WrapperComponent
-    }
-    Hello = WrapperHello(Hello)
-  
-  3.2的简写形式类似于@connect
-    function WrapperHello(Component){ //把这个看成是从外部引入进来的
-      class WrapperComponent extends React.Component{
-        render(){
-          return (
-            <div>
-              <p>这是高洁组建</p>
-              <Component name='text' {...this.props}></Component> //我们可以加些属性 属性代理
-            </div>
-          )
+        Hello = WrapperHello(Hello)
+      
+      3.2的简写形式类似于@connect
+        function WrapperHello(Component){ //把这个看成是从外部引入进来的
+          class WrapperComponent extends React.Component{
+            render(){
+              return (
+                <div>
+                  <p>这是高洁组建</p>
+                  <Component name='text' {...this.props}></Component> //我们可以加些属性 属性代理
+                </div>
+              )
+            }
+          }
+          return WrapperComponent
         }
-      }
-      return WrapperComponent
-    }
 
-    @WrapperHello
-    class Hello extends React.Componet{
-      render(){
-        return <h2>react</h2>
-      }
-    }
-    以上这个模式叫属性代理
+        @WrapperHello
+        class Hello extends React.Componet{
+          render(){
+            return <h2>react</h2>
+          }
+        }
+        以上这个模式叫属性代理
 
-  4.还有一种叫反向继承
-    不继承React的,而是继承传入的组建 改写他的生命周期 改写他的渲染的流程
-    function WrapperHello(Comp){
-      class WrapperComponent extends Comp{
-        componentDidMount(){
-          console.log('高洁新增的生命周期,加载完成')
+      4.还有一种叫反向继承
+        不继承React的,而是继承传入的组建 改写他的生命周期 改写他的渲染的流程
+        function WrapperHello(Comp){
+          class WrapperComponent extends Comp{
+            componentDidMount(){
+              console.log('高洁新增的生命周期,加载完成')
+            }
+            render(){
+              return <Comp></Comp>
+            }
+          }
+          return WrapperComponent
         }
-        render(){
-          return <Comp></Comp>
-        }
-      }
-      return WrapperComponent
-    }
 
 
 ## socket.io
 
-  基于事件的实施双向通信库
-    基于websocket
-    前后段通过事件进行双向通信
-    配合express，快速开放实施应用
-      npm install socket.io --save
-      io = require('socket.io')(http)
-      io.on监听事件
-      io.emit触发事件
-    前段api
-      npm install socket.io-client --save
-      import io from 'socket.io-client'
-        io.on监听事件
-        io.emit触发事件
-    
-  Ajax和Socket.io的区别
-    Ajax基于http协议,单项,实时获取数据只能轮询
-    socket.io基于websocket双向通信协议,后端可以主动推送数据
-    现代浏览器均支持websocket协议
+      基于事件的实施双向通信库
+        基于websocket
+        前后段通过事件进行双向通信
+        配合express，快速开放实施应用
+          npm install socket.io --save
+          io = require('socket.io')(http)
+          io.on监听事件
+          io.emit触发事件
+        前段api
+          npm install socket.io-client --save
+          import io from 'socket.io-client'
+            io.on监听事件
+            io.emit触发事件
+        
+      Ajax和Socket.io的区别
+        Ajax基于http协议,单项,实时获取数据只能轮询
+        socket.io基于websocket双向通信协议,后端可以主动推送数据
+        现代浏览器均支持websocket协议
 
 
 # emoji表情
-  https://emojipedia.org
+    https://emojipedia.org
 
 # react进阶
 
