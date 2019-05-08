@@ -1607,6 +1607,57 @@ md5加密
           3.对现有的项目入侵太严重
             新项目使用,老项目不使用
     key
+      加和不加性能差别很大的
+      const users = ['hello', 'world', '!!!']
+      <ul>{this.users.map(v=><li key={v}>{v}</li>)}</ul>
   redux性能优化
-  react同构
+    我们的数据从redux里面获取,有些数据是要进行过滤调,但是自己写了很多代码和逻辑这个很不好的
+    使用reselect选择器库，将过滤逻辑写在这个选择器里面使得代码更加的好维护
+    import {createSelector} from 'reselect'
+    //采用了备忘录的设计模式
+    const numSelector = createSelector(
+      state=>state,
+      //第二个参数是第一个参数的返回值
+      num=>({num:num*2}) 
+    )
+    @connect(
+      state=>numSelector(state)
+    )
+    class App extends React.Component{+
+
+    }
+  React服务端渲染SSR
+    传统服务端渲染，JSP,twig,jinja2等 
+      前后端一体
+      浏后端模板+数据=》html给浏览器
+      首屏快,每次获取数据都会刷新页面
+    浏览器渲染 ajax拼接html
+      后端只提供静态资源和接口
+      前段写模板,渲染,MVVM
+      单页应用,页面跳转也不刷新,体验好，首屏慢,SEO
+    前后同构,首屏服务端渲染
+      node在服务端解析首屏模板
+      React支持SSR
+    React同构的Api
+      后RenderToString和RenderToStaticMarkup
+      React16新出的RenderToNodeStream,性能更好
+      React16里,客户端hydrate取代render
+    SSR，build代码后的事情
+      后node使用babel-node配置node里的react环境
+      修改客户端代码,抽离App组件,前后端共享
+      服务端生成DMO结构,渲染,加载build后的css和js
+```
+
+# 整体
+```
+  eslint代码规范
+    在package.json里面自定义自己的代码规范
+    "eslintConfig": {
+      "extends": "react-app"，
+      "rules":{
+        "eqeqeq":["off"],
+        "jsx-ally/accessible-emoji":[0],
+         "semi":["warn","never"]
+      }  
+    }
 ```
