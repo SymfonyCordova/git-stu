@@ -52,4 +52,50 @@
     
     集群之后session共享问题
     session怎么解决发布失效问题
+
+# Http协议
+    http协议:对浏览器客户端和服务端之间数据传输的格式规范
+    B/S模式的同步是请求了会立马有响应
+    B/S模式的异步是请求了不立马有响应 放到消息中间件中 等消费完了再通知给调用者
+    ajax的同步是代码还是从上往下走。   
+    ajax的异步类似多线程一条新的执行路径。默认是异步的
+
+    Http组成部分
+        HttpServletRequest
+            请求行
+                Request URL: https://blog.csdn.net/itmyhome1990/article/details/48765703
+                Request Method: GET
+                Status Code: 200 
+                Remote Address: 127.0.0.1:1080
+                Referrer Policy: origin
+            请求头    
+            请求体
+        HttpServletResponse
+            响应头
+            响应体 --重定向与转发原理
+    抓包分析
+        抓包工具
+    请求重定向
+        response.setStatus(302);response.addHeader("Location","URL");
+        快捷方式：response.sendRedirect("URL");
+    请求转发
+        request.getRequestDispatcher().forward();
+    请求包含
+        request.getRequestDispatcher().include();
+        请求包含的机制可以理解成函数调用，相当于把第二个servlet 中的代码拷到这里来执行。
+    防盗链
+        通过referer信息防盗链
+        String ref = request.getHeader("Referer");
+        String serverName = req.getServerName()
+        //ref == null 浏览器直接访问资源 ref为null
+        //if (ref == null || ref == "" || !ref.startsWith("http://localhost")) {
+        if (ref == null || ref == "" || !ref.contains(serverName)) {
+            response.sendRedirect(request.getContextPath() + "/homePage.html");
+        } else {
+            this.getServletContext().getRequestDispatcher("/WEB-INF/fengjie.html").forward(request, response);
+        }
+    
+    时间戳js图片请求后面会加上一个时间戳,防止浏览器缓存
+        304是读取浏览器缓存内容
+        200是重新请求的
     
