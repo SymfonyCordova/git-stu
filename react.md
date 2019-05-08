@@ -478,314 +478,314 @@
 
 ## Redux代码
 
-import { createStore } from 'redux'
-//1.新建store
-//通过reducer建立
-//根据老的state和action 生成新的state
-function counter(state=0,action){
-  switch(action.type){
-    case '加机关枪':
-      return state + 1
-    case '减机关枪':
-      return state-1
-    default:
-      return 10
-  }
-}
-const store = createStore(counter) 
-
-function listener(){
-  const current = store.getState()
-  console.log(`现在有机枪${current}把`)
-}
-
-store.subscribe(listener) //store.subscribe进行监听变化 store.getState来获取state
-
-//派发事件 传递action
-store.dispatch({type:'加机关枪'}) //每次派遣事件,调用counter函数里面对应的事件，改变state 还会触发listener函数
-store.dispatch({type:'加机关枪'})
-store.dispatch({type:'减机关枪'})
-=================================================================================
-1.index.reudx.js文件: 
-  //Redux相关内容,移动单独的文件index.redux.js单独管理
-  const ADD_GUN = '加机关枪'
-  const REMOVE_GUN = '减机关枪'
-
-  //reducer
-  export function counter(state=0,action){
-    switch(action.type){
-      case ADD_GUN:
-        return state + 1
-      case REMOVE_GUN:
-        return state-1
-      default:
-        return state
+    import { createStore } from 'redux'
+    //1.新建store
+    //通过reducer建立
+    //根据老的state和action 生成新的state
+    function counter(state=0,action){
+      switch(action.type){
+        case '加机关枪':
+          return state + 1
+        case '减机关枪':
+          return state-1
+        default:
+          return 10
+      }
     }
-  }
+    const store = createStore(counter) 
 
-  //action creator
-  export function addGun(){
-    return {type:ADD_GUN}
-  }
-
-  export function removeGun(){
-    return {type:REMOVE_GUN}
-  }
-2.App.js文件:
-  import React from 'react'
-  import {addGun} from './index.redux'
-
-  class App extends React.Component{
-    constructor(props){
-      super(props)
+    function listener(){
+      const current = store.getState()
+      console.log(`现在有机枪${current}把`)
     }
-    render(){
-      const store  = this.props.store
-      const num  = store.getState()
-      return (
-        <div>
-          <h1>现在有机枪{num}把</h1>
-          <button onClick={()=>store.dispatch(addGun())}>申请武器</button> //把store.dispatch方法传递给组件,内部可以调用修改状态
-        </div>
+
+    store.subscribe(listener) //store.subscribe进行监听变化 store.getState来获取state
+
+    //派发事件 传递action
+    store.dispatch({type:'加机关枪'}) //每次派遣事件,调用counter函数里面对应的事件，改变state 还会触发listener函数
+    store.dispatch({type:'加机关枪'})
+    store.dispatch({type:'减机关枪'})
+    =================================================================================
+    1.index.reudx.js文件: 
+      //Redux相关内容,移动单独的文件index.redux.js单独管理
+      const ADD_GUN = '加机关枪'
+      const REMOVE_GUN = '减机关枪'
+
+      //reducer
+      export function counter(state=0,action){
+        switch(action.type){
+          case ADD_GUN:
+            return state + 1
+          case REMOVE_GUN:
+            return state-1
+          default:
+            return state
+        }
+      }
+
+      //action creator
+      export function addGun(){
+        return {type:ADD_GUN}
+      }
+
+      export function removeGun(){
+        return {type:REMOVE_GUN}
+      }
+    2.App.js文件:
+      import React from 'react'
+      import {addGun} from './index.redux'
+
+      class App extends React.Component{
+        constructor(props){
+          super(props)
+        }
+        render(){
+          const store  = this.props.store
+          const num  = store.getState()
+          return (
+            <div>
+              <h1>现在有机枪{num}把</h1>
+              <button onClick={()=>store.dispatch(addGun())}>申请武器</button> //把store.dispatch方法传递给组件,内部可以调用修改状态
+            </div>
+          )
+        }
+      }
+
+      export default App
+
+    3.index.js文件:
+    import React from 'react'
+    import ReactDom from 'react-dom'
+    import App from './App'
+    import { createStore } from 'redux'
+    import { counter } from './index.redux'
+
+    const store = createStore(counter)
+
+    function render(){
+      ReactDom.render(<App store={store}/>,document.getElementById('root')) 
+    }
+    render() //注意第一次的时候也要调要一次 进行初始化
+    store.subscribe(render) //Subscribe订阅render函数,每次修改都重新渲染
+    =========================================================================================
+    1.index.js文件  
+      import React from 'react'
+      import ReactDom from 'react-dom'
+      import App from './App'
+      import { createStore } from 'redux'
+      import { counter,addGun,removeGun } from './index.redux'
+
+      const store = createStore(counter)
+
+      function render(){
+        ReactDom.render(<App store={store} addGun={addGun} removeGun={removeGun}/>,document.getElementById('root')) //组件解藕 
+      }
+      render()
+      store.subscribe(render)
+
+    2.App.js文件
+      import React from 'react'
+
+      class App extends React.Component{
+        constructor(props){
+          super(props)
+        }
+        render(){
+          const store  = this.props.store
+          const num  = store.getState()
+          const addGun = this.props.addGun
+          const removeGun = this.props.removeGun //组件解藕
+          return (
+            <div>
+              <h1>现在有机枪{num}把</h1>
+              <button onClick={()=>store.dispatch(addGun())}>申请武器</button>
+              <button onClick={()=>store.dispatch(removeGun())}>上缴武器</button> //组件解藕
+            </div>
+          )
+        }
+      }
+
+      export default App
+    =========================================================================================
+    1.index.js文件:
+      import React from 'react'
+      import ReactDom from 'react-dom'
+      import App from './App'
+      import { createStore, applyMiddleware } from 'redux' 
+      import thunk from 'redux-thunk'
+      import { counter,addGun,removeGun,addGunAsync } from './index.redux'
+
+      const store = createStore(counter,applyMiddleware(thunk)) //使用applyMiddleware开启thunk中间件
+                                                          //开启过后就可以使用异步
+
+      function render(){
+        ReactDom.render(<App store={store} addGunAsync={addGunAsync} addGun={addGun} removeGun={removeGun}/>,document.getElementById('root')) 
+      }
+      render()
+      store.subscribe(render)
+    2.App.js文件:
+      import React from 'react'
+
+      class App extends React.Component{
+        constructor(props){
+          super(props)
+        }
+        render(){
+          const store  = this.props.store
+          const num  = store.getState()
+          const addGun = this.props.addGun
+          const removeGun = this.props.removeGun
+          const addGunAsync = this.props.addGunAsync
+          return (
+            <div>
+              <h1>现在有机枪{num}把</h1>
+              <button onClick={()=>store.dispatch(addGun())}>申请武器</button>
+              <button onClick={()=>store.dispatch(removeGun())}>上缴武器</button>
+              <button onClick={()=>store.dispatch(addGunAsync())}>托两天再给</button>
+            </div>
+          )
+        }
+      }
+
+      export default App
+    3.index.redux.js文件
+      const ADD_GUN = '加机关枪'
+      const REMOVE_GUN = '减机关枪'
+
+      //reducer
+      export function counter(state=0,action){
+        switch(action.type){
+          case ADD_GUN:
+            return state + 1
+          case REMOVE_GUN:
+            return state-1
+          default:
+            return state
+        }
+      }
+
+      //action creator
+      export function addGun(){
+        return {type:ADD_GUN}
+      }
+
+      export function removeGun(){//没开启thunk中间件,只能返回action对象
+        return {type:REMOVE_GUN}
+      }
+
+      export function addGunAsync(){ //开启thunk中间件，那么Action可以返回函数,使用dispatch提交action
+        return dispatch=>{ //这里面会传入store.dispatch
+          setTimeout(()=>{
+            dispatch(addGun())
+          },2000)
+        }
+      }
+    =================================================================================================
+    1.index.js文件
+      import React from 'react'
+      import ReactDom from 'react-dom'
+      import App from './App'
+      import { createStore, applyMiddleware, compose } from 'redux' 
+      import thunk from 'redux-thunk'
+      import { counter,addGun,removeGun,addGunAsync } from './index.redux'
+
+      const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+      //新建store的时候判断window.devToolsExtension
+
+      const store = createStore(counter,compose( //使用compose结合thunk和window.devToolsExtension
+        applyMiddleware(thunk), 
+        reduxDevtools
+      ))
+
+      function render(){
+        ReactDom.render(<App store={store} addGunAsync={addGunAsync} addGun={addGun} removeGun={removeGun}/>,document.getElementById('root')) 
+      }
+      render()
+      store.subscribe(render)
+    ==================================================================================
+    1.index.js文件:  
+      import React from 'react'
+      import ReactDom from 'react-dom'
+      import App from './App'
+      import { createStore, applyMiddleware, compose } from 'redux'
+      import thunk from 'redux-thunk'
+      import { counter } from './index.redux'
+      import { Provider } from 'react-redux'
+
+      const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+
+      const store = createStore(counter,compose(
+        applyMiddleware(thunk),
+        reduxDevtools
+      ))
+
+
+      ReactDom.render(
+        (<Provider store={store}> //Provider组件在应用最外层,传入store即可,只用一次
+          <App/>
+        </Provider>),
+        document.getElementById('root')
       )
-    }
-  }
 
-  export default App
+    2.App.js文件:
+      import React from 'react'
+      import { connect } from 'react-redux'
+      import {addGunAsync,addGun,removeGun} from './index.redux' 
 
-3.index.js文件:
-import React from 'react'
-import ReactDom from 'react-dom'
-import App from './App'
-import { createStore } from 'redux'
-import { counter } from './index.redux'
+      class App extends React.Component{
+        render(){
+          return (
+            <div>
+              <h1>现在有机枪{this.props.num}把</h1>
+              <button onClick={this.props.addGun}>申请武器</button>
+              <button onClick={this.props.removeGun}>上缴武器</button>
+              <button onClick={this.props.addGunAsync}>托两天再给</button>
+            </div>
+          )
+        }
+      }
 
-const store = createStore(counter)
+      const mapStateProps = (state)=>{
+        return {num:state}
+      }
+      const actionCreators = {addGunAsync,addGun,removeGun}
+      //装饰器设计模式 装饰返回新的组件了
 
-function render(){
-  ReactDom.render(<App store={store}/>,document.getElementById('root')) 
-}
-render() //注意第一次的时候也要调要一次 进行初始化
-store.subscribe(render) //Subscribe订阅render函数,每次修改都重新渲染
-=========================================================================================
-1.index.js文件  
-  import React from 'react'
-  import ReactDom from 'react-dom'
-  import App from './App'
-  import { createStore } from 'redux'
-  import { counter,addGun,removeGun } from './index.redux'
-
-  const store = createStore(counter)
-
-  function render(){
-    ReactDom.render(<App store={store} addGun={addGun} removeGun={removeGun}/>,document.getElementById('root')) //组件解藕 
-  }
-  render()
-  store.subscribe(render)
-
-2.App.js文件
-  import React from 'react'
-
-  class App extends React.Component{
-    constructor(props){
-      super(props)
-    }
-    render(){
-      const store  = this.props.store
-      const num  = store.getState()
-      const addGun = this.props.addGun
-      const removeGun = this.props.removeGun //组件解藕
-      return (
-        <div>
-          <h1>现在有机枪{num}把</h1>
-          <button onClick={()=>store.dispatch(addGun())}>申请武器</button>
-          <button onClick={()=>store.dispatch(removeGun())}>上缴武器</button> //组件解藕
-        </div>
-      )
-    }
-  }
-
-  export default App
-=========================================================================================
-1.index.js文件:
-  import React from 'react'
-  import ReactDom from 'react-dom'
-  import App from './App'
-  import { createStore, applyMiddleware } from 'redux' 
-  import thunk from 'redux-thunk'
-  import { counter,addGun,removeGun,addGunAsync } from './index.redux'
-
-  const store = createStore(counter,applyMiddleware(thunk)) //使用applyMiddleware开启thunk中间件
-                                                      //开启过后就可以使用异步
-
-  function render(){
-    ReactDom.render(<App store={store} addGunAsync={addGunAsync} addGun={addGun} removeGun={removeGun}/>,document.getElementById('root')) 
-  }
-  render()
-  store.subscribe(render)
-2.App.js文件:
-  import React from 'react'
-
-  class App extends React.Component{
-    constructor(props){
-      super(props)
-    }
-    render(){
-      const store  = this.props.store
-      const num  = store.getState()
-      const addGun = this.props.addGun
-      const removeGun = this.props.removeGun
-      const addGunAsync = this.props.addGunAsync
-      return (
-        <div>
-          <h1>现在有机枪{num}把</h1>
-          <button onClick={()=>store.dispatch(addGun())}>申请武器</button>
-          <button onClick={()=>store.dispatch(removeGun())}>上缴武器</button>
-          <button onClick={()=>store.dispatch(addGunAsync())}>托两天再给</button>
-        </div>
-      )
-    }
-  }
-
-  export default App
-3.index.redux.js文件
-  const ADD_GUN = '加机关枪'
-  const REMOVE_GUN = '减机关枪'
-
-  //reducer
-  export function counter(state=0,action){
-    switch(action.type){
-      case ADD_GUN:
-        return state + 1
-      case REMOVE_GUN:
-        return state-1
-      default:
-        return state
-    }
-  }
-
-  //action creator
-  export function addGun(){
-    return {type:ADD_GUN}
-  }
-
-  export function removeGun(){//没开启thunk中间件,只能返回action对象
-    return {type:REMOVE_GUN}
-  }
-
-  export function addGunAsync(){ //开启thunk中间件，那么Action可以返回函数,使用dispatch提交action
-    return dispatch=>{ //这里面会传入store.dispatch
-      setTimeout(()=>{
-        dispatch(addGun())
-      },2000)
-    }
-  }
-=================================================================================================
-1.index.js文件
-  import React from 'react'
-  import ReactDom from 'react-dom'
-  import App from './App'
-  import { createStore, applyMiddleware, compose } from 'redux' 
-  import thunk from 'redux-thunk'
-  import { counter,addGun,removeGun,addGunAsync } from './index.redux'
-
-  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-  //新建store的时候判断window.devToolsExtension
-
-  const store = createStore(counter,compose( //使用compose结合thunk和window.devToolsExtension
-    applyMiddleware(thunk), 
-    reduxDevtools
-  ))
-
-  function render(){
-    ReactDom.render(<App store={store} addGunAsync={addGunAsync} addGun={addGun} removeGun={removeGun}/>,document.getElementById('root')) 
-  }
-  render()
-  store.subscribe(render)
-==================================================================================
-1.index.js文件:  
-  import React from 'react'
-  import ReactDom from 'react-dom'
-  import App from './App'
-  import { createStore, applyMiddleware, compose } from 'redux'
-  import thunk from 'redux-thunk'
-  import { counter } from './index.redux'
-  import { Provider } from 'react-redux'
-
-  const reduxDevtools = window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
-
-  const store = createStore(counter,compose(
-    applyMiddleware(thunk),
-    reduxDevtools
-  ))
+      App = connect(mapStateProps,actionCreators)(App) //Connect负责从外部获取组件需要的参数
+      export default App
+    ======================================================================================
+    App.js文件:
+      import React from 'react'
+      import { connect } from 'react-redux'
+      import {addGunAsync,addGun,removeGun} from './index.redux'
 
 
-  ReactDom.render(
-    (<Provider store={store}> //Provider组件在应用最外层,传入store即可,只用一次
-      <App/>
-    </Provider>),
-    document.getElementById('root')
-  )
+      // const mapStateProps = (state)=>{
+      //  return {num:state}
+      // }
+      //const actionCreators = {addGunAsync,addGun,removeGun}
 
-2.App.js文件:
-  import React from 'react'
-  import { connect } from 'react-redux'
-  import {addGunAsync,addGun,removeGun} from './index.redux' 
+      //App = connect(mapStateProps,actionCreators)(App)
+      @connect(//Connect可以用装饰器的方式来写
+        //你要什么属性放到props里面
+        state=>({num:state}),
+        //你要什么方法,放到props里,会自动dispatch
+        {addGunAsync,addGun,removeGun}
+      ) 
+      class App extends React.Component{
+        render(){
+          return (
+            <div>
+              <h1>现在有机枪{this.props.num}把</h1>
+              <button onClick={this.props.addGun}>申请武器</button>
+              <button onClick={this.props.removeGun}>上缴武器</button>
+              <button onClick={this.props.addGunAsync}>托两天再给</button>
+            </div>
+          )
+        }
+      }
 
-  class App extends React.Component{
-    render(){
-      return (
-        <div>
-          <h1>现在有机枪{this.props.num}把</h1>
-          <button onClick={this.props.addGun}>申请武器</button>
-          <button onClick={this.props.removeGun}>上缴武器</button>
-          <button onClick={this.props.addGunAsync}>托两天再给</button>
-        </div>
-      )
-    }
-  }
-
-  const mapStateProps = (state)=>{
-    return {num:state}
-  }
-  const actionCreators = {addGunAsync,addGun,removeGun}
-  //装饰器设计模式 装饰返回新的组件了
-
-  App = connect(mapStateProps,actionCreators)(App) //Connect负责从外部获取组件需要的参数
-  export default App
-======================================================================================
-App.js文件:
-  import React from 'react'
-  import { connect } from 'react-redux'
-  import {addGunAsync,addGun,removeGun} from './index.redux'
-
-
-  // const mapStateProps = (state)=>{
-  //  return {num:state}
-  // }
-  //const actionCreators = {addGunAsync,addGun,removeGun}
-
-  //App = connect(mapStateProps,actionCreators)(App)
-  @connect(//Connect可以用装饰器的方式来写
-    //你要什么属性放到props里面
-    state=>({num:state}),
-    //你要什么方法,放到props里,会自动dispatch
-    {addGunAsync,addGun,removeGun}
-  ) 
-  class App extends React.Component{
-    render(){
-      return (
-        <div>
-          <h1>现在有机枪{this.props.num}把</h1>
-          <button onClick={this.props.addGun}>申请武器</button>
-          <button onClick={this.props.removeGun}>上缴武器</button>
-          <button onClick={this.props.addGunAsync}>托两天再给</button>
-        </div>
-      )
-    }
-  }
-
-  export default App
+      export default App
 
 
 ## React-router4
