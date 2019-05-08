@@ -1425,26 +1425,128 @@
         2.了解业务模式
             接口业务类型,系统层次化结构
         3.性能与安全
-            start 5-10
+
     ab压测工具
+        httpd-tools
+        ab -n 2000 -c 2 https://127.0.0.1/
+        -n 总的请求数
+        -c 并发数
+        -k 是否开启长链接
+
     系统与Nginx性能优化
-    文件句柄设置
-    CPU亲和配置
-    Nginx通用配置优化
+        网络 系统 服务 程序 数据库,底层服务 
+        
+        文件句柄设置
+            用户每发送一次请求就会产生一个文件描述符(默认系统是1024)
+            设置方式
+                系统全局性修改,用户局部性修改,进程局部性修改
+                linux系统下面的/etc/security/limits.conf配置文件描述符号
+                vim 修改
+                    root soft nofile 65535 //系统全局性
+                    root hard nofile 65535
+                    *    soft nofile 25535 //用户局部性
+                    *    hard nofile 25535
+                针对nginx工作进程进行文件描述符限制
+                例子
+                    ...
+                    worker_rlimit_nofile 65535; //进程局部性
+                    ...
+                    http{
+                        ...
+                    }
+        CPU亲和配置
+            nginx工作进程通常不会在处理器之间频繁迁移，进程迁移的频率小,减少性能损耗
+            linux /proc/cpuinfo 记录了CPU的型号,CPU的核数
+            当前的物理CPU个数 cat /proc/cpuinfo | grep "physical id" |sort|uniq|wc -l
+            每个CPU的核数 cat /proc/cpuinfo | grep "cpu cores" |uniq
+            top 再按键盘的1查看CPU的核数
+            例子：
+                worker_processes 16; //官方建议配置和核数一样
+                #worker_cpu_affinity 1010101010101010 0101010101010101;
+                #worker_cpu_affinity 0000000000000001 0000000000000010 ， 0000000000000110 ...以此类推 一共16个;
+                worker_cpu_affinity auto;//上面的设置太繁琐了,使用auto这样自动就设置好了,这样很方便我们使用
+                http{
+                    ...
+                }
+                配置完成使用以下命令查看nginx worker进程对应使用的是哪一个CPU
+                ps -eo,pid,args,psr | grep [n]ginx 
+        
+        Nginx通用配置优化
+            user nginx;
+            worker_processes 16;
+            worker_cpu_affinity auto;
+
+            error_log /var/log/nginx/error.log warn;
+            pid /var/run/nginx.pid;
+
+            worker_rlimit_nofile 35535;
+
+            events {
+                use epoll;
+                worker_connections 10240;
+            }
+
+            http {
+                include /etc/nginx/mime.types;
+                default_type application/octet-stream;
+                charset utf-8;
+
+                log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                            '$status $body_bytes_sent "$http_referer" '
+                            '"$http_user_agent" "$http_x_forwarded_for" "$request_uri"';
+
+                access_log /var/log/nginx/access.log main;
+
+                sendfile on;
+                #tcp_nopush on;
+                #tcp_nodeny on;
+                keepalive_timeout 65;
+
+                gzip on;
+                gzip_disable "MSIE [1-6]\.";
+                gzip_http_version 1.1;
+
+                include /etc/nginx/conf.d/*.conf;
+            }
 
 ## Nginx安全
     基于Nginx的安全章节内容介绍
-    恶意行为控制手段
-    攻击手段之暴力破解
-    文件上传漏洞
-    SQL注入
+        1.常见的恶意行为
+            爬虫行为和恶意抓取,资源盗用
+                基础防盗链功能-目的不让恶意用户能轻易的爬取网站对外数据
+                secure_link_moudle-对数据安全性提高加密验证和失效性,适合如核心重要数据
+                access_moudle-对后台,部分数据服务的数据提供基于IP防护
+        2.常见的应用层攻击手段
+            后台密码撞库-通过猜测密码字典不断对后台系统登陆性尝试,获取后台登陆密码
+                方法1:后台登陆密码复杂度
+                方法2:access_moudle-对后台提供IP防控 
+                    后台是给公司使用的可以固定在某个,某几个IP过来访问
+                方法3:预警机制
+                    如果有一个地址频繁访问服务器,有没有做任何操作,可以做一个通知预警的系统
+            文件上传漏洞-利用这些可以上传的接口将恶意代码植入到服务器中,再通过url去访问以执行代码
+                http://www.zler.com/upload/1.jpg/1.php
+                Nginx将1.jpg作为php代码执行
+                location ^~ /upload {
+                    root /opt/app/images;
+                    if($request_filename ~*(.*)\.php){
+                        return 403;
+                    }
+                }
+            SQL注入-利用未过滤/未审核用户输入的攻击方法,让应用运行本不应该运行的SQL代码
+        3.Nginx防攻击策略
+
+    start-5.24
+    
+    
     SQL注入场景说明
-## Nginx安全_场景准备mariadb和lnmp环境
-## Nginx安全_模拟SQL注入场景
-## Nginx安全_Nginx+LUA防火墙功能
-## Nginx安全_Nginx+LUA防火墙防sql注入场景演示
-## Nginx安全_复杂的访问攻击中CC攻击方式
-## Nginx安全_Nginx版本更新和本身漏洞
-## Nginx架构总结_静态资源服务的功能设计
-## Nginx架构总结_Nginx作为代理服务的需求
-## Nginx架构总结_需求设计评估
+    场景准备mariadb和lnmp环境
+    模拟SQL注入场景
+    Nginx+LUA防火墙功能
+    Nginx+LUA防火墙防sql注入场景演示
+    复杂的访问攻击中CC攻击方式
+    Nginx版本更新和本身漏洞
+
+## Nginx架构总结
+    静态资源服务的功能设计
+    Nginx作为代理服务的需求
+    需求设计评估
