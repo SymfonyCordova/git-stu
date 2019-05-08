@@ -13,7 +13,7 @@
   扩展package.json里的script字段,扩展npm run 命令
 
 ## es6
-```
+
   es6是什么
   es6新语法讲解，作用域，字符串,函数
   常用的es6代码片段
@@ -172,10 +172,10 @@
      const [head,...tail] = [1,2,3]
      const [last,...initial] = [1,2,3].reverse()
            
-```
+
 
 ## Express+mongodb
-```
+
 Express+mongodb开放web后台接口
   Express开放web接口
   非关系型数据库mongodb
@@ -220,7 +220,7 @@ mongodb
   mongodb独立工具函数
   express使用body-parser支持post参数
   使用cookie-parser存储登陆信息cookie
-```
+
 
 ## react基础知识
 
@@ -293,10 +293,10 @@ mongodb
       Layout布局组件
       表单组件,数据显示组件,选择器等等
       操作组件
-```
+
 
 ## react基础知识代码
-```
+
 import React from 'react'
 
 class App extends React.Component{
@@ -414,10 +414,10 @@ class 一营 extends React.Component{
     )
   }
 }
-```
+
 
 ## Redux
-```
+
   1.Redux专注于状态管理,和react解耦
     单一状态,单向数据流
     核心概念:store,state,action,reducer
@@ -477,10 +477,10 @@ class 一营 extends React.Component{
             ]
           }
 
-```
+
 
 ## Redux代码
-```
+
 import { createStore } from 'redux'
 //1.新建store
 //通过reducer建立
@@ -789,10 +789,10 @@ App.js文件:
   }
 
   export default App
-```
+
 
 ## React-router4
-```
+
 React开发单页面应用必备,践行路由组件的概念
 核心概念:动态路由,Route，Link，Switch
 
@@ -825,10 +825,10 @@ Router4使用react-router-dom作为流浪器的路由
 
 react-router与redux组合
   复杂redux应用,多个reducer，用combineReducers合并
-```
+
 
 ## React-router4 代码
-```
+
 index.js文件:
   import React from 'react'
   import ReactDom from 'react-dom'
@@ -1039,7 +1039,7 @@ index.js文件:
   }
 
   export default Dashboard
-```
+
 ## 前后台联调
     如何发送,端口不一致,使用proxy配置转发
     axios拦截器,统一loading处理
@@ -1054,7 +1054,7 @@ index.js文件:
     axios.interceptors设置拦截器,比如全局的loading
 
 ## 前后台联调代码
-```
+
 config.js文件下
   import axios from 'axios'
   import { Toast } from 'antd-mobile'
@@ -1190,10 +1190,10 @@ Auth.js文件
   }
 
   export default Auth
-```
+
 
 ## 开发模式
-```
+
 基于cookie用户验证
   express依赖cookie-parser，需要 npm install cookie-parser --save 安装
   body-parser插件来管理接收post数据
@@ -1224,10 +1224,10 @@ md5加密
     
 客户端操作cookie
   npm install browser-cookies --save
-```
+
 
 ## 高阶组建
-```
+
   1.函数编程
     函数可以当参数
     函数可以当返回值
@@ -1302,10 +1302,10 @@ md5加密
       }
       return WrapperComponent
     }
-```
+
 
 ## socket.io
-```
+
   基于事件的实施双向通信库
     基于websocket
     前后段通过事件进行双向通信
@@ -1324,13 +1324,13 @@ md5加密
     Ajax基于http协议,单项,实时获取数据只能轮询
     socket.io基于websocket双向通信协议,后端可以主动推送数据
     现代浏览器均支持websocket协议
-```
+
 
 # emoji表情
   https://emojipedia.org
 
 # react进阶
-```
+
   jquery
     $('#test').find('img') //性能好一些的
     $('#test img')
@@ -1540,10 +1540,10 @@ md5加密
     redux: createStore bindActionCreators applyMiddleware compose
     react-redux: Provider connect
     react-thunk: thunk arrayThunk
-```
+
 
 # 代码优化和进阶
-```
+
   react组件性能优化
     单个组件属性传递优化
       1.不要在组件上面加入对象，因为每一次都会生成新的对象传递，最好放在构造方法里面的this或者this.state,this.state不要展开到组件上
@@ -1645,10 +1645,10 @@ md5加密
       后node使用babel-node配置node里的react环境
       修改客户端代码,抽离App组件,前后端共享
       服务端生成DMO结构,渲染,加载build后的css和js
-```
+
 
 # 整体
-```
+
   eslint代码规范
     在package.json里面自定义自己的代码规范
     "eslintConfig": {
@@ -1659,4 +1659,4 @@ md5加密
          "semi":["warn","never"]
       }  
     }
-```
+    
