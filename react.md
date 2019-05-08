@@ -267,7 +267,7 @@
           都会导致重新加载 场景就是在ajax请求时可以放在这个进行判断 过滤 修改等等操作
         组件卸载生命周期 
         (看图 这个生命周期图是很重要)
-  ![image](https://github.com/SymfonyCordova/git-stu/tree/master/img/react生命周期.jpeg)
+![image](https://github.com/SymfonyCordova/git-stu/tree/master/img/react生命周期.jpeg)
     
     React调试工具 
       安装chrome插件
