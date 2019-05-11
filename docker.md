@@ -30,10 +30,10 @@
 
     docker commit -m 'fun' 177add7bbc58c nginx-fun
         docker运行都是临时的 用此命令是将修改后的内容 创建了一个新的容器 新容器的名字是nginx-fun
-        保存改动为新的景象
+        保存改动为新的镜像
 
     docker rmi 99sdsdadd7bbc58c (景象id)
-        删除一个景象
+        删除一个镜像
     
     docker rm asd8834732 23783434(容器的id)
         删除一个已经结束的容器
@@ -313,3 +313,35 @@
     -v /home/zler/桌面/docker/mysql/conf:/etc/mysql/conf.d \
     -v /home/zler/桌面/docker/mysql/data:/var/lib/mysql \
     -e MYSQL_ROOT_PASSWORD=root mysql:5.6
+
+## docker 安装nginx+php-fpm+composer+mysql
+    docker pull php:7.3.5-fpm
+    sudo docker run --name myphp -v /home/zler/桌面/docker/php-composer/www:/var/www/html --privileged=true -d php:7.3.5-fpm
+
+    在nginx配置虚拟主机
+        server {
+            listen 80;
+            server_name localhost;
+
+            root /usr/share/nginx/html;
+
+            location / {
+                index  index.html index.php;
+            }
+
+            location ~ \.php$ {
+                fastcgi_pass   172.17.0.4:9000;
+                fastcgi_index  index.php;
+                #这个www目录是php-fpm容器中的www目录
+                fastcgi_param  SCRIPT_FILENAME  /var/www/html/$fastcgi_script_name; 
+                include        fastcgi_params;
+            }
+
+            error_page 500 502 503 504 404 /50x.html;
+            location = /50x.html {
+            }
+        }
+
+    docker pull composer
+        运行composer容器和运行php或者nginx容器不同，它不需要后台运行，而是使用命令行交互模式，即不使用-d，使用-it。同时composer是在PHP项目跟目录运行，所以也需要挂载/docker/www目录
+        docker run -it --name composer -v /home/zler/桌面/docker/php-composer/www:/app --privileged=true composer composer create-project --prefer-dist laravel/laravel blog "5.5.*"  -vvv
