@@ -15,3 +15,8 @@
     android list sdk --all
     android update sdk -u --all --filter 1,2,3,5,11,12,22,23,24,25,26,27,28,29,88,89  
 
+    sudo npm install -g cordova
+    cordova com.zler
+    cd com.zler
+    cordova platform add ios
+    cordova platform add android
