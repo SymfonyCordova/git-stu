@@ -1656,3 +1656,73 @@
           "semi":["warn","never"]
         }  
       }
+    
+    async+await优化异步代码
+      export function readMsg(from){
+        return async (dispatch, getState)=>{
+          const res = await axios.post('/user/readmsg',{from})
+          const userid = getState().user._id
+          if(res.status===200 && res.data.code===0){
+            dispatch(msgRead({userid, from, num:res.data.num}))
+          }
+        }
+      }
+
+    ant motion做react动画
+      1.css动画 vs javascript动画
+      2.ReactCSSTransitionGroup
+      3.ant motion
+        npm install rc-queue-anim --save
+        网站 https://motion.ant.design/
+    
+    打包编译
+      npm run build
+      编译打包后,生成build目录
+      express中间件,拦截路由,手动渲染index.html
+      build设置为静态资源地址
+      const path = require('path')
+      app.use(function(req, res, next){
+          if(req.url.startsWith('user')||req.url.startsWith('/static/')){
+              return next()
+          }
+          return res.sendFile(path.resolve('build/index.html'))
+      })
+      app.use('/', express.static(path.resolve('build')))
+
+      购买域名
+      DNS解析到你的服务器ip
+      安装nginx 配置反向代理
+      使用pm2管理node进程
+
+      编译为静态的 在package.json里面配置 "homepage":"."
+    
+    React服务端渲染SSR实战
+      node环境使用babel-node支持jsx 让node环境支持es6的写法
+      npm install babel-cli --save
+      package.json
+         "scripts": {
+          "start": "node scripts/start.js",
+          "build": "node scripts/build.js",
+          "test": "node scripts/test.js",
+          "server_bak": "nodemon server/server.js",
+          "server": "NODE_ENV=test nodemon --exec babel-node server/server.js"
+        }
+    
+    服务端渲染renderToString
+      服务端把组件编译好,发给客户端就不需要客户端通过js来渲染组件
+      在服务器端
+        import {renderToString} from 'react-dom/server'
+        function App(){
+          return (
+            <div>
+              <h1>server render app</h1>
+            </div>
+          )
+        }
+        app.use(function(req, res, next){
+          if(req.url.startsWith('user')||req.url.startsWith('/static/')){
+              return next()
+          }
+          htmlRes = renderToString(<App></App>)
+          return res.send(htmlRes)
+        })
