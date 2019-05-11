@@ -1,3 +1,40 @@
+# linux介绍
+    linux---堡垒机(公司)---跳转机
+    linux安全 开源 免费 可靠
+    并发量支持比windows好
+    windows---比尔盖茨开发的
+    linux内核---Linus Torvalds
+
+# linux目录
+    bin 存放二进制可执行文件
+    sbin 存放二进制可执行文件,只有root才能访问
+    etc 存放系统配置文件
+    usr 用于存放共享的系统资源
+    home 存放用户文件的根目录
+    root 超级用户目录
+    dev 用于存放设备文件
+    lib 存放跟文件系统程序运行所需要的共享库
+    mnt 系统管理员安装临时文件系统的安装点
+    boot 存放用于系统引导时使用的各种文件
+    tmp 用于存放各种临时文件
+    var 用于存放运行时需要改变数据的文件
+
+# rpm 和 yum
+    windwos控制面板 添加/卸载程序
+    进行程序的安装,更新,卸载,查看
+    Setup.exe 
+
+    rpm命令:相当于windows的添加/卸载程序
+    进行程序的安装、更新、卸载、查看
+
+    程序安装: rpm -ivh 程序名
+    程序查看: rpm -qa
+    程序卸载: rpm -e --nodeps 程序名
+
+    yum命令:相当于可以联网的rpm命令
+    相当于先联网下载程序安装包、程序的更新包
+    自动执行rpm命令
+
 # ubuntu .deb包安装方法
     dpkg -i package.deb 	    安装包
     dpkg -r package 	        删除包
