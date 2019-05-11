@@ -99,3 +99,81 @@
         304是读取浏览器缓存内容
         200是重新请求的
     
+    http和https的区别
+        https ssl+证书传输--非对称加密,证书加密 缺点:效率低,安全非常高
+        http 不安全 抓包工具
+
+        抓包工具作用:通过宽带连接,都可以通过抓包分析请求
+        1.笔记本上创建一个wif
+        2.手机链接wif
+        3.fiddler抓包工具可以分析请求
+        4.不要轻易链接分析
+
+        post请求 浏览器看不到提交参数 抓包可以分析到这个参数
+        移动app接口注册密码都需要加密传输
+        电商架构 要求: https，微信开发,ios自带浏览器http没有任何证书,无法访问
+    软件模拟请求postman
+    java模拟请求httpclient
+
+# 长连接和短连接
+    http1.0 属于短连接
+    http1.1 保留短连接,新增长连接 默认长连接 响应头:Connection:keep-alive
+    短连接
+        建立连接(三次握手)->数据传输->关闭连接(四次挥手)
+    长连接
+        建立连接(三次握手)->数据传输->保持连接->数据传输->关闭
+        效率高
+    http1.1长连接什么时候关闭
+        1.配置失效时间 它是有心跳检测时间 客户端没有一直发送数据 直接关闭
+        2.客户端主动关闭
+        3.tomcat服务器 配置长连接超时配置时间 20分钟
+    长连接与端连接场景
+        长连接:默认网站长连接，rpc远程调用 dubbo netty 移动APP消息推送 长连接心跳检测
+        短连接:调用别人的接口,如果不是特别频繁,基本上都是短连接 响应头设置Connection:keep-alive timeout短连接
+
+# 跨域实战解决方案
+    什么是跨域:跨域其实是浏览器安全机制,请求的域名与ajax请求地址不一致 浏览器会直接无法访问浏览器
+    解决办法:
+        1.jsonp支持get请求不支持post请求
+        2.使用接口网关---nginx,springcloud zull---互联网公司使用这个
+        3.httpclient内部转发,前段转发proxy
+            请求了两次,效率低,就不能存在跨域问题
+            安全，抓包分析不到
+        4.添加header请求允许访问
+            String userName = request.getParameter("userName");
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("userName", userName);
+            response.getWriter().println(jsonObject.toJSONString());
+            //允许浏览器跨域
+            response.setHeader("Access-Control-Allow-Origin", "*");
+
+# 表单重复提交和防止模拟Http请求
+    网络延迟,刷新,点击后退,回退----解决办法使用token令牌
+        uuid创建token
+        将token放入到session中,在分布式场景中最好是存放到redis里面
+        表单隐藏域中存放
+        提交时进行验证 
+    如何防止模拟Http请求
+        使用令牌--好处唯一性 只能有一次请求
+        web安全知识点:使用令牌解决模拟请求
+        我现在把这个token的生存方式知道,还是能被模拟的,怎么解决？
+            这个时候使用验证码去当着别人的请求
+            因为模拟请求识别验证码是非常难得
+            token+验证码
+
+# XSS攻击
+    SQL注入
+    XSS攻击 脚本注入
+    CSRF(模拟请求) 开多线程给一个系统注册,一下子你的网站就数据满了 token+验证码解决
+
+    XSS提交(Web前段提交) (注入跳转的js脚本 钓鱼网站)
+        向表单提交js代码 执行脚本 脚本注入
+        转义方式
+    解决办法
+        写一个过滤器 拦截所有请求后
+        重写获取值的方法,将特定字符转成html
+        StringEscapeUtils.escapeHtml4(value)
+    DOS---压力测试 把你的网站流量耗尽,你的网站就很卡
+        CC攻击是DDOS（分布式拒绝服务）的一种
+
+
