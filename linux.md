@@ -65,3 +65,6 @@
     到chrome下载安装包安装
     chrome://version/查看配置信息
     google-chrome --proxy-server="socks5://127.0.0.1:1080"
+
+## 常用命令
+    
