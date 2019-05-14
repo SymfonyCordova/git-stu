@@ -176,4 +176,171 @@
     DOS---压力测试 把你的网站流量耗尽,你的网站就很卡
         CC攻击是DDOS（分布式拒绝服务）的一种
 
+## mysql的优化
+    小说明
+        读写分离--MyChar
+        分组having
+        存储过程，触发器，函数
+        
+    mysql如何实现优化
+        1.数据库设计要合理(3F)
+            较少冗余量
+            三范式
+                1F:原子约束(每列不可再分)
+                    是否保证原子性(看具体业务需求)
+                2F:保证唯一(主键唯一,uuid唯一)
+                    比如订单表的订单号要唯一约束 
+                    怎么保证订单号不被重复生成?
+                    怎么保证订单号的幂等性?
+                        一般将订单号提前生成好,存放到redis中,需要的时候直接从redis中取出    
+                3F:不要有冗余数据
+                不一定要完全遵循这个三范式的
+                    统计一个总数的时候需要到明细表sum的时候,这个时候查询很慢的
+                    在表头上方一个字段每次更新这个总数查询起来很快
+        2.什么是慢查询【核心】
+            mysql默认10s内没有响应SQL结果则为慢查询
+            使用show status查看mysql服务器状态信息
+            常用的命令
+                show status like 'uptime';
+                    mysql数据库启动了多少时间
+                show status like 'com_select' show status like 'com_insert' ...
+                    类似于update delete显示数据库的查询,更新,添加,删除的次数
+                show [session|global] status like ...
+                    [session|global]默认是session会话
+                    指取出当前窗口的执行,如果你想看所有(从mysql启动到现在,则应该global)
+                show status like 'connections'
+                    显示到mysql数据库的连接数
+                show status like 'slow_queries';
+                    显示慢查询次数
+            如何修改慢查询的默认时间
+                show variables like 'long_query_time';
+                    查询慢查询时间
+                set long_query_time=1;
+                    修改慢查询时间
+                    但是重启mysql之后,long_query_time依然是my.ini中的值
+            怎么定位慢查询
+                在默认情况下,我们的mysql不会记录慢查询,需要在启动mysql时候,指定记录慢查询才可以
+                mysqld --safe-mode --show-query-log [mysql5.5可以在my.ini指定]
+                    以安全模式启动,数据库将操作写入日志,以备恢复
+                mysqld -log-show-queries=d:/abc.log [低版本mysql5.0可以在my.ini指定]
+                    先关闭mysql再启动,如果启动了慢查询日志,默认把这个文件放在
+                    my.ini文件中记录的位置
+                    datadir="c:/ProgramData/MySQL/MySQL Server5.5/Data/"
 
+        3.添加索引(普通索引,主键索引,唯一索引,全文索引)【核心】
+            不加索引叫全表扫描
+            索引实现原理--B-Tree树 折半查找 二分查找
+                会生成索引文件,将索引以B-Tree树的数据结果存储,找起来效率非常高
+                B-Tree:能找2的N次方次
+            索引有优点:提高查询速度
+            索引有缺点:增加,删除,索引文件也需要更新的,所以更新操作有时候效率很低,占内存,占资源
+            索引的分类
+                主键索引(primary key)
+                    alter table 表名 add primary key (id);
+                    alter table 表名 drop primary key;
+                唯一索引(unique)
+                    可以有多个null,但是有具体内容时,则不能重复
+                    不允许' '
+                普通索引(index)
+                    create index 索引名 on 表名 (列名1，列名2,...);
+                联合索引(联合主键),
+                组合索引
+                    alter table 表名 add index my_ind (dname,inc);
+                    explain select * from bb where dname = 'aaa'；//会使用组合索引查找
+                    explain select * from bb where inc = 'aaa';//不会使用组合索引查找
+                    explain select * from bb where dname = 'aaa' and inc = 'aaa'；//会使用组合索引查找
+                全文索引
+                    fulltext(title,body)
+                    explain select * from articles where title like '%aaa%';
+                    explain select * from articles where match(title,body) against('aaa')
+                    企业一般不会采用全文索引
+                    企业一般使用第三方搜索引擎 slor es
+            mysql执行计划
+                怎么知道语句正在使用什么索引呢?
+                在语句之前加上explain
+                explain select * from ccc where name='aaa' 
+                    type为all是全表扫描
+                    type为ref是索引查找
+                    type为const是索引文件
+            什么字段适合加索引
+                where查询次数比较多，值有非常多的不同，需要加索引
+            索引注意事项:
+                1.使用组合索引:
+                    第一个条件可以不用和第二个一起作为条件查找--会使用组合索引查找
+                    第二个条件,不使用第一个条件--不会使用组合索引查找
+                2条件加like
+                    两个'%%'不会使用到索引,全表扫描
+                    条件加like，开头不要% 'aaa%'会使用到索引，否则不会使用到索引
+                    like不要开头使用%
+                3.使用or
+                    条件都必须加上索引,只要有一个条件不加索引,则不会使用索引查找
+                4.判断语句,判断是否为null，一定要使用is null不要null
+                    is null会使用到索引
+                    = null是不会使用到索引的,是全表扫描
+                5.group by 分组不会使用索引,是全表扫描,默认还给你排序
+                    如果进制排序使用order by null;
+                    explain select * from aa group by b order by null;
+                6.分组需要效率高,禁止排序 order by null
+                7.不要使用大于等于,大于等于会使用2次全表扫描,使用大于效率高点
+                    select * from user where userId>=101; //低
+                    select * from user where userId>100; //高
+                8.不要给表留null
+                    设计表的时候not null
+                9.in 和not in,不要用
+                    即使你加了索引,也不会使用索引的,全表扫描
+                10.查询量大的时候怎么办?
+                    缓存,分表，分页
+            mysql的存储引擎
+                myisam
+                innodb 用的最多 还有事物机制
+                memory
+                innodb与myisam有什么区别?
+                    批量添加--myisam效率高
+                    innodb--事物机制
+                    锁机制--myisam是表锁,innodb是行锁
+                    数据结构--myisan支持全文检索,innodb不支持
+                        三个类型都支持b-tree数据结果
+                        索引都会缓存
+                    支持外键
+                        只有innodb支持,其他都不支持
+                        企业也很少建主外键的,但是使用hibernate需要使用到
+                myisam清理碎片化
+                    .frm文件存放数据表
+                    .MYD文件
+                    .MYI文件存放的是索引
+                    myisam删除的时候不会立马删除,要清理碎片化
+                    optimize table aa;//清理碎片
+
+        4.分库分表技术(取模算法,水平分割,垂直分割)
+            什么时候分库
+                电商项目将一个项目拆分，分成多个小项目,每个小的项目有自己单独的数据库
+                这样互不影响---这个叫垂直分割
+                会员数据库
+                订单数据库
+                支付数据库
+            什么时候分表
+                有一张表存了多年的数据,这样查询起来也是很慢的,比如日志(每年存放),
+                可以根据年份来分表---水平分割(取模算法)
+                腾讯QQ号可以根据位数进行分表 电信可以根据手机号的前3位分表
+                
+                例如用户表存放到三张表中,6条用户数据,怎么样分非常均匀
+                    三张表 user0表 user1表 user2表
+                    取模算法 非常均匀的分配 就需要专门有一张表存放userid 这个userid不能用自动增长了
+                    1%3=1 1号用户放到 user1表
+                    2%3=2 2号用户放到 user2表
+                    3%3=0 3号用户放到 user0表
+                    4%3=1 4号用户放到 user1表
+                    5%3=2 5号用户放到 user2表
+                    6%3=0 6号用户放到 user0表
+                分表之后有什么缺点:1.分页查询就难了 2.查询非常受限制的
+                先有一个主表，存放所有数据
+                再有一个次表, 根据具体业务需求进行分表
+                mycar分表功能
+                阿里云rds已经帮我们做了这些内容,根本不需要担心 付费的不是免费的
+        5.读写分离
+        6.存储过程
+        7.配置mysql的最大连接数(最大并发)
+            my.ini
+        8.mysql服务器升级
+        9.随时清理碎片化
+        10.sql语句的调优化
