@@ -605,6 +605,3 @@
         update order set stat=1 and version = version+1 where id=1 and version = 0;
         查询非常多,修改非常少,使用乐观锁
         修改非常多,查询非常少,使用悲观锁
-
-## mysql的优化
-    
