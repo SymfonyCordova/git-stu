@@ -1726,3 +1726,24 @@
           htmlRes = renderToString(<App></App>)
           return res.send(htmlRes)
         })
+      npm install css-modules-require-hook --save
+      npm install asset-require-hook --save
+
+    新特性
+      新的核心算法Fiber
+      Render可以返回数组,字符串
+      错误处理机制
+        如果出错了,页面现实的是一个错误信息,这样给用户看是很不好的
+        react提供了新的生命周期函数 componentDidCatch
+        componentDidCatch(err, info){
+          console.log(err, info)
+          
+        }
+      Portals组件
+      更好更快的服务端渲染
+      体积更小, MIT协议
+      服务端渲染
+        之前版本的renderToString,解析为字符串
+        新版本的renderToNodeStream解析为可读的字节流对象
+        使用ReactDom.hydate取代render
+    
