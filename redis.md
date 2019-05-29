@@ -124,6 +124,8 @@ Redis非常擅长做大量数据的排行榜
     ps -ef | grep -i redis
     好处:
     可以在配置文件改一下端口号,可以启动多个redis 这样就能部署一个redis集群
+    redis默认是没有密码的,可以在配置文件中配置密码
+        requirepass foobared 修改为 requirepass 123456
 ```
 
 ## redis的关闭
@@ -633,4 +635,25 @@ Redis有两种持久化策略:
             
         适用于内存比较小的计算机  
         
+```
+
+# Redis主从复制高可用
+```
+    redis支持一主多从,不支持多主多从
+    主服务器有读写权限
+    从服务器只有读权限
+    哨兵机制: 监听所有服务器,如果发现主服务器宕机,重新从剩下多个从服务器选择一个为主服务器(采用投票选举)
+    如果所有的服务器都宕机,如何保证重启,使用keepalived监听自动重启,但是一直不能重启,发送短信邮件给运维人员
+    注意: keepalived是一个脚本,能重启很多软件，keepalived+哨兵机制实现高可用
+    
+    redis主从复制配置
+        主服务器是不需要做任何配置的,需要在从服务器配置
+        replicaof 172.17.0.4[主机名] 6379[端口号]
+        masterauth 123456[主机密码]
+    redis哨兵机制选举主服务器,再加入一台哨兵服务器
+        在sentinel.conf文件中拷贝到redis安装目录下并配置
+            sentinel monitor mymaster 172.17.0.2 6379 1
+            sentinel auth-pass mymaster 123456
+            sentinel down-after-milliseconds mymaster 30
+            sentinel parallel-syncs mymaster 2
 ```
