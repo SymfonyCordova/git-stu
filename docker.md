@@ -345,3 +345,13 @@
     docker pull composer
         运行composer容器和运行php或者nginx容器不同，它不需要后台运行，而是使用命令行交互模式，即不使用-d，使用-it。同时composer是在PHP项目跟目录运行，所以也需要挂载/docker/www目录
         docker run -it --name composer -v /home/zler/桌面/docker/php-composer/www:/app --privileged=true composer composer create-project --prefer-dist laravel/laravel blog "5.5.*"  -vvv
+
+# docker 安装redis
+    sudo docker run -v /home/zler/桌面/docker/redis01/data:/data -v /home/zler/桌面/docker/redis01/conf/redis.conf:/usr/local/etc/redis/redis.conf --name redis01  -d redis redis-server /usr/local/etc/redis/redis.conf --appendonly yes
+
+    sudo docker run -v /home/zler/桌面/docker/redis02/data:/data -v /home/zler/桌面/docker/redis02/conf/redis.conf:/usr/local/etc/redis/redis.conf --name redis02  -d redis redis-server /usr/local/etc/redis/redis.conf
+
+    sudo docker run -v /home/zler/桌面/docker/redis03/data:/data -v /home/zler/桌面/docker/redis03/conf/redis.conf:/usr/local/etc/redis/redis.conf --name redis03  -d redis redis-server /usr/local/etc/redis/redis.conf
+
+    安装redis哨兵服务器
+    sudo docker run -v /home/zler/桌面/docker/redis_sentinel/data:/data -v /home/zler/桌面/docker/redis_sentinel/conf/redis.conf:/usr/local/etc/redis/redis.conf -v /home/zler/桌面/docker/redis_sentinel/conf/sentinel.conf:/usr/local/etc/redis/sentinel.conf --name redis_sentinel -d redis redis-server /usr/local/etc/redis/sentinel.conf --sentinel
