@@ -906,7 +906,7 @@
             }
     }
 
-##rewrite
+## rewrite
     规则作用:
         实现url重写以及重定向
     场景:
@@ -1569,3 +1569,53 @@
         合理配置
         了解原理
         关注日志
+
+## 安全架构
+    http服务器
+    虚拟主机
+    集群(减轻单台服务器的压力)负载均衡
+    静态服务器(动静分离)
+    nginx反响代理(不暴露真实ip)
+    nginx使用https防止抓包分析Http请求
+    搭建企业黑名单和白名单系统(防盗链)
+    模拟请求(csrf)业务攻击
+    XSS脚本攻击
+    sql注入
+    ddos(流量攻击)nginx解决防ddos
+    CDN-加速
+    虚拟服务器
+    其他的方向代理服务器是lvs,F5(硬件),haproxy
+    解决跨域问题,使用nginx搭建企业级api接口网关
+
+    在集群会产生什么情况?
+        1.分布式job幂等性(重复)问题(使用XXLjob分布式调度任务平台)
+        2.session共享问题
+        3.分布式生成全局ID
+            比如分布式下根据时间戳同一时刻生成订单号会出现重复生成相同的订单号,怎么办呢?
+                使用前提前生成好订单号,存放到redis中,快要用完的时候,再次生成一批订单号
+                使用分布式锁保证唯一性
+
+    nginx宕机容错机制：一主一备,多主多备
+        1.使用keepalived重启脚本,自动重启,重启N多次还是挂了。发送报警邮箱,给运维人员
+        2.nginx配置,集群宕机,自动轮训到下一台服务器
+            就是之前负载均衡服务器配置
+            proxy_connect_timeout 30;
+            proxy_send_timeout 60;
+            proxy_read_timeout 60;
+        3.一主一备
+    nginx解决跨域访问 
+        1.jsonp 不支持post请求,支持get请求
+        2.httpclient进行内部转发
+        3.使用http相应头允许跨域设置
+        4.使用nginx搭建企业api接口网关
+            拦截所有请求,进行分发。权限控制
+            原理:域名相同,项目不同的特征
+            location /A {
+                proxy_pass http://wwww.aaaa.com:8080/A;
+                index index.html index.htm;
+            }
+            location /B {
+                proxy_pass http://wwww.bbbb.com:8081/B;
+                index index.html index.htm;
+            }
+        5.使用SpringZULL接口网关

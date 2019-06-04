@@ -33,6 +33,20 @@
       /sbin/iptables -I INPUT -p tcp --dport 3306 -j ACCEPT
       /etc/rc.d/init.d/iptables save
 
+## 权限控制
+    创建用户
+      create user 'test'@'%' indentified by 'test';
+    查看用户
+      select user,host from mysql.user;
+    给用户连接的权限
+      alter user 'test'@'%' indentified by '1234'
+    给用户设置操作数据库的权限
+      grant all slave on *.* to 'test'@'%';
+      grant replication slave on *.* to 'test'@'%';
+    回收用户所有的权限
+      revoke all on *.* from 'test'@'%';
+    删除用户
+      drop user 'test';
 
 ## 数据库操作
 
@@ -770,6 +784,31 @@
         9.随时清理碎片化
         10.sql语句的调优化
 
+## mysql日志
+  Error log 错误日志
+  General query log普通查询日志
+  Show query log 慢查询日志
+  Binary log 二进制日志
+    作用：
+      1.增量备份
+      2.主从
+    show variables like '%log_bin%';查看bin_log 
+    mysql-bin.000001这个是日志文件的数据文件
+    mysql-bin.index这个是日志文件的索引文件
+    查看索引
+      cat /var/lib/mysql/mysql-bin.index
+    查看日志
+      mysqlbinlog /var/lib/mysql/mysql-bin.000001//去日志目录下看
+      show binlog events\G;//要登陆mysql
+      show binlog events in 'mysql-bin.000002';//要登陆mysql
+      flush logs刷新日志文件,会产生一个新的日志文件
+      每次服务器重启,服务器会调用flush logs，会新创建一个新的binlog日志
+      show master status; 查看当前日志处于哪个的状态
+      show master logs; 查看所有的bin-log日志
+      reset master; 清空所有日志
+      mysqlbinlog mysql-bin.000001 | mysql -uroot -p
+      mysqlbinlog mysql-bin.000001 --start-position 219 --stop-position 421 | mysql -uroot -p
+
 ## 高可用
     大型互联网公司高并发是很多的
     服务器宕机后怎么实现容错？
@@ -801,16 +840,17 @@
         一般使用mycat来管理这个帮助我们管理主从复制存在的数据问题,权限问题
         主从复制服务器一般是走内网,速度是非常快的
     mysql主从复制的配置
+
         主机 172.17.0.2
         备机 172.17.0.3
-        
-        1.配置主节点信息(server_id=)
+        1.先查看是否开启bin_log
+        2.配置主节点信息(server_id=)
             配置文件/etc/my.cnf
                 [mysqld]
                 server-id = 110   ##主从复制 服务Id唯一
-                log-bin=mysql-bin ##主从复制 开启日志文件
+                log-bin=/var/log/mysql/mysql-bin ##主从复制 开启日志文件
                 port = 3306
-                log-error    = /var/log/mysql/error.log
+                log-error=/var/log/mysql/error.log
                 #只能用IP地址
                 skip_name_resolve 
                 #数据库默认字符集
@@ -824,14 +864,14 @@
             配置好,重启,查看是否修改了server_id
                 show variables like 'server_id';
                 show master status; 查看主服务器的状态
-        2.设置从权限读取账号的权限
+        3.设置从权限读取账号的权限
             配置文件/etc/my.cnf
-                [mysqld]
+                [mysqld]  
                 server-id = 120   #主从复制 服务Id唯一
                 log-bin=mysql-bin #主从复制 开启日志
                 binlog_do_db=User #主从复制 同步主服务器的那个数据库
                 port = 3306
-                log-error    = /var/log/mysql/error.log
+                log-error=/var/log/mysql/error.log
                 #只能用IP地址
                 skip_name_resolve 
                 #数据库默认字符集
@@ -845,15 +885,15 @@
             配置好,重启,查看是否修改了server_id
                 show variables like 'server_id';
                 show master status; 查看主服务器的状态
-        3.同步
-            进入主服务器给从服务器设置账号权限
-                grant replication slave on *.* to 'mysync'@'%' identified by 'q123456';
+        4.同步
+            进入主服务器给从服务器设置账号权限(局域网内)
+                grant replication slave on *.* to 'mysync'@'172.17.0.%' identified by 'q123456';
                 flush privileges;
             进入从服务器开始同步
             stop slave;
-            change master to master_host='172.17.0.2',master_user='mysync',master_password='q123456', master_log_file='mysql-bin.000005',master_log_pos=289; 
+            change master to master_host='172.17.0.2',master_user='mysync',master_password='q123456', master_log_file='mysql-bin.000002',master_log_pos=1309; 
             start slave; //启动IO复制
-        4.检查服务器复制功能的状态
+        5.检查服务器复制功能的状态
             在从服务器上
             show slave status\G;    //查看主从复制状态
             Slave_IO_Running:Yes  //此状态必须YES
@@ -880,10 +920,131 @@
         mycat会虚拟一个数据库 连接地址(本机的ip地址) 端口8066 库mycat
         mysql -uroot -proot -P8066 -h127.0.0.1
 
+## 主主复制
+  主主复制参考主从复制配置
+  注意到id自增会出现不一样的情况下，配置主键自增的增长策略
+  master1配置文件中配置
+    [mysqld]
+    auto_increment_increment=2
+    auto_increment_offset=1
+  master2配置文件中配置
+    [mysqld]
+    auto_increment_increment=2
+    auto_increment_offset=2
+  这样保证主键不会插入不进去的情况,比如一个是奇数id插入，一个是偶数id插入
+
+# HAProxy实现mysql负载均衡
+  HAProxy是基于TCP进行通讯的,正好mysql也是基于TCP进行通讯的
+  HAProxy使用 给多台mysql服务器进行负载均衡的读操作
+  HAProxy的算法，配置文件中 balance xxx
+    roundrobin,表示简单的轮询,这个不多说,这个是负载均衡基本都具备的
+    static-rr,表示根据权重
+    leastconn,表示最少连接者优先处理
+    source, 表示根据请求源IP
+    uri, 表示根据请求的URI
+    uri_param,表示根据请求的URI参数'balance url param' requires an URL parameter name
+    hdr(name)，表示根据HTTP请求头来锁定每一次HTTP请求
+    rdp-cookie(name),表示根据cookie(name)来锁定并哈希每一次TCP请求
+  在haproxy.cfg文件配置
+    global
+	    #daemon # 后台方式运行
+
+    defaults
+        mode tcp			#默认模式mode { tcp|http|health }，tcp是4层,http是7层,health只会返回OK
+        retries 2			#两次连接失败就认为是服务器不可用,也可以通过后面设置
+        option redispatch	#当serverId对应的服务器挂掉后,强制定向到其他健康的服务器
+        option abortonclose	#当服务器负载很高的时候,自动结束掉当前队列处理比较久的连接
+        maxconn 4096		#默认的最大连接数			
+        timeout connect 5000ms	#连接超时
+        timeout client 30000ms  #客户端超时
+        timeout server 30000ms  #服务器超时
+        #timeout check 2000 #心跳检测超时
+        log 127.0.0.1 local0 err #[err warning info debug]
+
+    listen test1	#这里是配置负载均衡,test1是名字,可以任意
+        bind 0.0.0.0:3306	#这是监听的IP地址和端口,端口号可以在0-65535之间,要避免端口冲突
+        mode tcp	#连接的协议,这里是tcp协议	
+        #maxconn 4086
+        #log 127.0.0.1 local0 debug
+        server s1 172.17.0.2:3306 check port 3306 #负载的机器
+        server s2 172.17.0.3:3306 check port 3306 #负载的机器,负载的机器可以有多个,往下排列即可
+        server s3 172.17.0.4:3306 check port 3306 #负载的机器
+        server s4 172.17.0.5:3306 check port 3306 #负载的机器
+        # balance source
+
+    listen admin_stats
+        bind 0.0.0.0:8888
+        mode http
+        stats uri /test_haproxy
+        stats auth admin:admin
+
+
+# Keepalived 高可用
+  keepalived.conf
+    global_defs {
+      #noticatition_email {
+      #  user1@yzy.cn
+      #}
+      #notification_email_from user2@yzy.cn
+      #smtp_server localhost
+      #smtp_connect_timeout 30
+      router_id LVS_MASTER #只要和另外一个keepalived不一样就可以了
+    }
+    vrrp_instance VI_1 {
+      state MASTER # 只能是MASTER|BACKUP 主从
+      interface eth0 # 制定选择的网卡
+      virtual_router_id 51 # 虚拟路由节点必须相同
+      priority 100 # 优先级 越大成为主节点的概率越大 
+      advert_int 1 # 多个节点发送心跳包的时间间隔
+      authentication { # 每天节点的授权必须配置一样的
+        auth_type PASS
+        auth_pass 1111  
+      }
+      virtual_ipaddress { #虚拟ip地址
+        192.168.153.200/24
+      }
+    }
+  邮件报警
+    1.在配置文件配置,但是不好
+    2.keepalived通过调用shell脚本
+        编写shell脚本
+        搭建smtp服务器
+          yum install postfix* 
+          cd /etc/postfix/
+          vim main.cf
+            myhostname = mail.yzy.cn #配置主机名
+            mydomain = yzy.cn #主机名
+            myorigin = $myhostname
+            myorigin = $mydomain
+            inet_interfaces = all
+            inet_protocols = all
+            mydestination = $myhostname, $mydomain
+            mynetworks = 192.168.153.0/28, 127.0.0.0/8
+            replay_domains = $mydestination
+          保存,启动 service postfix start
+          查看是否启动 
+            netstat -tunlp | grep 25
+            netstat -tunlp | grep master
+            ps -ef | grep master 
+          yum install dovecot 接受邮件服务器
+          cd /etc/dovecot/
+          vim dovecot.conf
+            protocols = imap pop3 lmtp
+          service dovecot start
+          netstat -tunlp | grep 110
+          yum install mail 安装一个发邮件的客户端
+          useradd user1
+          passwd user1
+          useradd user2
+          passwd user2
+        start 25:50
+    3.第三方的监控程序
+
 # mycat
   mycat实现读写分离
   主服务器使用InnoDB,从服务器使用MyISAM
   show engines; 查看数据库引擎
   在mysql的配置文件中[mysqld]加入default-storage-engine=INNODB，default-storage-engine=MyISAM
+
 # mycat集群
   HAProxy

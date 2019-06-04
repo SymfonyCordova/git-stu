@@ -445,7 +445,293 @@
             @Bean作用方法上,相当于xml配置的<bean>
             AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(被标记为配置文件的类.class)
             @PropertySource(value={"classpath:jdbc.properties"})指定读取配置文件，通过@Value注解获取值
+            @Value作用在属性上,给类的属性赋值 值可以是字面量,也可以从配置文件获取 @value("${person.last-name}")
+
+# spring注解驱动开发
+    容器
+        需要导入spring-context包
+        @Configuration //告诉spring这是一个配置类
+        @Bean("person") //给容器注册一个Bean;类型为放回值的类型,id默认是用方法名作为id
+        @Component泛指组件，当组件不好归类的时候，我们可以使用这个注解进行标注。
+        @Repository用于标注数据访问组件，即DAO组件。
+        @Service用于标注业务层组件
+        @Controller用于标注控制层组件
+        @ComponentScan(value = "com.zler", excludeFilters = {
+            Filter(type = FilterType.ANNOTATION,classes={Controller.class,Service.class})
+        })
+        @ComponentScan(value = "com.zler", excludeFilters = {
+            Filter(type = FilterType.ANNOTATION,classes={Controller.class})}, 
+            useDefaultFilters = false)
+        //扫描包 value指定扫描包 excludeFilters排除哪些包 includeFilters指定扫描的时候只需要包含的哪些包
+        //FilterType.ANNOTATION 按照注解的方式来扫描包
+        //FilterType.ASSIGNABLE_TYPE 按照给定的类型来扫描包
+        //FilterType.ASPECTJ 按照ASPECTJ来扫描包
+        //FilterType.REGEX 按照正则表达式来扫描包
+        //FilterType.CUSTOM 按照自定义规则来扫描包 需要实现TypeFilter接口
+        @ComponentScans(
+            value = {
+                @ComponentScan(value = "com.zler", excludeFilters = {
+                        @ComponentScan.Filter(type = FilterType.ANNOTATION,classes={Controller.class})
+                }, useDefaultFilters = false)
+            }
+        )//扫描多个包
+        @Scope用于设置bean的作用域
+            prototype:多实例的  需要的时候每次获取的时候都会创建一个
+            singleton:实例的(默认值) 随着容器的创建而创建
+            request:同一个请求创建一个实体 (web环境下)
+            session:同一个session创建一个实体 (web环境下)
+        @Lazy(true) 表示延迟加载
+            针对的是单例的bean
+            单例bean默认在容器启动的时候创建对象 饿汉式
+            懒加载:容器启动不创建对象。第一次使用(获取)Bean创建对象 懒汉式
+        @Conditional({WindowsCondition.class}) 按照一定条件进行判断,满足条件给容器中注册bean
+            条件类要实现Condition接口
+            注册在类上统一设置条件注册bean
+            注册在方法上,单一的设置条件注册bean
+        @Import({Color.class, Red.class, CustomSelector.class, CustomImportBeanDefinitionRegistrar.class}) //导入组件,id默认是全类名 com.zler.domian.Color 场景就是需要导入第三方类的时候可以用 
+
     
+        给容器中注册组件总结
+            1.包括扫描+组件注解(@Controller/@Service/@Repository/@Component)
+            2.@Bean[导入第三包里面的组件]
+            3.@Import[快速给容器导入一个组件]
+                1.@Import(要导入到容器的组件),容器就会自动注册这个组件,id默认是全类名
+                2.ImportSelector:返回导入的组件的全类名数组(批量导入) 需要写一个类实现ImportSelector
+                3.ImportBeanDefinitionRegistrar: 手动注册bean到容器 需要写一个类实现ImportBeanDefinitionRegistrar
+            4.使用Spring提供的FactoryBean(工厂Bean): 需要写一个类实现FactoryBean 这个和第三方框架整合时,经常用到
+                getBean("colorFactoryBean")获取的是工厂返回的对象bean
+                getBean("&colorFactoryBean")获取的就是是工厂本身对象bean
+
+    Bean的生命周期      
+        容器管理bean的生命周期
+            生命周期:bean创建--初始化---销毁的过程
+            我们可以自定义初始化和销毁方法,容器在bean进行到当前生命周期的时候来调用我们自定义的初始化和销毁方法
+        整个生命周期调用方法的流程
+            构造方法(对象创建)
+                单例:在容器启动的时候创建对象
+                多例:在每次获取的时候创建对象
+            BeanPostProcessor.postProcessBeforeInitialization
+            初始化方法:
+                对象创建完成,并赋值好,调用初始化方法
+            BeanPostProcessor.postProcessAfterInitialization
+            销毁方法
+                单例:在容器关闭的时候
+                多例:容器不会管理这个bean，容器不会调用销毁方法
+        整个生命周期调用方法的流程的操作
+            1.指定初始化和销毁方法
+                通过@Bean指定init-method="" destory-method=""
+            2.通过Bean实现InitializingBean接口(定义初始化逻辑) DisposableBean接口实现销毁逻辑
+            3.可以使用JSR250
+                @PostConstruct注解用于在bean创建完成并且属性赋值完成,来执行初始化方法（用在方法上）
+                @PreDestory注解用于容器销毁bean之前通知我们进行清理工作（用在方法上）
+            4.新建一个处理器实现 BeanPostProcessor,bean的后置处理器
+                在bean初始化前后进行一些处理工作
+                postProcessBeforeInitialization:在初始化之前工作
+                postProcessAfterInitialization:在初始化之后工作
+        BeanPostProcessor在Spring底层的使用
+            bean赋值,注入其他组件,@Autowired,生命周期注解功能,@Async,...等都是XxxBeanPostProcessor的使用
+            之后在学习的过程中只要对bean的一些注解,接口实现特殊功能，看看到底有没有对应的XxxBeanPostProcessor
+
+    属性赋值
+        @Value
+            基本的数值
+                @Value("战三")
+                private String name;
+            可以写SpEl表达式, #{}
+                @Value("#{20-2}")
+                private Integer age;
+            可以 ${} 取出配置文件【properties】中的值(在运行环境变量里面的值) 可用@PropertySource配合
+                @Value("${person.nickName}")
+                private String nickName;
+        @PropertySource读取外部配置文件的k/v保存到运行的环境变量中;加载完外部的配置文件以后使用${}取出配置文件的值
+            spring容器有一个保存环境的组件,可取出来配置文件的配置信息
+        自动装配
+            自动装配：Spring利用依赖注入(DI)，完成对IOC容器中各组件的依赖关系赋值
+            1.@Autowired【是Spring定义的】
+                @Autowired 
+                    1.默认按照类型去容器找对应的组件:applicationContext.getBean(UserDao.class)
+                    2.如果找到多个相同类型的组件,再将属性的名称作为组件的id去容器中找
+                    3.使用@Qualifier指定需要装配的在组件id，而不使用属性名
+                    4.自动装配默认一定要将属性赋值好,没有就报错；
+                        可以使用@Autowired(required=false)；不是必须要装配的
+                    5.@Primary:让Spring进行自动装配的时候,默认使用首选的bean；
+                        也可以继续使用@Qualifier指定需要装配的bean的名字
+                @Qualifier 
+                    @Autowired(required=false)默认是true
+                    @Qualifier("personDao")
+                    private UserDao dao
+                @Primary
+                    @Primary
+                    @Bean("BookDao2")
+            2.Spring还支持使用@Resource(JSR250)和@Inject(JSR330)【是java规范的注解】
+                @Resource:默认是按照组件名称进行装配的；
+                    没有支持@Primary功能和@Autowired(required=false)功能
+                @Inject:
+                    需要导入javax.inject包和@Autowired的功能一样,但是required=false
+            3.@Autowired：构造器,参数,方法,属性;都是从容器中获取参数组件的值
+                可以标记在方法位置上；
+                    比如bean的setter方法上
+                    @Bean+方法参数；参数从容器中获取；默认不写@Autowired效果都是一样的,都能自动装配
+                可以标记在有参构造方法上,如果组件只有一个有参构造器,
+                    这个有参构造器的@Autowired可以省略,参数位置的组件还是可以自动从容器中获取
+                可以标记在方法的参数上
+            4.自定义组件想要使用Spring容器底层的一些组件(ApplicationContext, BeanFactory,xxx...等)
+                自定义组件实现XxxAware,在创建对象的时候,会自动调用接口规定的方法注入相关组件;
+                把Spring底层一些组件注入到自定义的Bean中
+                XxxAware:功能使用XxxProcessor后置处理器来实现的；
+                    ApplicationContextAware==>ApplicationContextAwareProcessor
+                还有 BeanNameAware，EmbeddedValueResolveWare,等等
+            5.@Profile: 指定组件在哪个环境下才能被注册到容器中,不指定,任何环境下都能注册这个组件
+                1.加了环境标识的bean，只有这个环境激活的时候才能注册到容器中。默认有一个default环境
+                2.写在配置类上只有是指定的环境的时候,整个配置类里面的所有配置才能开始生效、
+                3.没有标注环境标识的bean在,任何环境下都是加载的
+                激活方式    
+                    1.使用命令行动态参数激活 -Dspring-profiles.active=test
+                    2.代码方式
+                    //1.创建一个applicationContext
+                    AnnotationConfigApplicationContext app = new AnnotationConfigApplicationContext();
+                    //2.设置需要激活的环境
+                    app.getEnvironment().setActiveProfiles("test", "dev");
+                    //3.注册主配置类
+                    app.register(CustomConfigProp.class);
+                    //4.启动刷新容器
+                    app.refresh();
+                Spring为我们提供的可以根据当前环境,动态的激活和切换一系列组件的功能
+                开发环境,测试环境,生存环境
+                数据源:(/A)(/B)(/C)
+                @Profile("test")
+    AOP
+        1.需要导入spring-aspects包
+        2.将业务逻辑组件和切面类都加入容器,告诉Spring哪个是切面类@Aspect
+        3.在切面类上的每一个通知方法上标注通知注解,告诉Spring何时何地的运行(切入点表达式)
+        4.开启基于注解的aop模式 @EnableAspectJAutoProxy(配置类中加)，一般@Enable...都是开启什么配置的
+            前置通知(@Before)
+            后置通知(@AfterReturning)
+            异常通知(@AfterThrowing)
+            最终通知(@After)
+            绕通知(@Around)
+        例子:
+            @Aspect //告诉spring这是一个切面类
+            public class LogAspects {
+
+                //抽取公共的切点表达式
+                //1.本类引用
+                //2.其他的切面引用
+                @Pointcut("execution(  public int com.zler.aop.MathCalculator.*(..))")
+                public void pointCut(){}
+
+                @Before("pointCut()")
+                public void logStart(JoinPoint joinPoint){
+                    Object[] args = joinPoint.getArgs();
+                    String name = joinPoint.getSignature().getName();
+                    System.out.println(""+name+"运行...参数列表是:{"+ Arrays.asList(args)+"}");
+                }
+
+                @After("com.zler.aop.LogAspects.pointCut()")
+                public void logEnd(JoinPoint joinPoint){
+                    System.out.println(""+joinPoint.getSignature().getName()+"结束");
+                }
+
+                //JoinPoint joinPoint一定出现在参数表的第一位
+                @AfterReturning(value = "pointCut()", returning = "result")
+                public void logReturn(JoinPoint joinPoint, Object result){
+                    System.out.println(""+joinPoint.getSignature().getName()+"正常返回...运行结果:{"+result+"}");
+                }
+
+                @AfterThrowing(value = "pointCut()", throwing = "exception")
+                public void logException(JoinPoint joinPoint, Exception exception){
+                    System.out.println(""+joinPoint.getSignature().getName()+"异常...异常信息:{"+exception+"}");
+                }
+
+            }
+        Aop原理
+            看给容器中注册了什么组件,这个组件什么时候工作,这个组件的功能是什么
+            总结：
+                1）、@EnableAspectJAutoProxy 开启AOP功能
+                2）、@EnableAspectJAutoProxy 会给容器中注册一个组件 AnnotationAwareAspectJAutoProxyCreator
+                3）、AnnotationAwareAspectJAutoProxyCreator是一个后置处理器；
+                4）、容器的创建流程：
+                    1）、registerBeanPostProcessors（）注册后置处理器；创建AnnotationAwareAspectJAutoProxyCreator对象
+                    2）、finishBeanFactoryInitialization（）初始化剩下的单实例bean
+                        1）、创建业务逻辑组件和切面组件
+                        2）、AnnotationAwareAspectJAutoProxyCreator拦截组件的创建过程
+                        3）、组件创建完之后，判断组件是否需要增强
+                            是：切面的通知方法，包装成增强器（Advisor）;给业务逻辑组件创建一个代理对象（cglib）；
+                5）、执行目标方法：
+                    1）、代理对象执行目标方法
+                    2）、CglibAopProxy.intercept()；
+                        1）、得到目标方法的拦截器链（增强器包装成拦截器MethodInterceptor）
+                        2）、利用拦截器的链式机制，依次进入每一个拦截器进行执行；
+                        3）、效果：
+                            正常执行：前置通知-》目标方法-》后置通知-》返回通知
+                            出现异常：前置通知-》目标方法-》后置通知-》异常通知
+    Spring声明式事物
+        环境搭建
+        1.导入相关依赖
+            数据源,数据驱动,Spring-jdbc模块
+        2.配置数据源,JdbcTemplate(Spring提供简化数据库操作的工具)操作数据
+        3.给方法上标注@Transactional 表示当前方法是一个事物方法
+        4.@EnableTransactionManagement 开启基于注解的事物管理功能
+        5.配置事物管理器来管理事物
+            @Bean
+            public PlatformTransactionManager transactionManager()
+        原理
+            1.@EnableTransactionManagement
+                利用TransactionManagementConfigurationSelector给容器导入组件
+                导入两个组件
+                    AutoProxyRegistrar，ProxyTransactionManagementConfiguration
+    扩展原理
+        BeanPostProcessor:bean的后置处理器,bean创建对象初始化前后进行拦截工作
+        1.BeanFactoryPostProcessor:beanFactory的后置处理器
+            在BeanFactory标准初始化之后调用,所有的bean定义已经保存加载到beanFactory，但是bean的实例还没创建
+        2.BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProcessor
+            postProcessBeanDefinitionRegistry()；
+            在所有bean定义信息将要被加载,bean实例还未创建的时候,进行执行
+            
+            优先于BeanFactoryPostProcessor执行,
+            利用BeanDefinitionRegistryPostProcessor给容器中再额外添加一些组件
+        3.ApplicationListener:监听容器发布的事件.事件驱动模型开发
+            public interface ApplicationListener<E extends ApplicationEvent> extends EventListener
+                监听ApplicationEvent及其下面的子事件:
+            自己发布事件步骤:
+                1.写一个监听器(ApplicationListener实现类)监听某个事件(ApplicationEvent及其子类)
+                    还有可以使用@EventListener来实现监听,这样比实现接口方便点
+                2.把监听器加入到容器
+                3.只要容器有相关事件的发布,我们就能监听到这个事件
+                    ContextRefreshedEvent：容器刷新完成(所有bean都完全创建)会发布事件
+                    ContextClosedEvent：关闭容器会发布这个事件
+                4.发布一个自己的一个事件:
+                    applicationContext.publishEvent(new ApplicationEvent(new String("我发布的事件")) {
+                    });
+            原理
+                spring可以自定义监听器也可以自定义设置派发器
+                比如之后的同步派发器和异步派法器
+
+    web
+        1.servlet3.0之后可以使用注解来配置servlet filter listener三大组件
+            需要tomcat7.0以上版本
+            @WebServlet("/hello")
+            @WebFilter
+            @WebListener
+            @WebInitParam 初始化一些参数
+        2.Shared libraries（共享库） / runtimes pluggability（运行时插件能力）
+            1、Servlet容器启动会扫描，当前应用里面每一个jar包的
+                ServletContainerInitializer的实现
+            2、提供ServletContainerInitializer的实现类；
+                必须绑定在，META-INF/services/javax.servlet.ServletContainerInitializer
+                文件的内容就是ServletContainerInitializer实现类的全类名；
+
+            总结：容器在启动应用的时候，会扫描当前应用每一个jar包里面
+            META-INF/services/javax.servlet.ServletContainerInitializer
+            指定的实现类，启动并运行这个实现类的方法；传入感兴趣的类型；
+
+            ServletContainerInitializer；
+            @HandlesTypes；
+
+# springmvc常用的组件
+    @RequestMapping("/queryItems")对queryItems方法和url进行映射，一个方法对应一个url
+    @RequestParam
+
 # springBoot
     敏捷开放(已经帮我们整合框架了)
     无需tomcat(java应用程序运行,实际jar包),内置tomcat
@@ -458,11 +744,17 @@
     SpringData(操作持久层框架)和SpringMVC(控制层框架)
     SpringBoot安不安全？安全
     使用SpringBoot写第一个接口(服务)
+    在实际项目中,怎么搭建多数据源 区分数据
+        1.分包结构方式
+            分布式事物解决方案jta+automatic传统项目
+        2.使用注解方式
+            自定义注解
     常用注解
         @ComponentScan("com.zler.controller")作用在类上 扫包
         @EnableAutoConfiguration作用在类上 开启spring注入容器
         @RestController作用在类上 表示该接口全部返回json格式
-        @RequestMapping作用在方法上 定义路由
+        @RequestMapping作用在类上同一个根路径，作用在方法上定义子路径
+        @ConfigurationProperties(prefix = "person")作用在类上,从配置文件注入到bean里面，给对象的属性赋值 
         只能有一个main
         public static void main(String[] args) {
             //主函数运行springboot项目
@@ -474,4 +766,34 @@
             @ExceptionHandler(RuntimeException.class)作用在方法上表示拦截异常
         模板引擎 伪html格式,提高搜索引擎
             freemaker velocity
+        @MapperScan 整合Mybatis扫描mapper包
+        @SpringBootApplication=@Configuration+@ComponentScan+@EnableAutoConfiguration
+    配置多数据源
+    分布式事物 jta+automatic 传统项目 配置好了就不需要@Transactional
+    使用AOP统一管理web请求日志
+    任务调度
 
+# 高并发解决方案
+    数据库
+        1.慢查询定位sql语句
+        2.sql语句优化
+        3.减少全表扫描
+        4.使用索引(注意索引事项)
+        5.分库分表(水平+垂直分割)
+        6.水平 取模算法
+        7.主从复制(mysql集群)二进制日志文件
+        8.读写分离(mycat)
+    缓存机制
+        1.redis开启持久化,缓存数据库内容
+        2.redis集群(主从复制)
+        3.redis读写分离
+        4.使用redis哨兵机制监听
+    服务器
+        反向代理,配置负载均衡,集群，CDN加速(买CDN加速服务器，按地区服务器，较少带宽)
+        nginx防止ddos攻击,csrf攻击
+    客户端
+        减少请求,用户体验好,使用ajax,动态分离,
+    项目重构
+        Jvm调优，垃圾回收机制，老年代，新生代(回收新生代),配置jvm参数配置
+        采用微服务架构和分布式架构
+    

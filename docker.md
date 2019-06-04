@@ -43,6 +43,8 @@
     
     docker build
         创建景象
+
+    docker rename 原容器名  新容器名
     
 
 ## Dockerfile
@@ -314,6 +316,11 @@
     -v /home/zler/桌面/docker/mysql/data:/var/lib/mysql \
     -e MYSQL_ROOT_PASSWORD=root mysql:5.6
 
+    sudo docker run --name mysql-slave3 -d \
+    -v /home/zler/桌面/docker/mysql4/conf:/etc/mysql/conf.d \
+    -v /home/zler/桌面/docker/mysql4/data:/var/lib/mysql \
+    -e MYSQL_ROOT_PASSWORD=root mysql:5.6
+
 ## docker 安装nginx+php-fpm+composer+mysql
     docker pull php:7.3.5-fpm
     sudo docker run --name myphp -v /home/zler/桌面/docker/php-composer/www:/var/www/html --privileged=true -d php:7.3.5-fpm
@@ -355,3 +362,48 @@
 
     安装redis哨兵服务器
     sudo docker run -v /home/zler/桌面/docker/redis_sentinel/data:/data -v /home/zler/桌面/docker/redis_sentinel/conf/redis.conf:/usr/local/etc/redis/redis.conf -v /home/zler/桌面/docker/redis_sentinel/conf/sentinel.conf:/usr/local/etc/redis/sentinel.conf --name redis_sentinel -d redis redis-server /usr/local/etc/redis/sentinel.conf --sentinel
+
+# docker 安装haproxy
+    在haproxy.cfg文件配置
+    global
+	    #daemon # 后台方式运行
+
+    defaults
+        mode tcp			#默认模式mode { tcp|http|health }，tcp是4层,http是7层,health只会返回OK
+        retries 2			#两次连接失败就认为是服务器不可用,也可以通过后面设置
+        option redispatch	#当serverId对应的服务器挂掉后,强制定向到其他健康的服务器
+        option abortonclose	#当服务器负载很高的时候,自动结束掉当前队列处理比较久的连接
+        maxconn 4096		#默认的最大连接数			
+        timeout connect 5000ms	#连接超时
+        timeout client 30000ms  #客户端超时
+        timeout server 30000ms  #服务器超时
+        #timeout check 2000 #心跳检测超时
+        log 127.0.0.1 local0 err #[err warning info debug]
+
+    listen test1	#这里是配置负载均衡,test1是名字,可以任意
+        bind 0.0.0.0:3306	#这是监听的IP地址和端口,端口号可以在0-65535之间,要避免端口冲突
+        mode tcp	#连接的协议,这里是tcp协议	
+        #maxconn 4086
+        #log 127.0.0.1 local0 debug
+        server s1 172.17.0.2:3306 check port 3306 #负载的机器
+        server s2 172.17.0.3:3306 check port 3306 #负载的机器,负载的机器可以有多个,往下排列即可
+        server s3 172.17.0.4:3306 check port 3306 #负载的机器
+        server s4 172.17.0.5:3306 check port 3306 #负载的机器
+
+    listen admin_stats
+        bind 0.0.0.0:8888
+        mode http
+        stats uri /test_haproxy
+        stats auth admin:admin
+
+
+    docker run -d --name haproxy \
+    --restart=always \
+    -v /home/zler/桌面/docker/haproxy:/usr/local/etc/haproxy \
+    haproxy:alpine
+    -p 80:80 \
+    -p 443:443 \
+    -p 2222:2222 \
+    -p 9090:9090 \
+    
+    
