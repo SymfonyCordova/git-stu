@@ -785,29 +785,29 @@
         10.sql语句的调优化
 
 ## mysql日志
-  Error log 错误日志
-  General query log普通查询日志
-  Show query log 慢查询日志
-  Binary log 二进制日志
-    作用：
-      1.增量备份
-      2.主从
-    show variables like '%log_bin%';查看bin_log 
-    mysql-bin.000001这个是日志文件的数据文件
-    mysql-bin.index这个是日志文件的索引文件
-    查看索引
-      cat /var/lib/mysql/mysql-bin.index
-    查看日志
-      mysqlbinlog /var/lib/mysql/mysql-bin.000001//去日志目录下看
-      show binlog events\G;//要登陆mysql
-      show binlog events in 'mysql-bin.000002';//要登陆mysql
-      flush logs刷新日志文件,会产生一个新的日志文件
-      每次服务器重启,服务器会调用flush logs，会新创建一个新的binlog日志
-      show master status; 查看当前日志处于哪个的状态
-      show master logs; 查看所有的bin-log日志
-      reset master; 清空所有日志
-      mysqlbinlog mysql-bin.000001 | mysql -uroot -p
-      mysqlbinlog mysql-bin.000001 --start-position 219 --stop-position 421 | mysql -uroot -p
+    Error log 错误日志
+    General query log普通查询日志
+    Show query log 慢查询日志
+    Binary log 二进制日志
+      作用：
+        1.增量备份
+        2.主从
+      show variables like '%log_bin%';查看bin_log 
+      mysql-bin.000001这个是日志文件的数据文件
+      mysql-bin.index这个是日志文件的索引文件
+      查看索引
+        cat /var/lib/mysql/mysql-bin.index
+      查看日志
+        mysqlbinlog /var/lib/mysql/mysql-bin.000001//去日志目录下看
+        show binlog events\G;//要登陆mysql
+        show binlog events in 'mysql-bin.000002';//要登陆mysql
+        flush logs刷新日志文件,会产生一个新的日志文件
+        每次服务器重启,服务器会调用flush logs，会新创建一个新的binlog日志
+        show master status; 查看当前日志处于哪个的状态
+        show master logs; 查看所有的bin-log日志
+        reset master; 清空所有日志
+        mysqlbinlog mysql-bin.000001 | mysql -uroot -p
+        mysqlbinlog mysql-bin.000001 --start-position 219 --stop-position 421 | mysql -uroot -p
 
 ## 高可用
     大型互联网公司高并发是很多的
@@ -921,204 +921,205 @@
         mysql -uroot -proot -P8066 -h127.0.0.1
 
 ## 主主复制
-  主主复制参考主从复制配置
-  注意到id自增会出现不一样的情况下，配置主键自增的增长策略
-  master1配置文件中配置
-    [mysqld]
-    auto_increment_increment=2
-    auto_increment_offset=1
-  master2配置文件中配置
-    [mysqld]
-    auto_increment_increment=2
-    auto_increment_offset=2
-  这样保证主键不会插入不进去的情况,比如一个是奇数id插入，一个是偶数id插入
+    主主复制参考主从复制配置
+    注意到id自增会出现不一样的情况下，配置主键自增的增长策略
+    master1配置文件中配置
+      [mysqld]
+      auto_increment_increment=2
+      auto_increment_offset=1
+    master2配置文件中配置
+      [mysqld]
+      auto_increment_increment=2
+      auto_increment_offset=2
+    这样保证主键不会插入不进去的情况,比如一个是奇数id插入，一个是偶数id插入
 
 # HAProxy实现mysql负载均衡
-  解压安装包
-    tar -zxvf haproxy-1.7.8.tar.gz
-  编译安装
-    yum install gcc-c++
-    uname -a 查看内核
-    编译
-      make TARGET=linux26
-    安装
-      make install PREFIX=/usr/local/haproxy
-  HAProxy是基于TCP进行通讯的,正好mysql也是基于TCP进行通讯的
-  HAProxy使用 给多台mysql服务器进行负载均衡的读操作
-  HAProxy的算法，配置文件中 balance xxx
-    roundrobin,表示简单的轮询,这个不多说,这个是负载均衡基本都具备的
-    static-rr,表示根据权重
-    leastconn,表示最少连接者优先处理
-    source, 表示根据请求源IP
-    uri, 表示根据请求的URI
-    uri_param,表示根据请求的URI参数'balance url param' requires an URL parameter name
-    hdr(name)，表示根据HTTP请求头来锁定每一次HTTP请求
-    rdp-cookie(name),表示根据cookie(name)来锁定并哈希每一次TCP请求
-  在haproxy.cfg文件配置
-    global
-	    #daemon # 后台方式运行
-      nbproc 1
-      pidfile /usr/local/haproxy/conf/haproxy.pid
-    defaults
-        mode tcp			#默认模式mode { tcp|http|health }，tcp是4层,http是7层,health只会返回OK
-        retries 2			#两次连接失败就认为是服务器不可用,也可以通过后面设置
-        option redispatch	#当serverId对应的服务器挂掉后,强制定向到其他健康的服务器
-        option abortonclose	#当服务器负载很高的时候,自动结束掉当前队列处理比较久的连接
-        maxconn 4096		#默认的最大连接数			
-        timeout connect 5000ms	#连接超时
-        timeout client 30000ms  #客户端超时
-        timeout server 30000ms  #服务器超时
-        #timeout check 2000 #心跳检测超时
-        log 127.0.0.1 local0 err #[err warning info debug]
+    解压安装包
+      tar -zxvf haproxy-1.7.8.tar.gz
+    编译安装
+      yum install gcc-c++
+      uname -a 查看内核
+      编译
+        make TARGET=linux26
+      安装
+        make install PREFIX=/usr/local/haproxy
+    HAProxy是基于TCP进行通讯的,正好mysql也是基于TCP进行通讯的
+    HAProxy使用 给多台mysql服务器进行负载均衡的读操作
+    HAProxy的算法，配置文件中 balance xxx
+      roundrobin,表示简单的轮询,这个不多说,这个是负载均衡基本都具备的
+      static-rr,表示根据权重
+      leastconn,表示最少连接者优先处理
+      source, 表示根据请求源IP
+      uri, 表示根据请求的URI
+      uri_param,表示根据请求的URI参数'balance url param' requires an URL parameter name
+      hdr(name)，表示根据HTTP请求头来锁定每一次HTTP请求
+      rdp-cookie(name),表示根据cookie(name)来锁定并哈希每一次TCP请求
+    在haproxy.cfg文件配置
+      global
+        #daemon # 后台方式运行
+        nbproc 1
+        pidfile /usr/local/haproxy/conf/haproxy.pid
+      defaults
+          mode tcp			#默认模式mode { tcp|http|health }，tcp是4层,http是7层,health只会返回OK
+          retries 2			#两次连接失败就认为是服务器不可用,也可以通过后面设置
+          option redispatch	#当serverId对应的服务器挂掉后,强制定向到其他健康的服务器
+          option abortonclose	#当服务器负载很高的时候,自动结束掉当前队列处理比较久的连接
+          maxconn 4096		#默认的最大连接数			
+          timeout connect 5000ms	#连接超时
+          timeout client 30000ms  #客户端超时
+          timeout server 30000ms  #服务器超时
+          #timeout check 2000 #心跳检测超时
+          log 127.0.0.1 local0 err #[err warning info debug]
 
-    listen test1	#这里是配置负载均衡,test1是名字,可以任意
-        bind 0.0.0.0:3306	#这是监听的IP地址和端口,端口号可以在0-65535之间,要避免端口冲突
-        mode tcp	#连接的协议,这里是tcp协议	
-        #maxconn 4086
-        #log 127.0.0.1 local0 debug
-        server s1 172.17.0.2:3306 check port 3306 #负载的机器
-        server s2 172.17.0.3:3306 check port 3306 #负载的机器,负载的机器可以有多个,往下排列即可
-        server s3 172.17.0.4:3306 check port 3306 #负载的机器
-        server s4 172.17.0.5:3306 check port 3306 #负载的机器
-        # balance source
+      listen test1	#这里是配置负载均衡,test1是名字,可以任意
+          bind 0.0.0.0:3306	#这是监听的IP地址和端口,端口号可以在0-65535之间,要避免端口冲突
+          mode tcp	#连接的协议,这里是tcp协议	
+          #maxconn 4086
+          #log 127.0.0.1 local0 debug
+          server s1 172.17.0.2:3306 check port 3306 #负载的机器
+          server s2 172.17.0.3:3306 check port 3306 #负载的机器,负载的机器可以有多个,往下排列即可
+          server s3 172.17.0.4:3306 check port 3306 #负载的机器
+          server s4 172.17.0.5:3306 check port 3306 #负载的机器
+          # balance source
 
-    listen admin_stats
-        bind 0.0.0.0:8888
-        mode http
-        stats uri /test_haproxy
-        stats auth admin:admin
+      listen admin_stats
+          bind 0.0.0.0:8888
+          mode http
+          stats uri /test_haproxy
+          stats auth admin:admin
 
 # Keepalived 高可用
-  cd /usr/local/etc/keepalived
-  vim keepalived.conf
-    global_defs {
-      #noticatition_email {
-      #  user1@yzy.cn
-      #}
-      #notification_email_from user2@yzy.cn
-      #smtp_server localhost
-      #smtp_connect_timeout 30
-      router_id LVS_MASTER #只要和另外一个keepalived不一样就可以了
-    }
-    vrrp_script chk_mysql { # 制定执行的脚本
-      script "/root/soft/mysql.sh"
-      interval 10
-    }
-    vrrp_instance VI_1 {
-      state MASTER # 只能是MASTER|BACKUP 主从
-      interface eth0 # 制定选择的网卡
-      virtual_router_id 51 # 虚拟路由节点必须相同
-      priority 100 # 优先级 越大成为主节点的概率越大 必须是大于对方的50以上才可以成功拿到优先级
-      advert_int 1 # 多个节点发送心跳包的时间间隔
-      authentication { # 每天节点的授权必须配置一样的
-        auth_type PASS
-        auth_pass 1111  
+    cd /usr/local/etc/keepalived
+    vim keepalived.conf
+      global_defs {
+        #noticatition_email {
+        #  user1@yzy.cn
+        #}
+        #notification_email_from user2@yzy.cn
+        #smtp_server localhost
+        #smtp_connect_timeout 30
+        router_id LVS_MASTER #只要和另外一个keepalived不一样就可以了
       }
-      track_script {
-        chk_mysql # 执行脚本
+      vrrp_script chk_mysql { # 制定执行的脚本
+        script "/root/soft/mysql.sh"
+        interval 10
       }
-      virtual_ipaddress { #虚拟ip地址
-        192.168.153.200/24
+      vrrp_instance VI_1 {
+        state MASTER # 只能是MASTER|BACKUP 主从
+        interface eth0 # 制定选择的网卡
+        virtual_router_id 51 # 虚拟路由节点必须相同
+        priority 100 # 优先级 越大成为主节点的概率越大 必须是大于对方的50以上才可以成功拿到优先级
+        advert_int 1 # 多个节点发送心跳包的时间间隔
+        authentication { # 每天节点的授权必须配置一样的
+          auth_type PASS
+          auth_pass 1111  
+        }
+        track_script {
+          chk_mysql # 执行脚本
+        }
+        virtual_ipaddress { #虚拟ip地址
+          192.168.153.200/24
+        }
       }
-    }
-  启动keeplaived
-    cd /usr/local/sbin
-    ./keepalived -D -f /usr/local/etc/keepalived/keepalived.conf
-    ip a 查看当前工作节点
-  邮件报警
-    1.在配置文件配置,但是不好
-    2.keepalived通过调用shell脚本
-      搭建smtp服务器
-          yum install postfix* 
-          cd /etc/postfix/
-          vim main.cf
-            myhostname = mail.yzy.cn #配置主机名
-            mydomain = yzy.cn #主机名
-            myorigin = $myhostname
-            myorigin = $mydomain
-            inet_interfaces = all
-            inet_protocols = all
-            mydestination = $myhostname, $mydomain
-            mynetworks = 192.168.153.0/28, 127.0.0.0/8
-            replay_domains = $mydestination
-          保存,启动 service postfix start
-          查看是否启动 
-            netstat -tunlp | grep 25
-            netstat -tunlp | grep master
-            ps -ef | grep master 
-          yum install dovecot 接受邮件服务器
-          cd /etc/dovecot/
-          vim dovecot.conf
-            protocols = imap pop3 lmtp
-          service dovecot start
-          netstat -tunlp | grep 110
-          yum install mail 安装一个发邮件的客户端
-          useradd user1
-          passwd user1
-          useradd user2
-          passwd user
-      关闭防火墙
-        1.vim /etc/selinux/config
-          SELINUX=disabled
-          重启服务器reboot
-        2.setenforce 0
-      编写shell脚本
-          vim mysql.sh
-            #!/bin/bash
+    启动keeplaived
+      cd /usr/local/sbin
+      ./keepalived -D -f /usr/local/etc/keepalived/keepalived.conf
+      ip a 查看当前工作节点
+    邮件报警
+      1.在配置文件配置,但是不好
+      2.keepalived通过调用shell脚本
+        搭建smtp服务器
+            yum install postfix* 
+            cd /etc/postfix/
+            vim main.cf
+              myhostname = mail.yzy.cn #配置主机名
+              mydomain = yzy.cn #主机名
+              myorigin = $myhostname
+              myorigin = $mydomain
+              inet_interfaces = all
+              inet_protocols = all
+              mydestination = $myhostname, $mydomain
+              mynetworks = 192.168.153.0/28, 127.0.0.0/8
+              replay_domains = $mydestination
+            保存,启动 service postfix start
+            查看是否启动 
+              netstat -tunlp | grep 25
+              netstat -tunlp | grep master
+              ps -ef | grep master 
+            yum install dovecot 接受邮件服务器
+            cd /etc/dovecot/
+            vim dovecot.conf
+              protocols = imap pop3 lmtp
+            service dovecot start
+            netstat -tunlp | grep 110
+            yum install mail 安装一个发邮件的客户端
+            useradd user1
+            passwd user1
+            useradd user2
+            passwd user
+        关闭防火墙
+          1.vim /etc/selinux/config
+            SELINUX=disabled
+            重启服务器reboot
+          2.setenforce 0
+        编写shell脚本
+            vim mysql.sh
+              #!/bin/bash
 
-            nc -w2 localhost 3306
-            if [ $? -ne 0 ]
-            then
-              echo "mysql's 3306 port is down" | mail user1@zl.cn -s "mysql is down"
-              # service mysql stop
-            fi
-          配置计划任务来监听发送邮件
-            crontab -e
-            */2 * * * * /root/soft/mysql.sh
-          keepalived来监听发邮件
-            
-    3.第三方的监控程序
+              nc -w2 localhost 3306
+              if [ $? -ne 0 ]
+              then
+                echo "mysql's 3306 port is down" | mail user1@zl.cn -s "mysql is down"
+                # service mysql stop
+              fi
+            配置计划任务来监听发送邮件
+              crontab -e
+              */2 * * * * /root/soft/mysql.sh
+            keepalived来监听发邮件
+              
+      3.第三方的监控程序
 
 # 分库分表
-  水平分表
-  垂直分表，分库
-  物理切分
-    共享表空间: 就是所有的数据库的数据都放在一个物理文件里面
-    独享表空间: 安装一个表一个物理文件里面
-    show variables like '%innodb_file_per%'; #查看表空间
-    set global innodb_file_per_table=off; #设置为独享表空间
-    set global innodb_file_per_table=1; #设置为共享表空间
-    InnoDB(共享表空间,独享表空间) 默认是共享表空间
-      frm 结构文件
-      ibd 数据文件
-      ibdata1 数据文件
-    MyISam
-      frm 结构文件
-      myd 数据文件
-      myi 索引文件
-    数据库本身的分表分区策略
-      range
-        create table t_range (id int primary key auto_increment,name varchar(10)) partition by range(id)(
-          partition p0 values less than(1000000),
-          partition p1 values less than(2000000),
-          partition p2 values less than(3000000),
-          partition p3 values less than(4000000),
-          partition p4 values less maxvalue
-        );
-        alter table t_range drop partition p0;
-      List
-        create table t_list(id int primary key auto_increment,province varchar(10)) partition by list(province)(
-          partition p0 values in('山东省'， '江苏省')，
-          partition p0 values in('山东省')，
-        )
-      Hash
-      Key
+    水平分表
+    垂直分表，分库
+    物理切分
+      共享表空间: 就是所有的数据库的数据都放在一个物理文件里面
+      独享表空间: 安装一个表一个物理文件里面
+      show variables like '%innodb_file_per%'; #查看表空间
+      set global innodb_file_per_table=off; #设置为独享表空间
+      set global innodb_file_per_table=1; #设置为共享表空间
+      InnoDB(共享表空间,独享表空间) 默认是共享表空间
+        frm 结构文件
+        ibd 数据文件
+        ibdata1 数据文件
+      MyISam
+        frm 结构文件
+        myd 数据文件
+        myi 索引文件
+      数据库本身的分表分区策略
+        range
+          create table t_range (id int primary key auto_increment,name varchar(10)) partition by range(id)(
+            partition p0 values less than(1000000),
+            partition p1 values less than(2000000),
+            partition p2 values less than(3000000),
+            partition p3 values less than(4000000),
+            partition p4 values less maxvalue
+          );
+          alter table t_range drop partition p0;
+        List
+          create table t_list(id int primary key auto_increment,province int) partition by list(id)(
+            partition p0 values in(1,2)， #'山东省'， '江苏省'
+            partition p1 values in(3) # '安徽省'
+          )
+        Hash
+          create table t_hash(id int primary key auto_increment,province int) partition by hash(id) partitions 4;        
+        Key
 
 # mycat
-  mycat实现读写分离
-  主服务器使用InnoDB,从服务器使用MyISAM
-  show engines; 查看数据库引擎
-  在mysql的配置文件中[mysqld]加入default-storage-engine=INNODB，default-storage-engine=MyISAM
+    mycat实现读写分离
+    主服务器使用InnoDB,从服务器使用MyISAM
+    show engines; 查看数据库引擎
+    在mysql的配置文件中[mysqld]加入default-storage-engine=INNODB，default-storage-engine=MyISAM
 
 # mycat集群
-  HAProxy
+    HAProxy
