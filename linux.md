@@ -66,5 +66,33 @@
     chrome://version/查看配置信息
     google-chrome --proxy-server="socks5://127.0.0.1:1080"
 
-## 常用命令
-    
+## 网络配置
+    1.配置ip地址和子网掩码
+    编辑配置文件 ：
+    >cd   /etc/sysconfig/network-scripts
+    >cd   ifcfg-eth0    ./ifcfg-eth0.bak    //修改前先备份
+    修改/etc/sysconfig/network-scripts/ifcfg-eth0 做网络的具体配置：
+        DEVICE=eth0
+        HWADDR=00:0C:29:EE:C7:1B
+        TYPE=Ethernet
+        UUID=0093d70b-1a03-4195-be15-d840614a776
+        ONBOOT=no 
+        MM_CONTROLLED=yes
+        BOOTPROTO=dhcp
+    对默认配置进行修改
+        DEVICE=eth0
+        HWADDR=00:0C:29:EE:C7:1B
+        TYPE=Ethernet
+        UUID=0093d70b-1a03-4195-be15-d840614a776
+        ONBOOT=yes # 系统自动开启网络
+        MM_CONTROLLED=yes 
+        BOOTPROTO=static # 改为静态IP
+        IPADDR=192.168.174.100 # IP和子网掩码具体配置
+        NETMASK=255.255.255.0 # IP和子网掩码具体配置
+        GATEWAY=192.168.174.2 # 网关，不设置网关是上不了网的
+        DNS1=8.8.8.8
+    重启网卡
+        service network  restart/stop/start
+    本机和linux互相ping通
+        问题：本机可以ping同linux，但是linux不能ping通本机。
+        解决：关闭本机防火墙

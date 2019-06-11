@@ -934,6 +934,15 @@
   这样保证主键不会插入不进去的情况,比如一个是奇数id插入，一个是偶数id插入
 
 # HAProxy实现mysql负载均衡
+  解压安装包
+    tar -zxvf haproxy-1.7.8.tar.gz
+  编译安装
+    yum install gcc-c++
+    uname -a 查看内核
+    编译
+      make TARGET=linux26
+    安装
+      make install PREFIX=/usr/local/haproxy
   HAProxy是基于TCP进行通讯的,正好mysql也是基于TCP进行通讯的
   HAProxy使用 给多台mysql服务器进行负载均衡的读操作
   HAProxy的算法，配置文件中 balance xxx
@@ -948,7 +957,8 @@
   在haproxy.cfg文件配置
     global
 	    #daemon # 后台方式运行
-
+      nbproc 1
+      pidfile /usr/local/haproxy/conf/haproxy.pid
     defaults
         mode tcp			#默认模式mode { tcp|http|health }，tcp是4层,http是7层,health只会返回OK
         retries 2			#两次连接失败就认为是服务器不可用,也可以通过后面设置
@@ -978,9 +988,9 @@
         stats uri /test_haproxy
         stats auth admin:admin
 
-
 # Keepalived 高可用
-  keepalived.conf
+  cd /usr/local/etc/keepalived
+  vim keepalived.conf
     global_defs {
       #noticatition_email {
       #  user1@yzy.cn
@@ -990,25 +1000,35 @@
       #smtp_connect_timeout 30
       router_id LVS_MASTER #只要和另外一个keepalived不一样就可以了
     }
+    vrrp_script chk_mysql { # 制定执行的脚本
+      script "/root/soft/mysql.sh"
+      interval 10
+    }
     vrrp_instance VI_1 {
       state MASTER # 只能是MASTER|BACKUP 主从
       interface eth0 # 制定选择的网卡
       virtual_router_id 51 # 虚拟路由节点必须相同
-      priority 100 # 优先级 越大成为主节点的概率越大 
+      priority 100 # 优先级 越大成为主节点的概率越大 必须是大于对方的50以上才可以成功拿到优先级
       advert_int 1 # 多个节点发送心跳包的时间间隔
       authentication { # 每天节点的授权必须配置一样的
         auth_type PASS
         auth_pass 1111  
       }
+      track_script {
+        chk_mysql # 执行脚本
+      }
       virtual_ipaddress { #虚拟ip地址
         192.168.153.200/24
       }
     }
+  启动keeplaived
+    cd /usr/local/sbin
+    ./keepalived -D -f /usr/local/etc/keepalived/keepalived.conf
+    ip a 查看当前工作节点
   邮件报警
     1.在配置文件配置,但是不好
     2.keepalived通过调用shell脚本
-        编写shell脚本
-        搭建smtp服务器
+      搭建smtp服务器
           yum install postfix* 
           cd /etc/postfix/
           vim main.cf
@@ -1036,9 +1056,63 @@
           useradd user1
           passwd user1
           useradd user2
-          passwd user2
-        start 25:50
+          passwd user
+      关闭防火墙
+        1.vim /etc/selinux/config
+          SELINUX=disabled
+          重启服务器reboot
+        2.setenforce 0
+      编写shell脚本
+          vim mysql.sh
+            #!/bin/bash
+
+            nc -w2 localhost 3306
+            if [ $? -ne 0 ]
+            then
+              echo "mysql's 3306 port is down" | mail user1@zl.cn -s "mysql is down"
+              # service mysql stop
+            fi
+          配置计划任务来监听发送邮件
+            crontab -e
+            */2 * * * * /root/soft/mysql.sh
+          keepalived来监听发邮件
+            
     3.第三方的监控程序
+
+# 分库分表
+  水平分表
+  垂直分表，分库
+  物理切分
+    共享表空间: 就是所有的数据库的数据都放在一个物理文件里面
+    独享表空间: 安装一个表一个物理文件里面
+    show variables like '%innodb_file_per%'; #查看表空间
+    set global innodb_file_per_table=off; #设置为独享表空间
+    set global innodb_file_per_table=1; #设置为共享表空间
+    InnoDB(共享表空间,独享表空间) 默认是共享表空间
+      frm 结构文件
+      ibd 数据文件
+      ibdata1 数据文件
+    MyISam
+      frm 结构文件
+      myd 数据文件
+      myi 索引文件
+    数据库本身的分表分区策略
+      range
+        create table t_range (id int primary key auto_increment,name varchar(10)) partition by range(id)(
+          partition p0 values less than(1000000),
+          partition p1 values less than(2000000),
+          partition p2 values less than(3000000),
+          partition p3 values less than(4000000),
+          partition p4 values less maxvalue
+        );
+        alter table t_range drop partition p0;
+      List
+        create table t_list(id int primary key auto_increment,province varchar(10)) partition by list(province)(
+          partition p0 values in('山东省'， '江苏省')，
+          partition p0 values in('山东省')，
+        )
+      Hash
+      Key
 
 # mycat
   mycat实现读写分离
