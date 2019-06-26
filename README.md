@@ -37,13 +37,17 @@ git  remote  add  origin  git@gitee.com:HotNewsTerm/www.carsafe.com.git
 
 git clone -b publish git@116.62.48.176:/data/git/Project-carsafe-201805.git 指定那个分支下载
 git branch 创建和查看分支
-git checkout 切换分支
+git checkout 切换分支 
+git checkout -b 自此分支新建分支
+git push origin 分支名字
 git merge 合并分支
 
 git clone git@116.62.48.176:/data/git/Project-GTMT-20181106.git
 
 使用ssh协议url
 	git remote set-url origin git@github.com:SymfonyCordova/git-stu.git
+
+git stash 储存
 ```
 
  ## 忽略文件
