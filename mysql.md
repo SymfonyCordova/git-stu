@@ -885,7 +885,10 @@
             配置好,重启,查看是否修改了server_id
                 show variables like 'server_id';
                 show master status; 查看主服务器的状态
-        4.同步
+        4.同步    query_cache_type
+        0:表示关闭查询缓存
+        1:表示始终开启查询缓存
+        2:表示按需开启查询缓存
             进入主服务器给从服务器设置账号权限(局域网内)
                 grant replication slave on *.* to 'mysync'@'172.17.0.%' identified by 'q123456';
                 flush privileges;
@@ -1080,8 +1083,6 @@
       3.第三方的监控程序
 
 # 分库分表
-    水平分表
-    垂直分表，分库
     物理切分
       共享表空间: 就是所有的数据库的数据都放在一个物理文件里面
       独享表空间: 安装一个表一个物理文件里面
@@ -1114,12 +1115,98 @@
         Hash
           create table t_hash(id int primary key auto_increment,province int) partition by hash(id) partitions 4;        
         Key
+    数据库切分
+      什么是数据切分
+        通过特定的手段,将我们放到同一个数据库中的数据发散到多个数据库中,或者分散到多个节点中。
+      切分的优点
+        分散单台设备的负载
+        提高数据安全性
+      切分的缺点
+        增加了系统的复杂度
+        引入分布式事物
+          解决
+            使用mq
+            Tcc事物
+            最大努力通知
+        跨节点的join
+        跨节点的排序分页
+        多数据源管理的问题
+      切分的类型
+        水平切分
+        垂直切分
+      全局序列号
+        专门有一个生存序列号,用全局序列号来保证主键全局唯一性
+        如何实现?
+          通过代码手动实现
+          通过数据库的主键生存策略来实现
+          使用时间戳
+          使用第三方组件或服务
+      如何进行切分,手段
+        1.自己实现，连接多个数据源,通过代码进行需求的操作
+        2.客户端组件
+          dangdang的Sharding JDBC
+        3.数据库中间件
+      多租户
+        独立数据库
+          隔离性最好,安全性最高,数据备份和恢复最为方便,价格最高
+        共享数据库,独立数据架构
+        共享数据库,共享数据架构
+          隔离性最差，安全性最差，数据恢复困难,价格最便宜
+    数据库切分策略
+      枚举
+        确定分片的表,分片的字段
+        1000=0
+        2000=1
+        3000=3
+      hash
+        任意长度的输入进行运算返回一个固定的hashCode值
+        Java Object里面的本地方法hashCode==object.hashCode()
+        对id进行hash得到hash值，再将hash值(转换成二进制) 与上3(转换成二进制) 得到id的后两位
+        ，id后两位的值就是表的后缀。
+      范围约定
+        1-100 0
+        100-200 1
+        200-300 2
+      取模
+        如果是三张表,分别为table_0,table_1,table_2
+        num%3 这个3就是切片的大小
+      按日期分片
+        如果数据量小的话，我们可以按照年来
+        如果数据量大的话,我们可以天,小时....来
+        假如10天来分的话
+      其他分片策略
+    全局表
+      全局表的插入、更新操作会实时在所有节点上执行，保持各个分片的数据一致性
+      全局表的查询操作,只从一个节点获取
+      全局表可以跟任何一个表进行join操作
+      比如:设备表,城市表...
 
 # mycat
+    mycat安装
+    wrapper.conf文件里面修改内存
+    用户从哪里来 server.xml
+    数据库从哪里来 schema.xml
+    mycat本身的高可用,可以切换主节点
+    mycat的分片策略
+      rule.xml下面的每个function对应一个class,还对应了配置文件就是一个分片规则
+    mycat全局表配置
+      在所有节点都有这个全局表, 解决跨界点join
+      <table name="aa" primaryKey="ID" type="global" dataNode="dn1,dn2,dn3">
+    mycatER主表和明细表
+      保证一对多的关系要放到同一个节点上
     mycat实现读写分离
-    主服务器使用InnoDB,从服务器使用MyISAM
-    show engines; 查看数据库引擎
-    在mysql的配置文件中[mysqld]加入default-storage-engine=INNODB，default-storage-engine=MyISAM
+      主服务器使用InnoDB,从服务器使用MyISAM
+      show engines; 查看数据库引擎
+      在mysql的配置文件中[mysqld]加入default-storage-engine=INNODB，default-storage-engine=MyISAM
+    先执行一条sql语句，然后explain sql语句来查看到底插入到那几个节点  
 
 # mycat集群
     HAProxy
+
+# mysql的查询缓存
+    show variables like '%query_cache%'
+    query_cache_type
+        0:表示关闭查询缓存
+        1:表示始终开启查询缓存
+        2:表示按需开启查询缓存
+    select sql_cache * from xxx
