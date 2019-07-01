@@ -60,6 +60,16 @@ git stash 储存
 	
 ```
 
+## git 会退到某个版本
+```
+	git log
+	git reset --soft 932343345464564006e
+	或者 git reset --hard 932343345464564006e
+	查看当前的分支
+		git rev-parse HEAD
+	git push -f 提交回退的版本
+```
+
 ## git 放弃本地修改 强制更新
 ```
 	git fetch --all
