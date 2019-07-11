@@ -75,3 +75,13 @@ git stash 储存
 	git fetch --all
 	git reset --hard origin/master
 ```
+
+## 代码提交过程
+```
+	从master切换到开发分支
+	git merge origin master 拉取远程仓库最新的代码
+	git add . 追踪文件的变化
+	git commit -am '备注信息', 将代码提交到本地仓库
+	git push 本地仓库代码推送到远程仓库
+	提交pull request 管理员审核
+```
