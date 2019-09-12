@@ -967,119 +967,63 @@ symfony-security
 
 https://symfony.com/doc/2.8/components/security/authentication.html
 
-1安全组件提供4个相关的身份验证事件：
-	Name								Event Constant							Argument Passed to the Listener
-security.authentication.success	AuthenticationEvents::AUTHENTICATION_SUCCESS		AuthenticationEvent
-	当提供程序对用户进行身份验证时，将调度security.authentication.success事件
-security.authentication.failure	AuthenticationEvents::AUTHENTICATION_FAILURE		AuthenticationFailureEvent
-	当提供程序尝试身份验证但失败（即抛出AuthenticationException）时，将调度security.authentication.failure事件
-security.interactive_login		SecurityEvents::INTERACTIVE_LOGIN					InteractiveLoginEvent
-	用户登陆网站后触发该事件
-security.switch_user			SecurityEvents::SWITCH_USER							SwitchUserEvent	
-	每次激活switch_user防火墙侦听器时都会触发security.switch_user事件。
+	1安全组件提供4个相关的身份验证事件：
+			Name								Event Constant							Argument Passed to the Listener
+		security.authentication.success	AuthenticationEvents::AUTHENTICATION_SUCCESS		AuthenticationEvent
+			当提供程序对用户进行身份验证时，将调度security.authentication.success事件
+		security.authentication.failure	AuthenticationEvents::AUTHENTICATION_FAILURE		AuthenticationFailureEvent
+			当提供程序尝试身份验证但失败（即抛出AuthenticationException）时，将调度security.authentication.failure事件
+		security.interactive_login		SecurityEvents::INTERACTIVE_LOGIN					InteractiveLoginEvent
+			用户登陆网站后触发该事件
+		security.switch_user			SecurityEvents::SWITCH_USER							SwitchUserEvent	
+			每次激活switch_user防火墙侦听器时都会触发security.switch_user事件。
 
-如果是ajax请求返回json格式,如果是html请求返回页面
-	如果是html请求跳转
-	只需要创建一个监听security.interactive_login的监听器
-	php app/console config:dump-reference security
+		如果是ajax请求返回json格式,如果是html请求返回页面
+			如果是html请求跳转
+			只需要创建一个监听security.interactive_login的监听器
+			php app/console config:dump-reference security
 
+	2.如何使用Guard创建自定义身份验证系统
+		需要实现GuardAuthenticatorInterface接口的四个方法
+			getCredentials(Request $request)
+				这是每次请求都会执行的方法，让开发者从 $request 对象中获取登录所需要的讯息，
+				比如常见表单登录的用户名和密码，或者微信登录的 code 参数。
+				返回的结果可以是任意的类型，但一般来说用数组
+				
+				如果返回null 那么 GuardAuthenticatorInterface::start 方法将会被执行
+				如果不是 null，则 GuardAuthenticatorInterface::getUser 方法将被执行
+						而 getCredentials 返回的结果将作为 getUser 的第一个参数。
+			start(Request $request, AuthenticationException $authException = null)
+				此方法可以理解成传统 Symfony 登录系统的 entry point，即让用户登录的地方。
+				看定义可以发现此方法返回一个 Response，你可以返回带登录表单的页面，或者跳转到微信 OAuth 获取 code 的接口。
+				当用户提交了账号密码，或者微信返回带 code 参数的链接，第二次请求开始，将又从 getCredentials 方法重新开始。
+			getUser($credentials, UserProviderInterface $userProvider)
+				此方法一般来说，都需要利用 UserProvider 的 loadUserByUsername 方法，
+				通过传入 $credentials 里的登录名，或者微信的 openId，返回 User 对象。
+				如果通过用户名找不到对应的 User 对象，既 UserProvider::loadUserByUsername 返回 null，
+					那么 GuardAuthenticatorInterface::onAuthenticationFailure 方法将会被调用；
+				如果 UserProvider::loadUserByUsername 能返回 User 对象，
+					那么 GuardAuthenticatorInterface::checkCredentials 方法将会被调用，
+						而 $user 对象会被作为第二参数被传入，第一参数仍是 $credentials。
+			checkCredentials($credentials, UserInterface $user)
+				此方法将检查用户和 $credentials 是否匹配。
+				比如表单登录，将 $credentials 里的密码信息和 $user 对象里的密码做对比，
+				如果密码不匹配，那么你将在此方法抛出 AuthenticationException 异常或者返回 false 来表示登录失败，
+				从而转向 GuardAuthenticatorInterface::onAuthenticationFailure 方法。
+			onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
+				当然，如果 checkCredentials 方法返回 true（即登录成功），
+				那么 GuardAuthenticatorInterface::onAuthenticationSuccess 方法将会被调用，
+				你可以在此方法做一些登录成功之后的事情。此方法需要返回 Response 或者 null，
+				如果返回 null 将继续执行当前路径应当执行的代码；
+				如果返回 Response，则此 Response 会立马发送。
+				比如如果要求用户登录成功都需要返回到首页，那么你就可以在此返回 new RedirectResponse('/')。
+			onAuthenticationFailure(Request $request, AuthenticationException $exception)
+				最后是登录失败的处理。类似于登录成功，此方法需要返回 Response，
+				比如显示登录失败的页面，或者继续显示登录表单让用户登录。
+			supportsRememberMe()
+			createAuthenticatedToken(UserInterface $user, string $providerKey)
+		例如微信登陆 参考: https://www.chrisyue.com/use-symfony-guard-as-authentication.html
+	有些是表单登陆 有些是微信登陆 有些是api登陆等等,那怎么办呢?
+		参考: https://symfony.com/doc/2.8/security/multiple_guard_authenticators.html
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		2.如何使用Guard创建自定义身份验证系统
-			需要实现GuardAuthenticatorInterface接口的四个方法
-				getCredentials(Request $request)
-					这是每次请求都会执行的方法，让开发者从 $request 对象中获取登录所需要的讯息，
-					比如常见表单登录的用户名和密码，或者微信登录的 code 参数。
-					返回的结果可以是任意的类型，但一般来说用数组
-					
-					如果返回null 那么 GuardAuthenticatorInterface::start 方法将会被执行
-					如果不是 null，则 GuardAuthenticatorInterface::getUser 方法将被执行
-							而 getCredentials 返回的结果将作为 getUser 的第一个参数。
-				start(Request $request, AuthenticationException $authException = null)
-					此方法可以理解成传统 Symfony 登录系统的 entry point，即让用户登录的地方。
-					看定义可以发现此方法返回一个 Response，你可以返回带登录表单的页面，或者跳转到微信 OAuth 获取 code 的接口。
-					当用户提交了账号密码，或者微信返回带 code 参数的链接，第二次请求开始，将又从 getCredentials 方法重新开始。
-				getUser($credentials, UserProviderInterface $userProvider)
-					此方法一般来说，都需要利用 UserProvider 的 loadUserByUsername 方法，
-					通过传入 $credentials 里的登录名，或者微信的 openId，返回 User 对象。
-					如果通过用户名找不到对应的 User 对象，既 UserProvider::loadUserByUsername 返回 null，
-						那么 GuardAuthenticatorInterface::onAuthenticationFailure 方法将会被调用；
-					如果 UserProvider::loadUserByUsername 能返回 User 对象，
-						那么 GuardAuthenticatorInterface::checkCredentials 方法将会被调用，
-							而 $user 对象会被作为第二参数被传入，第一参数仍是 $credentials。
-				checkCredentials($credentials, UserInterface $user)
-					此方法将检查用户和 $credentials 是否匹配。
-					比如表单登录，将 $credentials 里的密码信息和 $user 对象里的密码做对比，
-					如果密码不匹配，那么你将在此方法抛出 AuthenticationException 异常或者返回 false 来表示登录失败，
-					从而转向 GuardAuthenticatorInterface::onAuthenticationFailure 方法。
-				onAuthenticationSuccess(Request $request, TokenInterface $token, $providerKey)
-					当然，如果 checkCredentials 方法返回 true（即登录成功），
-					那么 GuardAuthenticatorInterface::onAuthenticationSuccess 方法将会被调用，
-					你可以在此方法做一些登录成功之后的事情。此方法需要返回 Response 或者 null，
-					如果返回 null 将继续执行当前路径应当执行的代码；
-					如果返回 Response，则此 Response 会立马发送。
-					比如如果要求用户登录成功都需要返回到首页，那么你就可以在此返回 new RedirectResponse('/')。
-				onAuthenticationFailure(Request $request, AuthenticationException $exception)
-					最后是登录失败的处理。类似于登录成功，此方法需要返回 Response，
-					比如显示登录失败的页面，或者继续显示登录表单让用户登录。
-				supportsRememberMe()
-				createAuthenticatedToken(UserInterface $user, string $providerKey)
-			例如微信登陆 参考: https://www.chrisyue.com/use-symfony-guard-as-authentication.html
-		有些是表单登陆 有些是微信登陆 有些是api登陆等等,那怎么办呢?
-			参考: https://symfony.com/doc/2.8/security/multiple_guard_authenticators.html
-	
-		防火墙的配置 使用 php app/console debug:config security 命令来检查
+	防火墙的配置 使用 php app/console debug:config security 命令来检查

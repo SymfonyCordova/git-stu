@@ -57,3 +57,6 @@
 		B:StringBuffer和数组的区别?
 	(4)注意的问题：
 		String作为形式参数，StringBuffer作为形式参数。
+	
+# 多线程
+	

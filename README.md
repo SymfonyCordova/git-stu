@@ -68,6 +68,8 @@ git stash 储存
 	查看当前的分支
 		git rev-parse HEAD
 	git push -f 提交回退的版本
+
+	git reset HEAD <文件>... 以取消暂存
 ```
 
 ## git 放弃本地修改 强制更新
@@ -84,4 +86,17 @@ git stash 储存
 	git commit -am '备注信息', 将代码提交到本地仓库
 	git push 本地仓库代码推送到远程仓库
 	提交pull request 管理员审核
+
+	细节
+		git status 文件变化
+		git diff 文件具体的变化
+
+		git checkout -b 自此分支新建分支
+		git branch
+
+		git add .
+		git commit -am '注释'
+		git push --set....
+
+		pull reques 提交给管理人员
 ```

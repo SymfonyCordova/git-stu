@@ -657,3 +657,8 @@ Redis有两种持久化策略:
             sentinel down-after-milliseconds mymaster 30
             sentinel parallel-syncs mymaster 2
 ```
+
+## redis实现分布式锁
+```
+    setnx
+```
