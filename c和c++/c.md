@@ -915,7 +915,7 @@ memset,memcpy,memmove函数
         堆区
             堆heap和栈一样，也是一种在程序运行过程中可以随时修改的内存区域，但没有栈那样先进后出的顺序．
             堆是一个大容器，它的容量要远远大于栈，但是在c语言中,堆内存空间的申请和释放需要手动通过代码来完成．
-
+    
     堆的分配和释放
         操作系统在管理内存的时候，最小单位不是字节,而是内存页
     mallocc
@@ -1014,22 +1014,22 @@ memset,memcpy,memmove函数
         通过typedef定义函数指针
             #include <stdio.h>
             #include <string.h>
-
+    
             char *mystrcat(char *s1, char *s2){
                 strcat(s1, s2);
                 return s1;
             }
-
+    
             typedef char *(*STRCAT)(char *, char *);
-
+    
             char *test(STRCAT p, char *s1, char *s2){
                 return p(s1, s2);
             }
-
+    
             int main(void){
                 //char *(*p[10])(char *s1, char *s2);
                 STRCAT array[10];
-
+    
                 char s1[100] = "hello";
                 char s2[100] = "world";
                 char *s = test(mystrcat, s1, s2);
@@ -1073,7 +1073,7 @@ memset,memcpy,memmove函数
         }	
         getc读取一个字符测
         putc 写一个字符
-
+    
     EOF和feof函数文件结尾
         程序怎么才能知道是否已经到达文件结尾了呢？EOF代表文件结尾
         如果已经是文件尾，feof函数返回ture    //while(!feof(p)){}
@@ -1153,13 +1153,13 @@ memset,memcpy,memmove函数
         冒泡排序
         选择排序
             #include <stdio.h>
-
+    
             void swap(int *a, int *b){
                 int tmp = *a;
                 *a = *b;
                 *b = tmp;
             }
-
+    
             void bubble(int *array, int n){
                 int i;
                 int j;
@@ -1171,14 +1171,14 @@ memset,memcpy,memmove函数
                     }
                 }
             }
-
+    
             void print_array(int *array, int n){
                 int i;
                 for(i = 0; i < n; ++i){
                     printf("array[%d] = %d\n", i, array[i]);
                 }
             }
-
+    
             int minkey(int *array, int low, int high){
                 int min = low;
                 int key = array[low];
@@ -1191,7 +1191,7 @@ memset,memcpy,memmove函数
                 }
                 return min;
             }
-
+    
             void select(int *array, int n){
                 int i;
                 for(i = 0; i < n; ++i){
@@ -1201,7 +1201,7 @@ memset,memcpy,memmove函数
                     }
                 }
             }
-
+    
             int main(int argc, char *argv[])
             {
                 int array[10] = {32, 35, 76, 21, 56, 85, 23, 89, 15, 4};
@@ -1223,247 +1223,4 @@ memset,memcpy,memmove函数
             链式存储结构特点，元素的存储单元可以是连续的，也可以是不连续的，因此为了表示每个元素a,与其接后的元素a+1之间的关系，对于元素a，除了存储其本身信息外，还需要存储一个指示其接后元素的位置．这两部分数据成为结点（node）
             一个结点中存储的数据元素被称为数据域．存储后存储位置的域叫指针域.n个结点(ai(1<=i<=n))的存储映像链接成一个链表．
             整个链表必须从头结点开始进行，头结点的指针指向下一个结点的位置，最后一个结点的指针指向NULL.
-            在链表中,通过指向接后结点位置的指针实现将链表中的每个结点”链”到一起．链表中第一个结点称之为头结点．
-
-# c语言提高
-
-## 目标
-接口的封装和设计(功能和抽象封装)
-    接口api的使用能力
-    接口api的查找能力(快速上手)
-    接口api的实现能力
-建立正确程序运行内存布局图(印象图)
-    内存四区模型图
-    函数调用模型图
-代码
-```c
-    #ifndef SOCKET_CLIENT_H
-
-    #define SOCKET_CLIENT_H
-
-    //第一套api函数
-    //socket客户端环境初始化
-    int socketClientInit(void **handle);
-
-    //socket客户端报文发送
-    int socketClientSend(void *handle, unsigned char *buf, int bufLen);
-
-    //socket客户端报文接收
-    int socketClientReceive(void *handle, unsigned char *buf, int *bufLen);
-
-    //socket客户端报文释放
-    int socketClientDestory(void *handle);
-
-    //第二套api函数
-    //socket客户端环境初始化
-    int socketClientInit2(void **handle);
-
-    //socket客户端报文发送
-    int socketClientSend2(void *handle, unsigned char *buf, int bufLen);
-
-    //socket客户端报文接收
-    int socketClientReceive2(void *handle, unsigned char **buf, int *bufLen);
-
-    //socket客户端报文释放
-    int socketClientDestory2(void **handle);
-
-    //技术分析
-    //1级指针
-    //2级指针
-    //void **handle类型封装的概念 业务模型封装的概念
-
-    #endif
-```
-## 内存四区的专题讲座
-
-### 数据类型本质分析
-数据类型概念
-    类型是对数据的抽象
-    类型相同的数据有相同的表示形式,存储格式以及相关操作
-    程序中使用的所有数据必定属于某一种数据类型
-    数据类型
-        简单数据类型
-            基本数据类型
-                整型(int)
-                浮点型(float,double)
-                字符型(char)
-                空类型(void)
-            用户自定义类型 枚举类型(enum)
-        结构类型
-            数组([])
-            结构(struct)
-            联合(union)
-            类(union)
-        指针(*)
-数据类型的本质思考
-    思考数据类型和内存有关系吗?
-    c/c++为什么会引入数据类型?
-数据类型的本质
-    数据类型可以理解为创建变量的模具(模子),是固定内存大小的别名
-    数据类型的作用:编译器预算对象(变量)分配的内存大小
-    如何求数据类型的大小 sizeof(int *)
-    请问:数据类型可以有别名吗?数据类型可以自定义吗?
-数据类型大小
-数据类型别名
-    typedef
-    struct在使用时必须在前面加上struct
-    如果给struct取别名后,那么使用的时候就不用加struct,直接用别名
-    typedef不仅仅可以给复杂的数据类型起别名,也可以给普通的数据类型起别名
-```c
-    #include <stdlib.h>
-    #include <stdio.h>
-    #include <string.h>
-
-    //数据类型的用途
-    //数据类型本质:固定大小内存块的别名
-    //b &b 数组数据类型 定义一个1数组类型 2数组指针 3数组类型和数组指针的关系 ===>压死初学者的三座大山 抛砖
-
-    int main01(int argc, char const *argv[])
-    {
-        int a;//告诉c编译器分配4个字节的内存
-        int b[10];//告诉编译器分配40个字节的内存
-        printf("a分配的字节数:%lu \n", sizeof(a));
-        printf("b[10]分配的字节数:%lu \n", sizeof(b));
-        printf("b:%p, b+1:%p, &b:%p, &b+1:%p \n", b, b+1, &b, &b+1);
-        //b:    0x7ffdb8b33420, 
-        //b+1:  0x7ffdb8b33424, 
-        //&b:   0x7ffdb8b33420, 
-        //&b+1: 0x7ffdb8b33448
-
-        //b+1 &b+1 结果不一样 //b &b所代表的数据类型不一样
-        //b  代表数组首元素的地址
-        //&b 代表的是整个数组的地址
-
-        printf("sizeof(b):%lu ", sizeof(b));
-        printf("sizeof(a):%lu ", sizeof(a));
-        return 0;
-    }
-
-    struct Teacher
-    {
-        char name[64];
-        int age;
-    };
-
-    typedef struct Teacher2
-    {
-        char name[64];
-        int age;
-    }Teacher2;
-    //数据类型别名 typeof
-
-    typedef int u32;
-
-    int main(int argc, char const *argv[])
-    {
-        struct Teacher t1;
-        t1.age = 31;
-        
-        Teacher2 t2;
-        t2.age = 31;
-
-        printf("u32:%lu \n", sizeof(u32));
-        return 0;
-    }
-```
-数据类型的封装
-    void的字面意思是无类型,void *则为无类型指针,void *可以指向任何数据类型
-    用法
-        数据类型的封装
-        int initHandEnv(void **handle);
-        典型如内存操作函数memcpy和memset的函数原型分别为:
-        void * memcpy(void * dest, const void * src， size_t len)        
-        void * memset(void * buff, int c， size_t num)        
-    用法
-        void 修饰函数返回值和参数,仅表示无
-        如果函数没有返回值,那么应该返回将其声明为void型
-        如果函数没有参数,那么声明其参数为void
-    void指针的意义
-        c语言规定只有相同类型的指针可以相互赋值
-        void *指针作为左值用于接收任意类型的指针
-        void *指针作为右值赋值给其他指针需要强制类型转换
-    不存在void类型的变量
-        c语言没有定义void究竟是多大的内存别名
-数据类型总结与扩展
-    数据类型本质是固定大小的内存块
-### 变量本质分析
-变量概念
-变量本质
-
-### 程序的内存四区模型
-内存四区模型
-各区元素分析
-
-### 函数调用模型
-基本原理
-内存四区模型和函数调用模型传递分析
-提示学好c语言的关键
-如何建立正确的程序内存导图
-
-### 内存四区模强化训练
-### 作业强化
-
-## 指针基础
-## 字符串
-## 一维数组
-## 二维数组
-## 指针数组和数组指针
-## 多维数组和多维指针
-## 结构体
-## 文件
-## 链表
-## 函数与指针
-## 动态库的封装和设计
-
-# c++
-## 函数
-## 引用
-## 内联函数
-## 函数重载
-## 面向对象概念
-## 类的封装
-## 类的构造和析构
-## new/delete
-## 类的静态成员
-## c++编译器对象管理模型分析
-## 操作符重载及友元
-## 类的继承与多态
-## 虚函数
-## 纯函数
-## 多继承
-## 函数模板
-## 类模板
-## IO流
-## 异常
-## c11新特性
-## 设计模式
-## STL
-## 算法基础
-## 链表顺序存储
-## 链表链表存储
-## 循环链表
-## 双向链表
-## 栈(顺序和链式)
-## 队列(顺序和链式)
-## 栈的应用
-## 堆(顺序和链表)
-## 树基本概念及遍历
-## 二叉树(遍历,非递归遍历)
-## 数据结构
-## 排序算法
-## 冒泡算法
-## 选择算法
-## 插入算法
-## 快速算法
-## 希尔算法
-## 图论(深度优先搜索,广度优先搜索,最小度成树,最短路径)
-## 动态存储管理(回收算法,分配算法)
-## 查找(二叉排序树和平衡二叉树,B树和B+树,哈希表)
-## 内排序和外排序,动态规划
-
-# Linux基础编程
-# Linux系统编程
-# Linux网络编程
-# Linux数据库编程
-# QT系统编程
-01 day01 9
+            在链表中,通过指向接后结点位置的指针实现将链表中的每个结点”链”到一起．链表中第一个结点称之为头结点.
