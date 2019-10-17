@@ -1,4 +1,3 @@
-
 # composer 教程
     1.在github创建自己的库
       并创建忽略文件和协议
@@ -17,8 +16,6 @@
       自动更新: 使用github服务钩子
         在github仓库点击settings
         点击webhook设置账号
-
-
 
 # composer自动加载
     php开始文件头加上 include "vendor\autoload.php"
