@@ -134,10 +134,10 @@
 
 # 网络配置
     对于redhat的系统,一开始没有vim 那么使用setup命令
-    1.配置ip地址和子网掩码
+    配置ip地址和子网掩码
     编辑配置文件 ：
-    >cd   /etc/sysconfig/network-scripts
-    >cd   ifcfg-eth0    ./ifcfg-eth0.bak    //修改前先备份
+    cd /etc/sysconfig/network-scripts
+    cp ifcfg-eth0 ./ifcfg-eth0.bak  修改前先备份
     修改/etc/sysconfig/network-scripts/ifcfg-eth0 做网络的具体配置：
         DEVICE=eth0
         HWADDR=00:0C:29:EE:C7:1B
@@ -163,7 +163,14 @@
     本机和linux互相ping通
         问题：本机可以ping同linux，但是linux不能ping通本机。
         解决：关闭本机防火墙
-    
+    复制镜像可能需要重置UUID
+        vi /etc/sysconfig/network-scripts/ifcfg-eth0
+            删除MAC地址行
+        rm -rf /etc/udev/rules.d/70-persistent-net.rules
+            删除MAC地址和UUID绑定文件
+        shutdown -r now
+            重启服务器
+
 如果是虚拟机安装的,还需要配置虚拟机的网络配置    
 
 | 连接方式     | 连接网卡     | 是否能连接本机      | 是否能连接局域网     | 是否能连接公网     |
@@ -202,20 +209,7 @@ NAT不会占用真实的ip
         localhost: 当前系统的简写主机名称
         ～: 代表用户当前所在的目录 在家目录
         #: 命令提示符。超级用户#，普通用户是$
-    ctrl + L 清屏 
-    table 补全名称  
-    ctrl +ｃ退出来
-    reboot 重启系统
-    poweroff 关闭系统
-    sync 数据同步命令,可以让暂时保存在内存中的数据同步到硬盘上
-    shutdown -r now 重启系统 使用这个，在重启之前最好多执行几次sync
-    hostname 查看主机名称
-    ps -A 查看系统活跃进程
-    du -h 目标 以K，M，G为单位显示目录或文件占据磁盘空间的大小(block块默认=4k)
-    df -lh 查看系统分区情况
-    kill -9 pid 杀死系统进程号的进程
-    alias 显示命令的别名
-    
+
     查看目录下有什么文件/目录
         ls      列出目录的文件信息
         ls -l   以“详细信息“查看目录文件
@@ -284,6 +278,10 @@ NAT不会占用真实的ip
         tail -n filename 查看文件的末尾n行内容
         tail -f filename 监听文件的新增内容
         wc filename 查看文件的行数
+        od 打开二进制文件
+            -tc
+        du -h 目标 以K，M，G为单位显示目录或文件占据磁盘空间的大小(block块默认=4k)
+        df -lh 查看系统分区情况
 
     硬链接
         ln -d 源文件 硬链接文件
@@ -505,6 +503,8 @@ NAT不会占用真实的ip
             缺点: 只能按照文件名来搜索文件,而不能执行更复杂的搜索,比如按照权限,大小,修改,时间等搜索文件
         updatedb 更新数据库
             vim /etc/updatedb.conf 禁止了搜索一些
+        whatis 指令是干什么的
+        makewhatis 更新whatis数据库
         find 在目录中搜索文件
             按照文件名搜索
                 -name 按照文件名搜索
@@ -513,6 +513,7 @@ NAT不会占用真实的ip
                     find / -name "*er*"  文件名字出现"er"字样即可，不要位置
                 -iname 按照文件名搜索，不区分文件名大小写
                 -inum  按照inode号搜索
+                可以使用通配符
             限制查找的目录层级
                 -maxdepth  限制查找的最深目录
                 -mindepth  限制查找的最浅目录
@@ -547,28 +548,221 @@ NAT不会占用真实的ip
                 -group 组名:  按照组名查找所属组是指定用户组的文件
                 -nouser:     查找没有所有者的文件
                 按照所有者和所属组搜索时,"-nouser"选项比较常用,主要用于查找垃圾文件
-                只有一种情况例外
+                只有一种情况例外，那就是外来文件。比如光盘和U盘中的文件如果是windows复制的,
+                在Linux中查看就是没有所有者的文件;再比如手工源码包安装的文件,也可能没有所有者
+            按照文件类型搜索
+                -type d: 查找目录
+                -type f: 查找普通文件
+                -type l: 查找软链接文件
+            逻辑运算
+                -a: and 与
+                -o: or 或
+                -not: not 非
+                find 目录 条件 逻辑运算符 条件
+                find . -size +1k -a -type f
+                find . -size +1k -o -type f
+                find . -not -name cangls
+            其他选项
+                -exec
+                -ok
+        grep 在文件中搜索符合条件的字符串
+            grep "搜索内容" 文件名
+            -i 忽略大小写
+            -n 输出行号
+            -v 取反
+            --color=auto 搜索出的关键字用颜色显示
+            搜索的内容可以使用正则表达式
+    
+    管道符
+        命令1 | 命令2
+        命令1的正确输出作为命令2的操作符号
+            ll -a /etc/ | more
+            将ll -a /etc/的输出想象是一个临时文件,然后使用more来查看
+            ll /etc | grep yum 只要是管道符那么命令1的输出是字符串,命令2要将命令1的内容当作字符串来处理
+            统计正在链接的网络链接数量 netstat -an | grep ESTABLISHED | wc -l
+        其中的许多指令（grep head tail wc ls 等等）都可以当做管道符号使用。
+        ls -l | wc 计算当前目录一共有多少文件
+        grep sbin passwd | wc 计算passwd 文件中出现sbin内容的行数
+        is -l | head -20 | tail -5 查看当前目录中第16-20个文件信息
+
+    别名
+        alias 显示设置命令的别名 照顾管理员的习惯 别名的优先级大于系统的命令
+        alias ser='service network restart'
+        alias 临时生效的,要向永久生效,需要写如环境变量配置文件~/.bashrc
+
+    快捷键
+        table 补全名称
+        ctrl + A 把光标移动到命令行的开头
+        ctrl + E 把光标移动到命令行的结尾
+        ctrl + C 强制终止当前命令
+        ctrl + L 清屏
+        ctrl + U 删除或剪切光标之前的命令。
+        ctrl + Y 粘贴ctrl + U剪切的内容
+        ctrl + B 向左
+        ctrl + F 向右
+        history 历史操作列表
+        ctrl + P 向上切换历史操作命令
+        ctrl + N 向下切换历史操作命令
+        ctrl + H 删除光标前面的字符  backspace  
+        ctrl + D 删除光标后面的字符(光标盖住的字符)
+
+    压缩
+        zip:
+            压缩
+                zip 生成压缩包的名字 压缩的文件
+                zip 生成压缩包的名字 -r 压缩的目录(-r递归操作)
+                zip zna.zip anaconda-ks.cfg
+                zip zna.zip -r aa
+            解压缩
+                unzip 压缩包的名字 默认解压到当前目录
+                unzip 压缩包的名字 -d　指定解压目录
+                uzip ana.zip -d /tmp/
+        gz:
+            压缩
+                gzip 源文件 会删除源文件
+                -c: 将压缩数据输出到标准输出中,可以用于保留源文件
+                -r: 压缩目录下的文件,但是不会对这个目录进行压缩,也就是不会打包
+                gzip -c abc >> abc.gz 这样是可以保留源文件的,默认是不保留源文件
+                gzip -r abc
+            解压缩
+                gzip -d
+                gunzip
+        bz2:
+            压缩
+                bzip2 源文件 不能压缩目录
+                -k: 压缩时,保留源文件
+                -v: 显示压缩的详细文件
+            解压缩
+                bzip2 -d: 解压缩
+                bunzip2 压缩包的名字
+        tar 不使用z/j参数, 该命令只能对文件或目录打包
+            -j:	使用bzip2方式压缩文件
+            -z: 使用gzip方式压缩文件
+            -c: 创建,压缩,打包
+            -x:	释放,解压缩,解打包
+            -t: 只是查看包，不解压缩
+            -f: 指定压缩文件的名字
+            -v:	显示提示信息 压缩解压缩 可以省略
+            压缩
+                打包不压缩: tar -cvf test.tar 123 abc bcd
+                打包压缩bzip2: tar -jcvf 生成压缩包的名字(xxx.tar.bz2)　要压缩的文件或目录
+                打包压缩gzip: tar -zcvf 生成压缩包的名字(xxx.tar.gz)　 要压缩的文件或目录    　
+            解压缩
+                解压bzip2: tar -jxvf  xxx.tar.bz2要压缩的名字(默认解压到当前目录)
+                解压gzip:  tar -zxvf  xxx.tar.gz压缩包名字　-C 压缩的目录
+            注意包的后缀名
+        rar 必须手动安装该软件(sudo apt install rar)
+            -a: 压缩
+            x: 解压缩
+            压缩
+                rar a 生成的压缩文件的名字（temp）　压缩的文件或者目录
+            解压缩
+                rar x　压缩文件名　(解压缩目录)
+    
+    关机和重启
+        sync 数据同步命令
+            刷新文件系统缓冲区
+            可以让暂时保存在内存中的数据同步到硬盘上
+        shutdown
+            -c: 取消已经执行的shutdown命令
+            -h: 关机
+            -r: 重启
+            后面可以跟一个时间
+            shutdown -r 05:30
+            shutdown -r now 重启系统 使用这个，在重启之前最好多执行几次sync
+        reboot 重启系统
+            现在reboot是安全的,但是还是使用shutdown
+        poweroff 关闭系统 
+            不会正确保存的正在使用的数据 不建议使用
+        halt 关闭系统 
+            不会正确保存的正在使用的数据 不建议使用
+        init 3
+        init 5
+        init 0
+        hostname 查看主机名称
+        ps -A 查看系统活跃进程
+        kill -9 pid 杀死系统进程号的进程
         pwd 查看完整的操作位置
+
+    网络
+        配置IP地址 参考网络配置
+        ifconfig 查看IP信息
+            enp1s0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+            #标志                                               最大传输单元
+            inet 10.0.11.147  netmask 255.255.254.0  broadcast 10.0.11.255
+            #IP地址            子网掩码                广播地址
+            inet6 fe80::1a86:574f:5df2:d134  prefixlen 64  scopeid 0x20<link>
+            #IPv6地址(目前没有生效)
+            ether 98:e7:f4:f3:e6:3c  txqueuelen 1000  (以太网)
+            #MAC地址
+            RX packets 85705  bytes 84865698 (84.8 MB)
+            RX errors 0  dropped 0  overruns 0  frame 0
+            #接收的数据包情况
+            TX packets 44099  bytes 6132250 (6.1 MB)
+            TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+            #发送的数据包情况
+        ping 刺探网络
+            -b: 后面加入广播地址,用于对整个网段进行刺探
+            -c 次数: 用于指定ping的次数
+            -s 字节: 指定刺探包的大小
+            ping -b -c 4 10.0.11.255 用于探测局域网上有多少台电脑
+        netstat
+            -a: 列出所有网络状态,包括Socket程序
+            -c: 指出每隔几秒刷新一次网络状态
+            -n: 地使用IP址和端口号显示,不使用域名与服务名
+            -p: 显示PID和程序名
+            -t: 显示使用TCP协议端口的链接状态
+            -u: 显示使用UDP协议端口的链接状态
+            -l: 仅显示监听状态的链接
+            -r: 显示路由表
+            netstat -tuln 查询本机所有开启端口
+                Proto: 网络链接协议,一般就是TCP协议和UDP协议
+                Recv-Q: 表示接收到的数据,已经在本地的缓冲中,但是还没有被进程取走
+                Send-Q: 表示从本机发送,对方还没有收到的数据,依然在本地的缓冲中,一般是不具备ACK标志包的数据包
+                Local Address: 本机IP地址和端口号
+                Foreign Address: 远程主机的IP地址和端口号
+                State: 状态
+                    LISTEN: 监听状态,只有TCP协议需要监听,而UDP协议不需要监听
+                    ESTABLISHED: 已经建立链接状态。如果使用-l选项,则看不到已经建立链接的状态
+                    SYN_SENT: SYN发起包,就是主动发起链接的数据包
+                    SYN_RECV: 接收到主动链接的数据包
+                    FIN_WAIT1: 正在中断的链接
+                    FIN_WAIT2: 已经中断的链接,但是正在等待对方主机确认
+                    TIME_WAIT: 链接已经中断,但是套接字依然在网络中等待结束
+            netstat -tulnp 查看到是哪个程序占用了端口,并且可以知道这个程序的PID
+            netstat -an 查看所有
+            netstat -rn 查网关
 
     用户切换
         su - 或 su - root 向root用户切换
         exit 退回到原用户
         su 用户名 普通用户切换
             多次使用su指令，会造成用户的”叠加“：（su和exit 最好匹配使用）
-            jinnan --->root--->jinnan  --->root--->jinnan
+            jinnan --->root--->jinnan  --->root--->jinnan     
 
-    图像界面与命令界面切换
-        root用户可以切换
-        init 3
-        init 5
+# 通配符
+    匹配文件名,完全匹配
+    ?:匹配一个任意的字符
+    *:匹配0个或者任意多个字符,也可以是匹配任何内容
+    []:匹配中括号中任意一个字符。
+        [abc]代表一定匹配一个字符,或者是a,或者是b,或者是c
+    [-]:匹配中括号中任意一个字符, -代表一个范围。
+        [a-z]代表匹配一个小写字母
+    [^]:逻辑非,表示匹配不是中括号内的一个字符
+        [^0-9]代表匹配一个不是数字的字符
 
-    查看一个指令对应的执行程序文件在哪
-        whatis 指令是干什么的
-        makewhatis 更新whatis数据库
-
-    在文件中查找内容
-        grep 被搜寻内容 文件
-        grep hello passwd 在passwd文件中搜索hello内容 会把hello所在行的内容都打印到终端显示
+# 正则表达式
+    用于匹配字符串,包含匹配
+    ?:匹配前一个字符重复0次,或1次
+    *:匹配前一个字符重复0次,或任意多次
+    []:匹配中括号任意一个字符
+        [abc]代表一定匹配一个字符,或者是a,或者是b，或者c
+    [-]:匹配中括号任意一个字符，-代表一个范围
+        [a-z]代表匹配一个小写字母
+    [^]:逻辑非,表示匹配不是中括号内的一个字符
+        [^0-9]代表匹配一个不是数字的字符
+    ^: 匹配行首  
+    $: 匹配行尾
 
 # rpm 和 yum
     windwos控制面板 添加/卸载程序
@@ -617,5 +811,3 @@ NAT不会占用真实的ip
     到chrome下载安装包安装
     chrome://version/查看配置信息
     google-chrome --proxy-server="socks5://127.0.0.1:1080"
-
-P32
