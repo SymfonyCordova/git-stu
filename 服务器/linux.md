@@ -383,22 +383,88 @@ NAT不会占用真实的ip
         答:修改的权限相对比较少的时候使用“字母方式” 相反，权限变得非常多的时候就使用“数字”方式
 
     用户操作
-        配置文件：/etc/passwd
-            用户名:密码:用户编号:组别编号:家目录:该用户执行的shell脚本
+        用户相关文件/etc/passwd
+            root:  x:    0:   0:  root:  /root:     /bin/bash
+            games: x:    5:   60:  games:/usr/games:/usr/sbin/nologin
+            用户名:密码:用户ID:组ID:用户说明:家目录:该用户执行的shell脚本
+            用户ID:
+                0 超级用户UID.如果用户UID为0,代表这个账号是管理员账号
+                    那Linux如何把普通用户升级成为管理员呢?就是把其他用户的UID修改为0就可以了,这点和Windows是不同的.
+                1-499 系统用户(伪账号)UID.这些UID账号是系统保留给系统系统账户的UID
+                    也就是说UID是1-499范围内的用户是不能登陆系统的,而是用来运行系统或服务的.其中1-99是系统保留的账号,
+                    系统自动创建.100-499是预留给用户系统创建系统账号的
+                500-65535 普通用户ID.建立的普通用户UID从500开始,最大到65535.
+                    这些用户足够使用了,但是如果不够也不用害怕,2.6.x内核以后的Linux系统用户UID已经可以支持2的32次方这么多了
+        影子文件/etc/shadow
+            root:*:17960:0:99999:7:::
+            用户名:加密密码:密码最近更改时间:两次密码的修改间隔时间:密码有效期:密码修改到期前的警告天数:密码过期后的宽限天数:
+                密码失效时间:保留
+            加密密码:我们也可以在密码前人为的加入!或*改变加密值让密码暂时生效,使用这个用户无法登陆,达到暂时禁止用户的目的
+                注意所有伪用户的密码都是!!或*,代表没有密码是不能登陆的.当然我新创建的用户如果不设定密码,它的密码也是!!,
+                代表这个用户没有密码,不能登陆
+            密码最近更改时间:
+                date -d "1970-01-01 15775 days"
+                2013年03月11日星期一 00:00:00 CST
+                echo $(($(date --date="2013/03/11" +%s)/86400 +1))    
+        用户组信息文件/etc/group
+            root:x:0:root
+            组名:组密码位:GID:此组中支持的其他用户.附加组是此组的用户
+            初始组:每个用户初始组只能有一个,初始组只能有一个,一般都是和用户名相同的组作为初始组
+            附加组:每个用户可以属于多个附加组.要把用户加入组,都是加入附加组
+        组密码文件/etc/gshadow
+            如果我给用户组设定了组管理员,并给该用户组设定了组密码,组密码就保存在这个文件当中.
+            组管理员就可以利用这个密码管理这个用户组了.
+        用户邮箱目录
+            /var/spool/mail
+        用户模板目录
+            /etc/skel/
         创建用户
-            useradd liming                     创建liming用户，同时会创建一个同名的组出来
-            useradd -g  gid组别编号  username    把用户的组别设置好，避免创建同名的组出来
-            useradd -g  gid组别编号  -u 用户编号  -d 家目录username     
+            手动添加用户
+                /etc/passwd
+                /etc/shadow
+                /etc/group
+                /etc/gshadow
+                /home/user1
+                /var/spool/mail/user1
+            useradd 选项 用户名
+                -u 550 指定UID
+                -g 组名 指定初始组,不要手工指定
+                -G 组名 指定附加组,把用户加入组,使用附加组
+                -c 说明 添加说明
+                -d 目录 手工指定家目录,目录不需要事先建立
+                -s shell /bin/bash
+            useradd默认值
+                useradd添加用户时参考的默认值文件主要有两个,分别是/etc/default/useradd和/etc/login.defs
+        设定密码
+            passwd 用户名
+                -l:暂时锁定用户
+                -u:解锁用户
+                --stdin:可以将通过管道符输出的数据作为用户密码.主要在批量添加用户时使用
+            passwd直接回车代表修改当前用户的密码
+            echo "123" | passwd --stdin lamp可以使用字符串作为密码不需要人机交互
+            可以通过命令,把密码修改日期归零(shadow第三字段),这样用户一登陆就要修改密码
+            change -d 0 lamp
         修改用户
-            usermod   -g 组编号  -u  用户编号  -d 家目录  -l  新的名字    username
-                (修改家目录时需要手动创建)
-        删除用户
+            usermod
+                -u 用户编号: 修改用户的UID
+                -d 家目录: 修改用户的家目录.家目录必须写绝对路径
+                -c 用户说明: 修改用户的说明信息,就是/etc/passwd文件的第五个字段
+                -g 组名: 修改用户的初始组,就是/etc/passwd文件的第四个字段
+                -G 组名: 修改用户的附加组,其实就是把用户加入其他组用户,常用这个
+                -s shell: 修改用户的登陆shell.默认时/bin/bash
+                -e 日期: 修改用户的失效日期,格式为"YYYY-MM-DD",也就是/etc/shadow文件的第八个字段
+                -L: 临时锁定用户
+                -U: 解锁用户
+            改名usermod -l 新名 旧名,但是不建议,可以删除旧用户,再建立新用户
+        删除用户同时删除其家目录
             userdel username
             userdel -r username 删除用户同时删除其家目录
-        给用户 设置密码,使其登陆系统
-            passwd 用户名
+        切换用户身份
+            su 用户名
+                -:选项只使用-代表连带用户的环境变量一起切换
+                -c 命令:仅执行一次命令,而不切换用户身份
 
-    组别操作
+    组管理操作
         配置文件: /etc/group
         创建组
             groupadd music
@@ -408,7 +474,12 @@ NAT不会占用真实的ip
             groupmod -g gid -n 新名字 groupname
         删除组
             groupdel groupname 组下边如果有用户存在，就禁止删除
-
+        把用户加进组或从组中删除
+            gpasswd 组名
+                -a 用户名:把用户加入组,其实就是把用户加入其他组用户
+                -d 用户名:把用户从组中删除
+            比usermod好用
+        
     修改文件和目录的所有者和所属组
         chown 主人 filename
             chown user1 abc 把文件abc所有者改为user1
@@ -601,6 +672,7 @@ NAT不会占用真实的ip
         ctrl + B 向左
         ctrl + F 向右
         history 历史操作列表
+        history -c 清除历史命令
         ctrl + P 向上切换历史操作命令
         ctrl + N 向下切换历史操作命令
         ctrl + H 删除光标前面的字符  backspace  
@@ -732,13 +804,91 @@ NAT不会占用真实的ip
             netstat -tulnp 查看到是哪个程序占用了端口,并且可以知道这个程序的PID
             netstat -an 查看所有
             netstat -rn 查网关
+        write 向指定的登陆的用户发送信息
+            write 用户名 终端号
+            write user1 pts/1
+            hello
+            I will be in 5 mintues to restart, please save your data
+            向在pts/1(远程终端1)登陆的user1用户发送信息,使用Ctrl+D快捷键保存发送的数据
+        wall 向所有的登陆的用户发送信息
+            wall "I will be in 5 mintues to restart, please save your data"
+            Ctrl+D发送的数据
+        mail 邮件
+            发邮件
+                mail user1
+                    Subject:hello       <-邮件标题
+                    Nice to meet you    <-邮件具体内容
+                    .                   <-使用"."来结束邮件输入
+                mail -s "test mail" root < /root/anaconda-ks.cfg 发送文件内容 -s指定邮件的标题
+                    把/root/anaconda-ks.cfg文件的内容发送给root用户
+            查看邮件
+                mail 查看邮件
+                N:选择其中一份没有看过的邮件
+                h:列出邮件标题
+                d:删除指定邮件
+                s:保存邮件
+                quit:退出,并把自己操作过的邮件进行保存
+                exit:退出,但是不保存任何操作
+                ?:帮助文档
 
-    用户切换
-        su - 或 su - root 向root用户切换
-        exit 退回到原用户
-        su 用户名 普通用户切换
-            多次使用su指令，会造成用户的”叠加“：（su和exit 最好匹配使用）
-            jinnan --->root--->jinnan  --->root--->jinnan     
+    系统痕迹
+        w 显示系统中正在登陆用户的信息
+            14:16:49 up  1:09,  1 user,  load average: 1.89, 1.82, 1.76
+            #系统时间   持续开机时间 登陆用户  系统在1分钟,5分钟,15分钟前的平均负载
+            USER     TTY      来自           LOGIN@   IDLE   JCPU   PCPU WHAT
+            zler     :0       :0               13:09   ?xdm?   2:29   0.01s /usr/lib/gdm3/gdm-x-session --run-script env GNOME_SHELL_SESSION_MODE=ubuntu gnome-session --session=ubuntu
+        who 显示系统中正在登陆用户的信息
+        last 查看系统所有登陆过的用户信息
+        lastlog 查看系统中所有用户最后一次的登陆时间
+        lastb 查看错误登陆的信息
+
+    挂载
+        linux所有的存储设备都必须挂载使用,包括硬盘
+            将空的目录与硬件设备进行链接
+            光盘设备文件名是 /dev/hdc, /dev/sro
+            无论哪个系统的操作系统都有软链接/dev/cdrom与可以作为光盘的设备文件名
+        挂载和卸载光盘
+            mount 查询系统已经挂载的设备
+            mkdir /mnt/cdrom 新建一个空的目录       
+            mount -t iso9660 /dev/cdrom /mnt/cdrom 把光驱挂载到cdrom目录
+            /mnt/cdrom 退出光盘
+            umount /dev/sr0 卸载光驱
+            umount /dev/cdrom (硬件)卸载光驱
+            umount /mnt/cdrom (挂载点)卸载光驱
+            eject 弹出光盘
+        挂载和卸载U盘
+            fdisk -l U盘会和硬盘共用设备文件名,所以U盘的设备文件名不是固定的,需要手工查询/dev/sdb4
+            mkdir /mnt/usb
+            mount -t vfat /dev/sdb4 /mnt/usb/  vfat=windows的FT32
+            mount -t vfat -o iocharset=utf8 /dev/sdb4 /mnt/usb/ 指定字符集显示中文
+            umount /mnt/usb/ 卸载
+        mount
+            -a:依据配置文件/etc/fstab的内容,自动挂载
+            -t 文件系统: 加入文件系统类型来指定挂载的类型,可以ext3,ext4,iso9660等文件系统
+            -l 卷标名: 挂载指定卷标的分区,而不是安装设备文件名挂载
+            -o 特殊选项: 可以指定挂载的额外选项,比如读写权限,同步异步等 如果不指定则默认值生效.
+        挂载NTFS分区
+            linux的驱动加载顺序
+                驱动直接放入系统内核之中.这种驱动主要是系统启动加载必须的驱动,数量较少
+                驱动以模块的形式放入硬盘.大多数驱动都已这种方式保存,保存位置在
+                    /lib/modules/3.10.0-862.el7.x86_64/kernel中
+                    /lib/modules/5.0.0-31-generic/kernel/中
+                驱动可以被linux识别,但是系统认为这种驱动一般不常用,默认不加载.如果需要加载这种驱动
+                    需要重新编译内核,而NTFS文件系统的驱动就属于这种情况
+                硬件不能被linux内核识别,需要手工安装驱动.当然前提是厂商提供了该硬件针对linux的驱动
+                    否则就需要自己手动开发驱动了
+            NTFS-3G安装NTFS文件系统模块
+                下载NTFS-3G插件,从官网:http://www.tuxera.com/community/ntfs-3g-download
+                安装NTFS-3G插件
+                    要保证gcc安装了
+                    tar -zxvf ntfs-3g_ntfsprogs-2013.1.13.tgz
+                    cd ntfs-3g_ntfsprogs-2013.1.13
+                    ./configure
+                    make
+                    make install
+                安装完成可以挂载使用windows的NTFS分区了.
+                    不过要注意挂载分区时的文件系统不是ntfs，而是ntfs-3g
+                    mount -t ntfs-3g /dev/sdb1 /mnt/win
 
 # 通配符
     匹配文件名,完全匹配
@@ -764,34 +914,289 @@ NAT不会占用真实的ip
     ^: 匹配行首  
     $: 匹配行尾
 
-# rpm 和 yum
-    windwos控制面板 添加/卸载程序
-    进行程序的安装,更新,卸载,查看
-    Setup.exe 
-    
-    rpm命令:相当于windows的添加/卸载程序
-    进行程序的安装、更新、卸载、查看
-    
-    程序安装: rpm -ivh 程序名
-    程序查看: rpm -qa
-    查看软件是否有安装： rpm -g 软件包名（完整）
-    程序卸载: rpm -e --nodeps 程序名
-    
-    yum命令:相当于可以联网的rpm命令
-    相当于先联网下载程序安装包、程序的更新包
-    自动执行rpm命令
+# vim
+    vim是一个全屏幕纯文本编辑器,是vi的增强版
+    alias vi='vim'，永久生效,请放入环境变量配置文件(~/.bashrc)
+    进入编辑器模式
+        a: 光标所在字符后插入
+        A: 光标所在字符行尾插入
+        i: 光标所在字符前插入 不发生任何变换
+        I: 光标所在行行首插入
+        o: 在光标下插入新行
+        O: 在光标上插入新行
+        s: 删除光标所在字符
+    尾行模式的操作
+        ZZ保存退出
+        :q 退出编辑器
+        :w 对修改后的内容进行保存
+        :wq 保持修改并退出编辑器
+        :q! （不保存）强制退出编辑器
+        :w! 强制保存
+        :wq! 强制保存并退出编辑
+        :set nu   设置行号
+        :set nonu 取消行号
+        :数字 跳转到光标所在行
+        查找
+            :/查找内容 从光标所在行向下查找
+            :?查找内容 从光标所在行向上搜索
+                n 下一个
+                N 上一个
+        替换
+            :s/cont1/cont2/  替换光标所在行的第一个cont1 字符串cout1被替换为cont2
+            :1,10s/cont1/cont2/g  替换1到10行的所有字符串cout1被替换为cont2
+            :s/cont1/cont2/g 替换光标所在行的全部cont1
+            :%s/cont1/cont2/g 替换整个文档的cont1
+            :1,10s/^/#/g 注释1到10行 ^代表行首
+            :1,10s/^#//g 取消注释
+            :1,10s/^/\/\//g 注释1到10行
+            :1,10s/^\/\///g 取消注释
+    命令模式操作
+        移动光标
+            字符级
+                左 下 上 右  移动光标
+                h  j  k l 
+            单词级
+                w：word移动到下个单词的首字母
+                e:    end 移动到下个（本）单词的尾字母
+                b:    before移动到上个（本）单词的首字母
+            行级
+                $:    行尾
+                0:    行首
+                ^:    行首
+            段落级
+                {：上个（本）段落首部
+                }：下个（本）段落尾部
+            屏幕级
+                H：屏幕首部
+                L: 屏幕尾部
+            文档级
+                gg:移动到文件头
+                G:文档尾部
+                1G：文档第一行
+                nG:文档第n行
+        内容删除
+            dd:  删除光标当前行
+            2dd：包括当前行在内，向后删除2行内容
+            ndd：包括当前行在内，删除后边n行内容
+            :10,20d 删除指定范围内的行
+            x:   删除光标所在字符
+            nx:  删除光标所在字符的n个字母
+            dG:  从光标所在行删到文件尾
+            cw:  从光标所在位置删除至单词结尾，并进入编辑模式        
+        内容复制
+            yy:  复制光标当前行
+            2yy： 包括当前行在内，向后复制2行内容
+            nyy： 包括当前行在内，复制后边n行内容
+            p：   对（删除）复制好的内容进行粘贴到光标后
+            P：   对（删除）复制好的内容进行粘贴到光标前
+        相关快捷键
+            u: 撤销
+            ctrl+r: 反撤销
+            J： 合并上下两行
+            r： 单个字符替换
+            R: 从光标所在处开始替换字符,按ESC结束
+            .点：重复执行上次最近的指令
+    vim的配置文件"~/.vimrc"，把你需要的参数写入配置文件   
+        :syntax on  开启语法颜色
+        :syntax off 关闭语法颜色
+        :set hlsearch 高亮显示
+        :set nohlsearch 不高亮显示
+        :set ruler 右下角的状态栏
+        :set noruler 不右下角的状态栏
+        :set showmode 设置左下角的状态栏入INSERT
+        :set noshowmode 取消左下角的状态栏入INSERT
+        :set list 设置显示隐藏字符
+        :set nolist 设置不显示隐藏字符
+        :set tx=4 设置Tab为4个空格
+    使用技巧
+        导入文件内容
+            :r 文件名 把文件的内容导入到光标处
+            :r!命令 在vim中执行系统命令
+            :r !命令 在vim中执行系统命令,并把结果导入到光标所在行
+        设定快捷键
+            :map 快捷键 快捷键的命令 自定义快捷键
+            :map ^P I#<ESC> 按"ctrl + p"时,在行首加入注释
+            :map ^B ^x      按"ctrl + b"时,删除行首第一个字母(删除注释)
+            :map ^D yyp     复制当前行到下一行
+            注意:^P快捷键不能手工输入,需要执行ctrl+v然后ctrl+p
+        字符替换
+            :ab 源字符 替换字符 
+            :ab mymail shenchao@163.com 当碰到"mymail"时,转变为邮箱
+        多文件打开
+            vim -o abc bcd 上下分屏打开两个文件
+            ctrl+w加左右箭头来切换屏幕
+            vim -O abc bcd 左右分屏打开两个文件
+            ctrl+ww:来切换屏幕
+            :wqall保存所有文件   
 
-# ubuntu .deb包安装方法
-    dpkg -i package.deb 	    安装包
-    dpkg -r package 	        删除包
-    dpkg -P package 	        删除包（包括配置文件）
-    dpkg -L package 	        列出与该包关联的文件
-    dpkg -l package 	        显示该包的版本
-    dpkg –unpack package.deb 	解开 deb 包的内容
-    dpkg -S keyword 	        搜索所属的包内容
-    dpkg -l 	                列出当前已安装的包
-    dpkg -c package.deb 	    列出 deb 包的内容
-    dpkg –configure package 	配置包
+# 软件包管理
+    软件包分类
+        源码包
+            开源,如果有足够的能力,可以修改源代码
+            可以自由选择需要的功能
+            软件是编译安装,所以更加适合自己的系统,更加稳定也更加高效
+            卸载方便
+            安装过程步骤较多,尤其安装较大的软件集合时(如LAMP),容易出现拼写错误
+            编译过程时间较长,安装比二进制安装时间长
+            因为是编译安装,安装过程中一旦报错新手很难解决
+        二进制包
+            window的.exe
+            linux的debian和ubuntu的.dpkg
+            linux的redhat的.rpm
+    软件包安装建议
+        源码包:如果服务是给大量客户端访问的,建议使用源码包,源码包效率高(LAMP)
+        二进制包:如果程序是给少量用户访问,或者本地使用的,建议RPM或者dpkg包,因为RPM或者dpkg包管理方便
+    rpm和yum
+        windwos控制面板 添加/卸载程序 进行程序的安装,更新,卸载,查看,Setup.exe
+        包的依赖性
+        包全名:如果操作的是未安装软件包,则使用全包名,而且需要注意绝对路径
+        包名:如果操作的是已经安装的软件包,则使用包名即可,系统会生产RPM包的数据库(/var/lib/rpm),
+            而且可以在任何路径使用
+        rpm命令:相当于windows的添加/卸载程序,进行程序的安装、更新、卸载、查看Step.exe
+        安装: rpm -ivh 包全名 安装包
+            -i: install
+            -v: 显示更详细的信息
+            -h: 打印显示安装进度
+            --nodeps:不检查依赖性
+            --prefix:指定安装位置,不建议指定位置,rpm包安装会记录安装位置的数据库,卸载的时候会找到并卸载，
+                源码包安装需要指定安装位置,不然默认位置乱放,不好卸载,源码包卸载很简单直接删除安装目录
+            --force:强制安装,不管是否已经安装,都重新安装
+                如果一个软件的文件被我们误删除,那么没法启动这个软件,可以使用强制安装,再重新安装一片
+            --test:测试安装,不会实际安装,只是检测一下依赖性
+            rpm包安装后软件的位置，不是绝对的只是大部分
+                /etc/ 配置文件安装目录
+                /usr/bin/ 可执行的命令安装
+                /usr/lib/ 程序所使用的函数库保存位置
+                /usr/share/doc/ 基本的软件使用手册保存位置
+                /usr/share/man/ 帮助文档保存位置
+            rpm安装的包如何启动
+                service 服务名 start|stop|restart|status
+                /etc/rc.d/init.d/httpd start|stop|restart
+                service搜索的也是/etc/rc.d/init.d/目录
+        升级: rpm -Uvh 包全名
+            这个只是升级安装包
+        升级安装: rpm -Fvh 包全名
+            升级安装包并安装
+        卸载: rpm -e 包名
+            --nodeps:不检查依赖性
+            -e: 卸载
+            卸载的时候也会按照安装的依赖卸载
+        查看:rpm -q 包名
+                查询是本地是否已安装
+            rpm -qa 包名
+                查询所有
+            rpm -qi 包名
+                查询软件信息
+            rpm -qip 包全名
+                查还没有安装的软件包的信息
+            rpm -ql 包名
+                查询已经安装的软件包中的文件列表和安装的完整目录
+            rpm -qlp 包全名
+                查询还没有安装的软件包中的文件列表和打算安装的位置
+            rpm -qf 系统文件名
+                查询系统文件属于哪个包
+            rpm -qR 包名
+                查询所有系统中和已经安装的软件包的依赖关系的软件包
+            rpm -Va
+                校验本机已经安装的所有软件包
+                校验是为了保证是否是正版的比如:md5加密的文件包
+                验证的包的内容比如大小,配置文件,等等
+            rpm -V 包名
+                校验本机已经安装的软件包
+            rpm -Vf 系统文件名
+                校验某个系统文件是否被修改
+            rpm -g 包全名
+                查看软件是否有安装
+            rpm2cpio 包全名 | cpio -idv . 文件绝对路径
+                提取RPM包中文件，比如httpd的配置文件
+        数字证书:
+            校验方法只能对已经安装的RPM包中的文件进行校验,但如果RPM包本身就被动手脚,
+            那么校验就不能解决问题。
+            数字证书的特点:
+                首先必须找到原厂的公钥文件,然后进行安装
+                再安装RPM包,会去提取RPM包中的证书信息,然后和本机安装的原厂证书进行验证
+                如果验证通过,则允许安装;如果验证不通过,则不允许安装并警告
+            数字证书的位置:
+                光盘里面RPM-GPG-KEY-CentOS-6
+                本机/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-6
+            数字证书导入
+                rpm --import RPM-GPG-KEY-CentOS-6
+            查看系统安装过的数字证书
+                rpm -qa | grep gpg-pubkey
+        yum:相当于可以联网的rpm命令
+            相当于先联网下载程序安装包、程序的更新包,自动执行rpm命令
+            联网安装的话,不需要手动解决安装包的各种依赖包
+            yum源配置文件保存在/etc/yum.repos.d/目录中,文件的扩展名一定是"*.repo"
+            yum操作大部分是要访问源服务器
+            yum list 
+                查询所有可用软件包列表
+            yum list 包名
+                查询yum源服务器中是否包含某个软件包
+            yum search 关键字
+                搜索服务器上所有和关键字相关软件包
+            yum info 包名
+            yum -y install 包名
+                -y:自动回答yes
+            yum -y update 包名
+            yum remove 包名
+            yum grouplist 
+                查看可以安装的软件组
+            yum groupinfo 软件组名
+                查看软件组的详细信息
+            yum -y groupinstall 软件组名
+                安装软件组
+            yum groupremove 软件组名
+                卸载软件组
+    dpkg和apt-get
+        dpkg -i package.deb 	    安装包
+        dpkg -r package 	        删除包
+        dpkg -P package 	        删除包（包括配置文件）
+        dpkg -L package 	        列出与该包关联的文件
+        dpkg -l package 	        显示该包的版本
+        dpkg –unpack package.deb 	解开 deb 包的内容
+        dpkg -S keyword 	        搜索所属的包内容
+        dpkg -l 	                列出当前已安装的包
+        dpkg -c package.deb 	    列出 deb 包的内容
+        dpkg –configure package 	配置包
+        apt-get命令:相当于可以联网的dpkg命令
+            相当于先联网下载程序安装包、程序的更新包,自动执行dpkg命令
+    源码包安装
+        下载软件包
+        解压缩
+        进入解压缩文件
+        ./configure: 编译前准备
+            安装之前需要检测系统环境是否符合安装要求
+            自定义需要的功能选型./configure支持的功能选项较多,可以执行./configure --help命令、
+                查询支持的功能.一般都会通过./configure --prefix=安装路径,来指定安装路径
+            把系统环境的检测结果和定义好的功能选项写入Makefile文件,后续的编译和安装需要依赖这个文件的内容
+            Makefile只有执行了./configure后才会生成这个文件
+        make: 编译
+            make会调用gcc编译器,并读取Makefile文件中的信息进行系统软件编译.编译的目的就是把源码程序转变成
+                为linux识别的可执行文件,这些可执行文件保存在当前目录下.编译过程较为耗时,需要有足够的耐性
+        make clean: 清空编译内容(非必须步骤)
+            如果在./configure或make编译中报错,那么我们在重新执行命令前一定要记得执行make clean命令,它
+                会清空Makefile文件或编译产生的.o头文件
+        make install: 编译安装
+            这才是真正的安装过程,一般会写清楚程序的安装位置.如果忘记指定安装目录,则可以把这个命令的执行过程
+                保存下来,以备将来删除使用
+    打入补丁
+        diff -Naur /root/test/old.txt /root/test/new.txt > txt.patch
+            比较两个文件的不同,同时生成txt.patch补丁文件
+        patch -pn < 补丁文件
+            按照补丁文件进行更新
+    脚本安装程序
+        就是一个shell脚本,里面写了一些RPM包和源码包的安装命令
+        Webmin软件
+            这个是用web浏览器来管理linux服务器的一个软件
+            http://sourceforge.net/projects/webadmin/files/webwin/
+            https://sourceforge.net/projects/webadmin/files/webmin/1.930/webmin-1.930.tar.gz/download
+        tar -zxvf webmin-1.930.tar.gz
+        ./Setup.sh
+
+# 登陆终端
+    本地字符终端  tty1-6        alt+F1-6
+    本地图形终端  tty7          ctrl+alt+F7(按住3秒,安装启动图形界面)
+    远程终端     pts/0-255
 
 # google-chrome 正向代理
     sudo apt update
