@@ -1,10 +1,3 @@
-# linux介绍
-    linux---堡垒机(公司)---跳转机
-    linux安全 开源 免费 可靠
-    并发量支持比windows好
-    windows---比尔盖茨开发的
-    linux内核---Linus Torvalds
-
 # 两种分区表和格式化
     1.分区
         MBR分区表: 最大支持2.1TB硬盘,最多支持4个分区
@@ -42,11 +35,11 @@
     分区设备名称
         /dev/hda1(IDE硬盘接口)
         /dev/sda1(SCSI硬盘接口、SATA硬盘接口)
-
+    
     挂载点(使用已经存在的空目录作为挂在点) 类似于windows的盘符
         理论上所有空目录,包括新建目录都可以作为挂载点,但是
         /bin,/lib,/etc要单独分出来
-
+    
     挂载
         必须分区
             /(根分区)
@@ -59,17 +52,17 @@
         常用分区
             /home （用于文件服务器）
             /www (用于web服务器)
-
+    
     挂载类型 自动、手动
         类型：自动 手动。
         自动：系统安装创建的挂载点，后期使用会自动与硬盘分区建立联系。
         手动：系统运行过程中，临时添加的U盘，移动硬盘不会被系统应用起来，
         需要手动创建一个文件目录并使其与该硬件进行联系，挂载。
-
+    
     与新硬件形成挂载
         把挂载点目录内部的旧的文件释放出去
         再进行挂载操作
-
+    
     目录说明
         bin 存放系统命令的目录,普通用户和超级用户都可以执行.是/usr/bin/目录的软连接
         sbin 存放系统命令的目录,只有超级用户才可以执行. 是/usr/sbin/目录的软连接
@@ -126,7 +119,7 @@
             /var/spool/mail/ 新收到的邮件队列保存位置。系统新收到的邮件会保存在此目录中
             /var/spool/cron/ 系统的定时任务队列保存位置。系统的计划任务会保存在这里
         /run 是各种各样数据的家园
-
+    
     ext4 
         类似于win系统的FAT32和NTFS类型
         给/boot目录单独创建一个分区结构，对其形成保护，避免其他的文件占据该目录空间
@@ -192,7 +185,7 @@ NAT不会占用真实的ip
     linux一切皆文件
     linux不靠扩展名区分文件类型,建议写上
     linux中所有的存储设备都必须在挂载之后才能使用
-
+    
     服务器不能关机只能重启,重启之前终止正在执行的服务
         sync 数据同步命令,可以让暂时保存在内存中的数据同步到硬盘上
         shutdown -r now 重启系统 使用这个，在重启之前最好多执行几次sync
@@ -200,7 +193,7 @@ NAT不会占用真实的ip
     远程配置防火墙不要把自己踢出服务器
         防火墙: 基本功能是数据包过滤(IP地址,MAC地址,端口号,协议类型,数据包中数据)
         先写一个系统定时任务,让它每5分钟清空一下防火墙规则,就算写错了也还有反悔的机会,等测试没有问题了再删除这个系统定时任务
-    
+
 # 常用命令
     [root@localhost ~] #
         []: 这是体是符的分隔符号,没有特殊含义
@@ -209,7 +202,7 @@ NAT不会占用真实的ip
         localhost: 当前系统的简写主机名称
         ～: 代表用户当前所在的目录 在家目录
         #: 命令提示符。超级用户#，普通用户是$
-
+    
     查看目录下有什么文件/目录
         ls      列出目录的文件信息
         ls -l   以“详细信息“查看目录文件
@@ -220,7 +213,7 @@ NAT不会占用真实的ip
         ls -i   查看文件的i节点号   
         ls -lh  人性化显示
         ls -ld  显示目录本身
-
+    
         第一列: 权限
         第二列: 引用计数. 文件的引用计数代表该文件的硬链接数个数,而目录的引用计数代表该目录有多少个一级子目录
         第三列: 所有者,也就是文件所属哪个用户
@@ -235,7 +228,7 @@ NAT不会占用真实的ip
         cd .. 向上级目录切换
         cd ~ 或 cd  直接切换到当前的对应的家目录
         cd - 进入上次所在目录
-
+    
     创建目录
         mkdir 目录的名字
         mkdir -p newdir/newdir/newdir 递归方式创建多个连续目录
@@ -243,22 +236,22 @@ NAT不会占用真实的ip
         mkdir dir/newdir              不用-p参数
         mkdir -p dir/newdir/newdir    使用-p参数
         mkdir dir/newdir/dir/newdir
-
+    
     删除文件或目录
         rm 文件
         rm -r  目录     -r[recursive递归]递归方式删除目录
         rm -rf 文件/目录 -r force 递归强制方式删除文件 force强制，不需要额外的提示
         rm -rf /
         这个删除是不能反悔的,所以再删除之前可以安装extundelete数据恢复软件
-
+    
     创建文件
         touch dir1/filename 如果没有此文件,就创建文件,如果有此文件只是修改访问时间,不会修改文件内容的
         touch filename
-
+    
     给文件追加内容
         echo 内容 > 文件名称   把”内容“以覆盖写方式追加给”文件“ 如果文件不存在会创建文件
         echo 内容 >> 文件名称  把”内容“以追加形式写给”文件“ 如果文件不存在会创建文件
-
+    
     查看文件内容
         stat filename 显示文件或文件系统的详细信息 linux是没有文件创建时间
         cat filename 打印文件内容到输出终端
@@ -282,7 +275,7 @@ NAT不会占用真实的ip
             -tc
         du -h 目标 以K，M，G为单位显示目录或文件占据磁盘空间的大小(block块默认=4k)
         df -lh 查看系统分区情况
-
+    
     硬链接
         ln -d 源文件 硬链接文件
         源文件和硬链接文件拥有相同的Inode和Block
@@ -291,7 +284,7 @@ NAT不会占用真实的ip
         硬链接标记不清,很难确认硬链接文件位置,不建议使用
         硬链接不能链接目录
         硬链接不能跨分区
-
+    
     软链接
         ln -s 源文件 软链接文件 相当于快捷方式
         软链接和源文件拥有不同的Inode和Block
@@ -308,7 +301,7 @@ NAT不会占用真实的ip
         cp     file1  dir/newfile2     			file1被复制一份到dir并改名字为newfile2
         cp     file1  dir            			file1被复制一份到dir并改名字为原名字
         cp     dir1/filea    dir2/newfile       file1被复制一份到dir2并改名字为newfile
-
+    
     目录的复制（需要设置-r[recursive递归]参数，目视目录层次）
         cp -r dir1 dir2            	     dir1被复制到dir2目录下，并改名字为原名
         cp -r dir1/dir2 dir3/newdir        dir2被复制到dir3目录下，并改名字为newdir
@@ -319,17 +312,17 @@ NAT不会占用真实的ip
         cp -d 如果源文件为软链接(对硬链接无效),则复制出的目标文件也为软链接
         cp -i 询问,如果目标文件已经存在,则会询问是否覆盖
         cp -p 复制后目标文件保留源文件的属性(包括所有者，所属组、权限和时间)
-
+    
     查看系统时间
         date
         date -s "2013-09-13 19:42:30" 给系统设置时间
-
+    
     移动目录（文件和目录）剪切
         mv dir1 dir2           把dir1移动到dir2目录下
         mv dir1/dir2 dir3       把dir2移动到dir3目录下
         mv dir1/dir2 dir3/dir4  把dir2移动到dir4目录下
         mv dir1/dir2 ./         把dir2移动到当前目录下
-
+    
     改名字（文件和目录）
         mv dir newdir                   修改dir1的名字为newdir
         mv dir1 ./newdir                dir1移动到当前目录下，并改名字为newdir
@@ -337,7 +330,7 @@ NAT不会占用真实的ip
         mv dir1/dir2 dir3/newdir        dir1移动到dir3目录下，并改名字为“newdir ”
         mv dir1/dir2 dir3/dir4          dir2移动到dir4目录下，并改名字为“原名	”
         mv dir1/dir2 dir3/dir4/newdir   dir2移动到dir4目录下，并改名字为“newdir"        
-
+    
     给文件设置权限
         - --- --- ---
         文件类型 主人权限 同组权限 其他组权限
@@ -381,7 +374,7 @@ NAT不会占用真实的ip
             常用的数字权限 644 文件基本权限 755目录的基本权限 777最大权限
         问:字母相对 和数字绝对 方式权限设置取舍?
         答:修改的权限相对比较少的时候使用“字母方式” 相反，权限变得非常多的时候就使用“数字”方式
-
+    
     用户操作
         用户相关文件/etc/passwd
             root:  x:    0:   0:  root:  /root:     /bin/bash
@@ -463,7 +456,7 @@ NAT不会占用真实的ip
             su 用户名
                 -:选项只使用-代表连带用户的环境变量一起切换
                 -c 命令:仅执行一次命令,而不切换用户身份
-
+    
     组管理操作
         配置文件: /etc/group
         创建组
@@ -479,7 +472,7 @@ NAT不会占用真实的ip
                 -a 用户名:把用户加入组,其实就是把用户加入其他组用户
                 -d 用户名:把用户从组中删除
             比usermod好用
-        
+    
     修改文件和目录的所有者和所属组
         chown 主人 filename
             chown user1 abc 把文件abc所有者改为user1
@@ -515,7 +508,7 @@ NAT不会占用真实的ip
             目录的默认权限最大可以是777，而umask的值是022
                 drwxrwxrwx 减去 d----w--w- 等于默认目录的权限 drwx-r-xr-x
                 减完是负的就是没有权限,因为没有负的权限
-
+    
     帮助命令查看文档命令
         man 指令查看帮助手册 manual pages
             man ls
@@ -562,7 +555,7 @@ NAT不会占用真实的ip
                 type mkdir 显示 mkdir 是 /bin/mkdir
         --help选项
             ls --help
-
+    
     搜索
         whereis 搜索系统命令的命令,不能搜索普通文件，只能搜索系统命令
             会显示源文件和帮助文档
@@ -655,12 +648,12 @@ NAT不会占用真实的ip
         ls -l | wc 计算当前目录一共有多少文件
         grep sbin passwd | wc 计算passwd 文件中出现sbin内容的行数
         is -l | head -20 | tail -5 查看当前目录中第16-20个文件信息
-
+    
     别名
         alias 显示设置命令的别名 照顾管理员的习惯 别名的优先级大于系统的命令
         alias ser='service network restart'
         alias 临时生效的,要向永久生效,需要写如环境变量配置文件~/.bashrc
-
+    
     快捷键
         table 补全名称
         ctrl + A 把光标移动到命令行的开头
@@ -755,7 +748,7 @@ NAT不会占用真实的ip
         ps -A 查看系统活跃进程
         kill -9 pid 杀死系统进程号的进程
         pwd 查看完整的操作位置
-
+    
     网络
         配置IP地址 参考网络配置
         ifconfig 查看IP信息
@@ -830,7 +823,7 @@ NAT不会占用真实的ip
                 quit:退出,并把自己操作过的邮件进行保存
                 exit:退出,但是不保存任何操作
                 ?:帮助文档
-
+    
     系统痕迹
         w 显示系统中正在登陆用户的信息
             14:16:49 up  1:09,  1 user,  load average: 1.89, 1.82, 1.76
@@ -841,7 +834,7 @@ NAT不会占用真实的ip
         last 查看系统所有登陆过的用户信息
         lastlog 查看系统中所有用户最后一次的登陆时间
         lastb 查看错误登陆的信息
-
+    
     挂载
         linux所有的存储设备都必须挂载使用,包括硬盘
             将空的目录与硬件设备进行链接
@@ -1193,7 +1186,126 @@ NAT不会占用真实的ip
         tar -zxvf webmin-1.930.tar.gz
         ./Setup.sh
 
+# ACL权限管理
+    用于解决用户对文件身份不足的问题的
+    不再考虑文件的所属组和所属人,直接赋予用户可执行的权限
+    开启ACL
+        dumpe2fs -h /dev/sda3
+        -h 仅显示超级块中信息,而不显示磁盘块组的详细信息
+    手工开启ACL权限
+        mount -o remount,acl /
+            重新挂载根分区,并挂载加入acl权限,临时生效的
+        也可以通过修改/etc/fstab文件,永久开启ACL权限:
+            vi /etc/fstab
+            UUID=44d25e35-ae89-4c93-b453-08ba076ce37a / ext4    defaults,acl 0    1
+        mount -o remount
+    基本命令
+        getfacl 文件名 
+            查询文件的ACL权限
+        setfacl 选项 文件名 设定ACL权限
+            -m 设定ACL权限
+            -b 删除ACL权限
+            -x:用户 删除单个用户的ACL权限
+        setfacl -m u:用户名:权限 文件名
+            setfacl -m u:aa:rwx /test
+            setfacl -m u:aa:rx -R soft/ 只对已经存在的文件生效
+            setfacl -m d:u:aa:rwx -R /test 只对以后新建的文件生效
+        setfacl -m g:组名:权限 文件名
+            setfacl -m g:组名:权限 文件名
+        ACL权限,一旦递归之后,不可避免的出现权限益出
+    最大有效的权限mask
+        setfacl -m m:rx project/
+            修改mask权限
+        getfacl 查看文件权限时有 mask::rwx
+    删除ACL权限
+        setfacl -x u:st /project/
+            删除指定用户和用户组的ACL权限
+        setfacl -b /project/
+            会删除文件的所有的ACL权限
+    sudo授权 给普通用户赋予部分管理员权限
+        授予的权限越详细,普通用户得到的权限越小
+        授予的权限越简单,普通用户得到的权限越大
+        visudo 赋予普通用户权限命令,命令执行之后和vi一样使用
+            root ALL=(ALL) ALL
+                用户名 被管理主机的地址=(可使用的身份) 授权命令(绝对路径)
+            %wheel ALL=(ALL) ALL
+                %组名 被管理主机的地址=(可使用的身份) 授权命令(绝对路径)
+        例子授权用户user1,可以重启服务器
+            visudo
+            user1 ALL=/sbin/shutdown -r now
+            sudo -l 查看可用的授权
+            sudo /sbin/shutdown -r now
+        例子授权user1可以添加用户并且可以修改密码,但不能修改root
+            user1 ALL=/usr/sbin/useradd
+            user1 ALL=/usr/bin/passwd [A-Za-z]*, !/usr/bin/passwd "", !/usr/bin/passwd root
+    文件特殊权限SetUID,SetGID,Sticky BIT
+        特殊权限
+            SUID:只能针对执行程序
+            SGID:既可以针对执行文件
+                 也可以针对目录文件
+            SBIT:只能针对目录
+        SetUID
+            只有可以执行的二进制程序才能设定SUID权限
+            命令执行者要对该程序拥有x(执行)权限
+            命令执行者在执行程序时获得该程序文件属主的身份(在执行程序的过程中灵魂附体为文件的属主)
+            SetUID权限只在该程序执行过程中有效,也就是说身份改变只在程序执行过程中有效
+            几点建议
+                关键目录应严格控制写权限.
+                用户的密码设置要严格遵循密码三原则
+                对系统中默认应该具有SetUID权限的文件作一列表,定时检查有没有这之外的文件被设置了SetUID权限
+        SetGID
+            既可以针对文件生效,也可以针对目录生效,这和SUID明显不同
+            如果针对文件
+                只有可执行的二进制程序才能设置SGID权限
+                命令执行者要对该程序拥有x(执行)权限
+                命令执行在执行程序的时候,组身份升级为该程序文件的属组
+                SetGID权限同样只在该程序执行过程中有效,也就是说组身份改变只在程序执行过程中有效
+            如果针对目录
+                普通用户必须对此目录拥有r和x权限,才能进入此目录
+                普通目录在此目录中的有效组会变成此目录的属组
+                若普通用户对此目录拥有w权限时,新建的文件的默认属组是这个目录的属组
+        Sticky BIT
+            黏着位目前只针对目录有效
+            普通用户对该目录拥有w和x权限,即普通用户可以在此目录拥有写入权限
+            如果没有黏着位,因为普通用户拥有w权限,所以可以删除此目录下所有文件,包括其他用户建立的文件.
+                一旦赋予了黏着位,除了root可以删除所有文件,普通用户就算拥有w权限,也只能删除自己建立的、
+                文件,但是不能删除其他用户建立的文件.
+        设定文件特殊权限
+            4代表SUID
+                chmod 4755 ftest (也可以u+s)
+            2代表SGID
+                chmod 2755 ftest (也可以g+s)
+            1代表SBIT
+                chmod 1755 ftest (也可以o+t)
+    文件系统属性chattr权限
+        可以包括root在内用户的权限
+        命令格式
+            chattr [+=] 选项 文件或目录名
+            +: 增加权限
+            -: 删除权限
+            =: 等于某权限
+            i: 如果对文件设置i属性,那么不允许对文件进行删除,改名,也不能添加和修改
+                数据;如果对目录设置i属性,那么只能修改目录文件的数据,但不允许建立删除
+                文件
+            a: 如果对文件设置a属性,那么只能在文件增加数据,但是不能删除也不能修改数据;
+                如果对目录设置a属性,那么只允许在目录中建立和修改文件,但是不允许删除
+            e: Linux中绝大多数的文件都默认拥有e属性.表示该文件是使用ext文件系统进行
+                存储的,而且不能使用chattr -e命令取消e属性
+        查看文件系统属性lsattr
+            lsattr 选项 文件或目录名
+            -a: 显示所有文件和目录
+            -d: 若目标是目录,仅列出目录本身的属性,而不是子文件的
+
+# 文件系统管理
+
+```
+P89
+```
+
+
+
 # 登陆终端
+
     本地字符终端  tty1-6        alt+F1-6
     本地图形终端  tty7          ctrl+alt+F7(按住3秒,安装启动图形界面)
     远程终端     pts/0-255
@@ -1216,3 +1328,361 @@ NAT不会占用真实的ip
     到chrome下载安装包安装
     chrome://version/查看配置信息
     google-chrome --proxy-server="socks5://127.0.0.1:1080"
+
+# gcc
+    gcc工作流程
+        预处理 -E
+            宏替换
+            头文件展开
+            注释去掉
+            xxx.c -> xxx.i
+            c文件
+            预处理器(cpp)
+            gcc -E hello.c -o hello.i
+        编译 -S
+            xxx.i -> xxx.s
+            汇编文件
+            编译器(gcc)
+            gcc -S hello.i -o hello.s
+        汇编 -c
+            xxx.s -> xxx.o
+            二进制文件
+            汇编(as)
+            gcc -c hello.s -o hello.o
+            file hello.o来查看文件是二进制文件还是字符文件
+        链接
+            将函数库中相应的代码组合到目标文件中
+            xxx.o -> xxx(可执行)
+            链接器(id)
+            gcc hello.o -o hello
+    gcc常用参数
+        -v/--version
+        -I:编译的时候指定头文件的路径
+        -c:将汇编文件生成二进制文件,得到了一个.o文件
+        -o:指定生成文件的名字
+        -g:gdb调式的时候需要加
+        -D:在编译的时候指定一个宏
+            使用场景:测试程序的时候用
+        -Wall:添加警告信息
+        -On:优化代码,n是优化级别:1、2、3
+
+# 静态库和动态库的制作和使用
+    库是什么?
+        二进制文件
+        将源代码 -> 二进制格式的源代码
+            .c .cpp
+        加密
+    库制作出来之后,如何给用户使用?
+        头文件
+        制作出的库
+        动态库和静态库
+            动态库在linux是.so在window是.dll
+            静态库在linux是.a在window是.lib
+    静态库的制作和使用
+        命名规则:libxxx.a
+            lib
+            xxx库的名字
+            .a
+        制作步骤:
+            原材料: 源代码.c .cpp
+            将.c文件生成.o
+                gcc a.c b.c -c
+            将.o打包
+                ar rcs 静态库的名字 原材料
+                ar rcs libtest.a a.o b.o
+                    ar - archiver
+                nm nm libmycalc.a 来查看静态包是什么文件
+        库的使用:
+            gcc main.c -o app -I ./include/ -L ./lib/ -lmycalc
+                -L:指定库的路径
+                -l:指定库的名字去掉lib和.a
+    动态库的制作和使用
+        命名规则:
+            libxxx.so
+        制作步骤:
+            将文件生成.o
+                gcc a.c b.c -c -fpic(fPIC) 
+            打包
+                gcc -shared -o libxxx.so a.o b.o
+        库的使用:
+            头文件a.h
+            动态库libtest.so
+            参考函数声明编写测试程序main.c
+                gcc main.c -o app -I ./include/ -L ./lib/ -ltest
+        动态库无法加载
+            app: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), 
+                dynamically linked, interpreter /lib64/l, for GNU/Linux 3.2.0, BuildID[sha1]
+                =68fd2bac4abb7ee5d0228fb223789bb3385bfd7a, not stripped
+            ldd app 查看可执行程序在运行时需要链接哪些库
+                linux-vdso.so.1 (0x00007fff2abb2000)
+                libmycalc.so => not found
+                libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fd868332000)
+                /lib64/ld-linux-x86-64.so.2 (0x00007fd868925000)
+            为什么体时找不到库?
+                动态链接器/lib64/ld-linux-x86-64.so.2会需要知道动态库的路径
+            对于ELF格式的可执行程序,是由ld-linux.so*来完成的,它先后搜索elf文件的DT_RPATH段
+                环境变量LD_LIBRARY_PATH /etc/ld.so.cache /lib,/usr/lib目录找到库文件后将其
+                载入内存
+            如何让系统找到共享库
+                拷贝自己制作的共享库到/lib或者/usr/lib
+                临时设置LD_LIBRARY_PATH
+                    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:库路径
+            使用环境变量
+                临时设置:
+                    在终端: export LD_LIBRARY_PATH=动态库的路径
+                永久设置:
+                    用户级别
+                        ～/.bashrc
+                            export LD_LIBRARY_PATH=动态库的路径:$LD_LIBRARY_patch
+                        配置完成
+                            重启终端
+                            source ~/.bashrc
+                                source可以使用.来代替
+                    系统级别
+                        /etc/profile
+                        source /etc/profile
+                            source可以使用.来代替
+            /etc/ld.so.cache文件列表
+                找到一个配置文件
+                    /etc/ld.so.conf
+                    把动态库的绝对路径添加到文件中
+                        /home/zler/10/c/Calc/lib
+                执行一个命令:
+                    sudo ldconfig -v
+        知识点扩展
+            dlopen,dlclose,dlsym
+    静态库和动态库的优缺点
+        静态库
+            优点
+                静态库被打包到应用程序中加载速度快
+                发布程序无需要提供静态库,移植方便
+            缺点
+                销毁系统资源,浪费内存
+                更新、部署、发布麻烦
+        动态库
+            gcc test.c -L./ -ltest -o app
+            ./app
+                app制作好了之后,动态库没有打包到app中
+                ./app动态库不会被加载,当程序调用动态库中的函数的
+                    时候,动态库才会被加载
+                程序运行之前会先判断库是否存在
+                    动态链接器ld.linus.so.*
+            优点
+                可实现进程间资源共享
+                    动态库在内存中只存在一份拷贝,避免了静态库浪费空间的问题
+                程序升级简单
+                程序员可以控制何时加载动态库
+                    dlopen,dlclose,dlsym手动的加载
+            缺点
+                加载速度比静态库慢
+                发布程序需要提供依赖的动态库
+
+# makefile
+    make
+        gcc-编译器
+        make-linux自带的构建器
+            构建的规则在makefile中
+    makefile文件的命名
+        makefile
+        Makefile
+    makefile中的规则
+        gcc a.c b.c c.c -o app
+        三部分:目标,依赖,命令
+            目标:依赖
+            (tab缩进) 命令
+        app: a.c b.c c.c
+            gcc a.c b.c c.c -o app
+        makefile中由一条或多条规则
+    makefile的编写
+        第一个版本
+            app: main.c add.c div.c mul.c sub.c
+                gcc main.c add.c div.c mul.c sub.c -o app
+            缺点: 效率低,修改一个文件,所有文件会被全部重新编译
+        第二个版本
+            工作原理
+                检查依赖是否存在:
+                    向下搜索下边的规则,如果有规则是用来生成查找的依赖的,执行规则中的命令
+                依赖存在,判断是否需要更新:
+                    原则:目标的时间>依赖的时间 反之,则更新                
+            app:main.o add.o div.o mul.o sub.o
+                gcc main.o add.o div.o mul.o sub.o -o app
+            main.o:main.c
+                gcc main.c -c
+            add.o:add.c
+                gcc add.c -c
+            div.o:div.c
+                gcc div.c -c
+            mul.o:mul.c
+                gcc mul.c -c
+            sub.o:sub.c
+                gcc sub.c -c
+            缺点:冗余
+        第三版本
+            自定义变量
+                obj=a.o b.o c.o
+                obj=10
+                变量的取值
+                    aa=$(obj)
+            makefile自带的变量:大写
+                CPPFLAGS:预处理的时候需要加的参数,比如头文件
+                CC:
+            自动变量
+                $@:规则中的目标
+                $<:规则中的第一个依赖
+                $^:规则中所有的依赖
+                自动变量只能在规则中的命令中使用
+            obj = main.o add.o div.o mul.o sub.o
+            target = app
+            $(target):$(obj)
+                gcc $(obj) -o $(target)
+            %.o:%.c
+                gcc -c $< -o $@
+            模式匹配:就相当于一个公式
+                %.o:%.c
+                第一次:main.o没有
+                    main.o:main.c
+                        gcc -c main.c -o main.o
+                第一次:add.o没有
+                    add.o:add.c
+                        gcc -c add.c -o add.o
+            缺点:可移植性比较差
+        第四个版本
+            makefile所有的函数都是有返回值
+            函数1:wildcard查找指定目录下指定类型的文件
+                src = $(wildcard ./*.c)
+            函数2:匹配替换
+                obj = $(patsubst %.c,%.o,$(src))
+            src = $(wildcard ./*.c)
+            obj = $(patsubst %.c, %.o, $(src))
+            target = app
+            $(target):$(obj)
+                gcc $^ -o $@
+            %.o:%.c
+                gcc -c $< -o $@
+            缺点:不能清理项目
+        第五个版本
+            让make生成不是终极目标的目标
+                第一个规则是终极目标,其他都不是
+                make 目标名
+            编写一个清理项目的规则
+                clean:
+                    -rm *.o app -f 
+                    前面加-代表忽略执行失败的命令,继续向下执行其余命令
+                    命令后面加-f代表强制执行
+            声明伪目标
+                如果目录下有一个文件名和目标规则名一样,但是需要执行这条规则,需要声明伪目标
+                .PHONY:clean
+            src = $(wildcard ./*.c)
+            obj = $(patsubst %.c, %.o, $(src))
+            target = app
+            $(target):$(obj)
+                gcc $^ -o $@
+            %.o:%.c
+                gcc -c $< -o $@
+            hello:
+                echo "hello, makefile"
+            .PHONY:clean
+            clean:
+                -mkdir /abc
+                -rm $(obj) $(target) -f
+
+# gdb
+    gcc a.c b.c c.c -o app
+    gcc a.c b.c c.c -o app -g
+        -g:会保留函数名和变量名
+    启动gdb
+        gdb 可执行程序的名字
+        gdb app
+        给程序传参数:set args xxx xxx
+    查看代码--list
+    	什么都不干,直接回车,会执行上一次输入的命令
+    	当前文件:
+    		l
+    		l 行号
+    		l 函数名
+    	非当前文件:
+    		l 文件名:行号
+    		l 文件名:函数名
+    	设置显示的行数
+    		set listsize n
+    		show listsize n
+    	示例:
+                        l
+                        l 5	
+                        l main
+                        l insert_sort.c:15
+                        l insert_sort.c:insertionSort	
+                        show listsize
+                        set listsize 20
+    断点操作-break/b
+    	设置断点是为了程序在断点停下来
+        设置断点
+        	b 行号
+        	b 函数名
+        	b 文件名:行号
+        	b 文件名:函数名
+        查看断点
+        	info b
+        	i b
+        删除断点
+        	d num(断点的编号)
+        	d num1-num6
+        设置断点无效
+        	dis num(断点的编号)
+        	dis num1-num2
+        断点生效
+        	ena num(断点的编号)
+        	ena num1-num6
+        设置条件断点
+        	b 行号 if 变量 ==var
+        	b 17 if i==10
+    调试相关命令
+    	让gdb跑起来
+    		run/r  停在第一个断点的位置
+    		start 运行一行,停止
+    	打印变量的值
+    		p 变量名
+    	变量的自动显示
+    		display 变量名
+    		查看编号
+    			i display
+    		取消自动显示
+    			undisplay num(变量名编号)
+    	打印变量的类型
+    		ptype 变量名
+    	向下单步调试
+    		next/n
+    			不会进入函数体
+    		step/s
+    			会进入到函数体的内部
+    			跳出函数体: finish
+    				如果出不去,看一下函数体中的循环中
+    				是否有断点,如果有删掉,或者设置无效
+    	继续运行gdb,停在下一个断点的位置
+    		continue/c
+    	退出gdb
+    		quit/q
+    	从循环体直接跳出
+    		until
+    			不能有断点
+    	直接设置变量等于某一个值
+    		set var 变量名=value
+    		set var i=5
+
+# 文件IO
+
+## c库IO函数工作流程
+
+## <img src="../img/01.png" alt="01" style="zoom: 67%;" />
+
+
+
+通过文件描述符找到文件Inode
+
+## c库函数与系统函数的关系
+
+## 虚拟地址空间
+
+## pcb和文件描述符表
+
+## open函数的flags参数
