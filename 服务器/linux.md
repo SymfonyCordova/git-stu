@@ -890,7 +890,7 @@ cttl + 空格  输入错误不能删除使用这个可以删除
 ​        刷新文件系统缓冲区
 ​        可以让暂时保存在内存中的数据同步到硬盘上
 
-###     shutdown
+###     shutdown 重启系统
 
 ​        -c: 取消已经执行的shutdown命令
 ​        -h: 关机
@@ -2185,7 +2185,261 @@ ff = $(( $aa+$bb ))
 | 2      | \|\|                               | 逻辑或                            |
 | 1      | =,+=,-=,*=,/=,%=,&=,^=,\|=,<<=,>>= | 赋值、运算且赋值                  |
 
-P124
+### 变量的测试与内容置换
+
+| 变量置换方式 | 变量y没有设置          | 变量y为空值            | 变量y设置值   |
+| ------------ | ---------------------- | ---------------------- | ------------- |
+| x=${y-新值}  | x=新值                 | x为空                  | x=$y          |
+| x=${y:-新值} | x=新值                 | x=新值                 | x=$y          |
+| x=${y+新值}  | x为空                  | x=新值                 | x=新值        |
+| x=${y:+新值} | x为空                  | x为空                  | x=新值        |
+| x=${y=新值}  | x=新值 y=新值          | x为空  y值不变         | x=$y  y值不变 |
+| x=${y:=新值} | x=新值 y=新值          | x=新值  y=新值         | x=$y  y值不变 |
+| x=${y?新值}  | 新值输出到标准错误输出 | x为空                  | x=$y          |
+| x=${y:?新值} | 新值输出到标准错误输出 | 新值输出到标准错误输出 | x=$y          |
+
+通过x值来判断y的值
+
+### 环境变量配置文件
+
+#### source命令
+
+source 配置文件
+
+.(点) 配置文件
+
+#### 环境变量配置文件
+
+1. 登陆时生效的环境变量配置文件
+
+   在linux系统登陆时主要生效的环境变量配置文件有以下五个:
+
+   - /etc/profile
+   - /etc/profile.d/*sh
+   - ~/.bash_profile
+   - ~/.bashrc
+   - /etc/bashrc
+
+   环境变量配置文件调用过程![17](../img/17.jpg)
+
+## 字符截取和替换命令
+
+1. cut列提取命令
+
+   cut  [选项]  文件名
+
+   -f 列号:   提取第几列
+
+   -d 分隔符:  按照指定分隔符合割列
+
+   -c 字符范围:  不依赖分隔符来区分列,而是通过字符范围(行首为0)来进行字段提取。
+
+   ​				"n-"表示从第n个字符到行尾;  "n-m"从第n个字符到第m个字符;
+
+   ​				"-m"表示从第1个字符到第m个字符
+
+   cut 命令的默认分隔符是制表符,也就是"tab"键,不过对空格符是支持的不怎么好啊。
+
+   grep "root" /etc/passwd 提取行的
+
+2. awk编程
+
+   - printf格式化输出
+
+     printf '输出类型输出格式' 输出内容
+
+     输出类型
+
+     ​		%ns: 	输出字符串。n是数字指代表输出几个字符
+
+     ​		%ni: 	输出整数。n是数字指代表输出几个数字
+
+     ​		%m.nf:  输出浮点数。m和n是数字,指代表输出的整数位数和小数位数。如%8.2
+
+     ​						代表共输出8位数,其中2位是小数,6位是整数
+
+     输出格式:
+
+     ​		\a:  输出警告声音
+
+     ​		\b:  输出退各键,也就是Backspace键
+
+     ​		\f:  清除屏幕
+
+     ​		\n:  换行
+
+     ​		\r:   回车,也就是Enter键
+
+     ​		\t:   水平输出退格键,也就是Tab键
+
+     ​		\v:  垂直输出退格键,也就是Tab键
+     
+   - awk基本使用
+   
+     awk   '条件1{动作1} 条件2{动作2}...'    文件名
+   
+     条件
+   
+     ​		一般使用关系表达式作为条件
+   
+     动作
+   
+     ​		格式化输出
+   
+     ​		流程控制语句
+   
+     awk   '{printf   $2  "\t"  $6  "\n"}'   //student.txt 输出第2列和第6列
+   
+     df -h  |  awk  '{print $5}'
+   
+     df -h  |  grep  "dev/sda3"  |  awk  '{print  $5}'  | cut -d "%" -f  1
+   
+   - awk的条件
+   
+     awk 'BEGIN{print 1111111}  {print  $2 "\t"  $6}'   student.txt
+   
+     awk 'END{print 1111111}  {print  $2 "\t"  $6}'   student.txt
+   
+     grep -v  "Name" student.txt  |  awk  '$6  >= 86  {print $2}'
+   
+     awk  '$2  ~  /Sc/  {printf  $6  "\n"}'  student.txt
+   
+     awk  '/Liming/  {printf  $6  "\n"}'  student.txt
+     
+   - awk内置变量
+   
+     | awk内置变量 | 作用                                                         |
+     | ----------- | ------------------------------------------------------------ |
+     | $0          | 代表目前awk所读入的整行数据。我们已知awk是一行一行对读入数据的,$0就代表当前行的整行数据 |
+     | $n          | 代表目前读入行的第n个字段                                    |
+     | NF          | 当前行拥有的字段(列)总数                                     |
+     | NR          | 当前awk所处理的行,是总数据的第几行                           |
+     | FS          | 用户定义分隔符。awk的默认分隔符是任何空格,如果想要使用其他分隔符(如":"),就需要FS变量定义 |
+     | ARGC        | 命令行参数个数                                               |
+     | ARGV        | 命令行参数数组                                               |
+     | FNR         | 当前文件中的当前记录数(对输入文件起始1)                      |
+     | OFMT        | 数值的输出格式(默认为%.6g)                                   |
+     | OFS         | 输出字段的分隔符(默认为空格)                                 |
+     | ORS         | 输出记录分隔符(默认为换行符)                                 |
+     | RS          | 输入记录分隔符(默认为换行符)                                 |
+   
+     cat /etc/pwasswd | grep "/bin/bash"  |  awk  'BEGIN{FS=":"}  $3=="500"  {print  $1}'
+   
+     P137
+
+# 启动引导与修复
+
+## 一、系统运行级别
+
+1. 运行级别
+
+   Linux默认7个运行级别
+
+   | 运行级别 | 含义                                                    |
+   | -------- | ------------------------------------------------------- |
+   | 0        | 关机                                                    |
+   | 1        | 单用户模式,可以想象为windows的安全模式,主要用于系统修复 |
+   | 2        | 不完全的命令行模式,不含NFS服务                          |
+   | 3        | 完全的命令行模式,就是标准字符界面                       |
+   | 4        | 系统保留                                                |
+   | 5        | 图形模式                                                |
+   | 6        | 重启动                                                  |
+
+   runlevel命令来查看系统的运行级别
+
+   init N 改变运行级别
+
+2. 系统默认运行级别
+
+   /etc/inittab 开机的默认级别写在这里
+
+3. /etc/rc.d/rc.local文件
+
+   用户登陆之前读取这个文件
+
+   /etc/rc.local这个时是软连接
+
+   开机执行
+
+## 二、启动引导程序
+
+早期Lilo引导
+
+现在grub引导
+
+如果安装了多个操作系统是可以引导去开启哪个操作系统
+
+1. /boot/grub目录
+
+2. grub的配置文件
+
+   /boot/grub/grub.conf
+   
+3. grub加密
+
+   grub-md5-crypt
+
+## 三、系统修复模式
+
+1. 单用户模式
+2. 光盘修复模式
+
+# 服务管理
+
+## 服务分类
+
+1. RPM包安装的服务
+
+   - 独立的服务:  单独的服务
+
+     - 启动:
+
+       - [ ] /etc/init.d/httpd start   (/etc/rc.d/init.d/httpd start)
+       - [ ] service 独立服务名 start|stop|restart
+
+     - 自启动(下次开机自动启动程序):
+
+       - [ ] 使用chkconfig服务自启动管理命令
+
+         chkconfig  [--level 运行级别]  [独立服务名]  [on|off]
+
+         --level: 设定在哪个运行级别中开机自启动(on),或是关闭自启动(off)
+
+         chkconfig --level  2345  httpd on
+
+         chkconfig  httpd on
+
+         chkconfig  httpd off
+
+       - [ ] 修改/etc/rc.d/rc.local文件,设置的服务自启动
+
+         /etc/init.d/httpd start
+
+       - [ ] 使用ntsysv命令管理自启动
+
+         ntsysv --level 运行级别:可以指定自启动的运行级别
+
+         这个命令的操作是这样的:
+
+         - 上下键:在不同服务之间移动
+         - 空格键:选定或取消服务的自启动.就是在服务之前是否加入"*"
+         - tab键:在不同项目间切换
+         - F1键: 显示服务的说明
+
+       - [ ] 推荐使用:   修改/etc/rc.d/rc.local文件,设置的服务自启动
+
+         P165
+
+   - 基于xinetd服务:   把基于xinetd的服务放在里边
+     - 启动:
+     - 自启动:
+
+   - chkconfig --list 查询已经安装的服务和区分服务自启动的状态
+
+2. 源码包安装的服务
+
+   - 启动:
+   - 自启动:
 
 # 登陆终端
 
@@ -2542,7 +2796,7 @@ P124
                         set listsize 20
     断点操作-break/b
     	设置断点是为了程序在断点停下来
-        设置断点
+        设置断点p
         	b 行号
         	b 函数名
         	b 文件名:行号
@@ -3631,8 +3885,16 @@ pcb：结构体
 
 4. 进程共享
 
-   <img src="../img/15.jpg" alt="15" style="zoom: 80%;" />
+   父子进程数据永远一样吗?
 
+   fork完成之后,一样
+   
+   读时共享,写时复制-有血缘关系
+   
+   <img src="../img/15.jpg" alt="15" style="zoom: 80%;" />
+   
+   num的地址值是一样的,因为是克隆出来,但是位置不一样,一个在父进程空间里面,一个在子进程里面
+   
    - 测试父子进程是不共享全局变量
 
 ### exec函数族
@@ -3822,6 +4084,90 @@ pcb：结构体
    - waitpid -- 
 
      - pid_t waitpid(pid_t pid, int *wstatus, int options);
+     
+       - [ ] 调用一次只能回收一个子进程
+     
+       - [ ] pid: 
+         - pid &gt; 0 : 某个子进程的pid
+         - pid  ==  -1:  回收所有的子进程
+           - [ ] 循环回收
+           - [ ] while((wpid = waitpid(-1, &status, xx)) != -1)
+         - pid == 0 :
+           - [ ] 回收当前进程组所有的子进程
+         - pid < 0: 子进程的pid取反(加减号)
+       - [ ] options:
+         - 0 - waitpid阻塞
+         - WNOHANG - 非阻塞
+       - [ ] 返回值:
+         -  -1 : 回收失败,  没有子进程
+         - &gt;0:  被回收的子进程的pid
+         - 如果为非阻塞(WNOHANG):
+           - [ ] = 0: 子进程处于运行状态
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/wait.h>
+
+int main(int argc, char const *argv[]){
+    int num = 3;
+    int i = 0;
+    pid_t pid;
+
+    for (i = 0; i < num; i++){
+        pid = fork();
+        if(pid == 0){
+            break;
+        }
+    }
+    sleep(1);
+    
+    if(i == 0){
+        execlp("ps", "ps", "aux", NULL);
+        perror("execlp ps");
+        exit(1);
+    }
+
+    if(i == 1){
+        execl("/home/zler/桌面/c/Process/hello", "hello", NULL);
+        perror("execl hello");
+        exit(2);
+    }
+
+    if(i == 2){
+        execl("./error", "error", NULL);
+        perror("execl error");
+        exit(3);
+    }
+
+    if(i == num){
+        pid_t wpid;
+        int status;
+        while ((wpid = waitpid(-1, &status, WNOHANG)) != -1){
+            if(wpid == 0){
+                continue;
+            }
+            printf("---- child died pid = %d\n", wpid);
+            if(WIFEXITED(status)){
+                printf("return value:%d\n", WEXITSTATUS(status));
+            }
+
+            if(WIFSIGNALED(status)){
+                printf("died by signal:%d\n", WTERMSIG(status));
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+
 
 ### 进程相关函数
 
@@ -3865,7 +4211,7 @@ pcb：结构体
 
         pid  >  0      等待其进程ID与pid相等的子进程
 
-        pid  ===  0  等待其组ID等于调用进程的组ID的任一子进程
+        pid  ==  0  等待其组ID等于调用进程的组ID的任一子进程
 
         pid  < 0      等待其组ID等于pid的绝对值的任一子进程
 
@@ -3881,15 +4227,740 @@ pcb：结构体
 
      =0: 参3为WNOHANG,且子进程正在运行。
 
+### 作业
+
+1. 编写测试程序,测试父子进程之间是否共享文件
+
+   - 共享文件-文件描述符
+
+     - 文件描述符 -> pcb
+     - 打开一个文件 -> fd
+     - fork()
+     - 父进程-write
+     - 子进程-read
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     
+     int main(int argc, char const *argv[]){
+         int fd = open("temp", O_RDWR | O_CREAT | O_APPEND, 0664);
+         if(fd == -1){
+             perror("open error");
+             exit(1);
+         }
+     
+         pid_t pid = fork();
+         if(pid == -1){
+             perror("fork error");
+             exit(1);
+         }
+     
+         if(pid > 0){
+             char* p = "Recently, Microsoft has made olive branch to Linux developers, hoping that Linux developers can transfer to windows 10 platform for development";
+             write(fd, p, strlen(p)+1);
+             close(fd);
+         }
+     
+         if(pid == 0){
+             //睡1s保证父进程已经完成了文件的写操作
+             sleep(1);
+             char buf[1024] = {0};
+             lseek(fd, 0, SEEK_SET);
+             int len = read(fd, buf, sizeof(buf));
+             printf("%s\n", buf);
+             close(fd);
+         }
+     
+         return 0;
+     }
+     ```
+
+     
+
+2. 父进程fork三个子进程:
+
+   其中一个调用ps命令:
+
+   一个调用自定义应用程序
+
+   一个调用会出现段错误的程序
+
+   父进程回收三个子进程(waitpid),并且打印三个子进程的退出状态
+
+   
+
+   ===段错误===
+
+   1>.访问了非法内存
+
+   2>.访问了不可写的区域进行写操作
+
+   3>.栈空间溢出
+
+   char* p = "hello, world"
+
+   p[0] = 'a'
+
+   段错误内核会发送 11) SIGSEGV 信号
+
+   ```c
+   #include <stdio.h>
+   #include <unistd.h>
+   #include <stdlib.h>
+   #include <sys/types.h>
+   #include <sys/stat.h>
+   #include <fcntl.h>
+   #include <string.h>
+   #include <sys/wait.h>
+   
+   int main(int argc, char const *argv[]){
+       int num = 3;
+       int i = 0;
+       pid_t pid;
+   
+       for (i = 0; i < num; i++){
+           pid = fork();
+           if(pid == 0){
+               break;
+           }
+       }
+       sleep(1);
+       
+       if(i == 0){
+           execlp("ps", "ps", "aux", NULL);
+           perror("execlp ps");
+           exit(1);
+       }
+   
+       if(i == 1){
+           execl("/home/zler/桌面/c/Process/hello", "hello", NULL);
+           perror("execl hello");
+           exit(2);
+       }
+   
+       if(i == 2){
+           execl("./error", "error", NULL);
+           perror("execl error");
+           exit(3);
+       }
+   
+       if(i == num){
+           pid_t wpid;
+           int status;
+           while ((wpid = wait(&status)) > 0){
+               printf("---- child died pid = %d\n", wpid);
+               if(WIFEXITED(status)){
+                   printf("return value:%d\n", WEXITSTATUS(status));
+               }
+   
+               if(WIFSIGNALED(status)){
+                   printf("died by signal:%d\n", WTERMSIG(status));
+               }
+           }
+       }
+   
+       return 0;
+   }
+   ```
+
+   
+
 ## 进程间通讯
 
 ### 进程间通信相关的概念
 
+1. 什么是IPC
+
+   a.  进程间通讯
+
+   ​	i. InterProcess Communication
+
+2. 进程间通信常用的4种方式
+
+   a.  管道 - 简单
+
+   b.  信号 - 系统开销小
+
+   c.  共享映射区 - (有无血缘关心的进程间通讯都可以)
+
+   d.  本地套接字 - 稳定
+
+   其是还有很多，只介绍常用的
+
 ### 管道(匿名)
 
-### fifo
+1. 管道的概念
+
+   - 本质: 
+
+     - 内核缓冲区
+
+     - 伪文件 - 不占用磁盘空间
+
+   - 特点:
+
+     - 两部分:
+       - [ ] 读端, 写端, 对应两个文件描述符
+       - [ ] 数据写端流入，读端流出
+     - 操作管道的进程被销毁之后,管道自动被释放了
+     - 管道默认是阻塞的。
+       - [ ] 读端和写端都是阻塞的
+
+2. 管道的原理
+
+   - 内部实现方式: 队列
+     - 环形队列
+     - 特点: 先进先出
+   - 缓冲区大小:
+     - 默认4k
+     - 大小会根据实际情况做适当调整
+
+3. 管道的局限性
+
+   - 队列: 
+
+     - 数据只能读取一次,不能重复读取
+
+   - 半双工:
+
+     - 单工:  遥控器
+     - 半双工:  对讲机
+       - [ ] 数据传输的方向是单向的
+     - 双工:  电话
+
+   - 匿名管道:
+
+     - 适用于有血缘关系的进程
+
+       父子 叔侄  堂兄弟姐妹...
+
+4. 创建匿名管道
+
+   - int pipe(int pipefd[2]);
+
+     - pipefd - 传出参数
+
+     - pipefd[0] - 读端
+
+     - pipefd[1] - 写端
+
+     - 返回值
+
+       -1 失败
+
+       0 成功
+
+5. 父子进程使用管道通信
+
+   - 思考:
+
+     - 单个进程能否使用管道完成读写操作?
+       - [ ] 可以
+     - 父子进程间通讯是否需要sleep函数?
+       - [ ] 父 写 -- 写的慢
+       - [ ] 子 读 -- 读的快
+
+   - 注意事项:
+
+     父进程读
+
+     ​	--关闭写端
+
+     子进程写
+
+     ​	--关闭读端
+
+     <img src="../img/18.jpg" alt="18" style="zoom:67%;" />
+
+   - 练习
+
+     - 父子进程间通讯,实现ps aux | grep bash
+
+       - [ ] 数据重定向: dup2
+
+       - [ ] execlp
+
+         <img src="../img/19.jpg" alt="18" style="zoom:67%;" />
+         
+         ```c
+         #include <stdio.h>
+         #include <unistd.h>
+         #include <stdlib.h>
+         #include <sys/types.h>
+         #include <sys/stat.h>
+         #include <fcntl.h>
+         #include <string.h>
+         #include <sys/wait.h>
+         
+         int main(int argc, char const *argv[]){
+             int pipefd[2];
+             int ret = pipe(pipefd);
+             if(ret == -1){
+                 perror("pipe error");
+                 exit(1);
+             }
+         
+             pid_t pid = fork();
+             if (pid == -1){
+                 perror("fork error");
+                 exit(1);
+             }
+             
+             //父进程ps aux
+             if(pid > 0){
+                 // 写管道的操作,关闭读端
+                 close(pipefd[0]);
+                 // 文件描述符重定向
+                 // stdout_fileno -> 管道的写端
+                 dup2(pipefd[1], STDOUT_FILENO);
+                 //执行ps aux
+                 execlp("ps", "ps", "aux", NULL);
+                 perror("execlp");
+                 exit(1);
+             }
+             //子进程 grep "bash"
+             else if(pid == 0){
+                 close(pipefd[1]);
+                 dup2(pipefd[0], STDIN_FILENO);
+                 execlp("grep", "grep", "bash", "--color=auto", NULL);
+                 perror("execlp");
+                 exit(1);
+             }
+         
+             return 0;
+     }
+         ```
+       
+         
+     
+     - 兄弟进程间通讯,实现ps aux | grep bash
+     
+       - [ ] 父进程回收资源
+     
+         ```c
+         #include <stdio.h>
+         #include <unistd.h>
+         #include <stdlib.h>
+         #include <sys/types.h>
+         #include <sys/stat.h>
+         #include <fcntl.h>
+         #include <string.h>
+         #include <sys/wait.h>
+         
+         int main(int argc, char const *argv[]){
+             int i;
+             int num = 2;
+             int pipefd[2];
+             int ret = pipe(pipefd);
+             if(ret == -1){
+                 perror("pipe error");
+                 exit(1);
+             }
+         
+             for ( i = 0; i < num; ++i){
+                 pid_t pid = fork();
+                 if(pid == -1){
+                     perror("fork error");
+                     exit(1);
+                 }
+                 if(pid == 0){
+                     break;
+                 }
+             }
+         
+             if(i == 0){
+                 close(pipefd[0]);
+                 dup2(pipefd[1], STDOUT_FILENO);
+                 execlp("ps", "ps", "aux", NULL);
+                 perror("execlp error");
+                 exit(1);
+             }
+         
+             if(i == 1){
+                 close(pipefd[1]);
+                 dup2(pipefd[0], STDIN_FILENO);
+                 execlp("grep", "grep", "bash", "--color=auto", NULL);
+                 perror("execlp error");
+                 exit(1);
+             }
+         
+             if(i == num){
+                 close(pipefd[0]);
+                 close(pipefd[1]);
+                 int status;
+                 pid_t wpid;
+                 while ((wpid = waitpid(-1, &status, WNOHANG)) != -1){
+                     if(wpid == 0){
+                         continue;
+                     }
+                     printf("child died pid = %d\n", wpid);
+                     if(WIFEXITED(status)){
+                         printf("exit value:%d\n", WEXITSTATUS(status));
+                     }   
+                     if(WIFSIGNALED(status)){
+                         printf("died by signal:%d\n", WTERMSIG(status));
+                     }
+                 }        
+             }
+         
+             return 0;
+         }
+         ```
+
+6. 管道的读写行为
+
+   - 读操作
+     - 有数据
+     
+       - [ ] read(fd)  - 正常读,返回读出的字节数
+     
+     - 无数据
+     
+       - [ ] 写端全部关闭
+     
+         - read解除阻塞,返回0
+     
+         - 相当于读文件读到了尾部
+     
+       - [ ] 没有全部关闭
+     
+         - read阻塞
+     
+   - 写操作
+     - 读端全部关闭
+       - [ ] 管道破裂,进程被终止
+         - 内核给当前进程发送信号SIGPIPE
+     
+     - 读端没全部关闭
+       - [ ] 缓冲区写满了
+         - write阻塞
+       - [ ] 缓冲区没满
+         - write继续写
+     
+   - 如何设置非阻塞
+   
+     - 默认读写两端都阻塞
+   
+     - 设置读端为非阻塞pipe(pipefd[2])
+   
+       - [ ] fcntl - 变参函数
+   
+         - 复制文件描述符 - dup
+         - 修改文件属性 - open的时候对应flag属性
+   
+       - [ ] 设置方法:
+   
+         获取原来的flags
+   
+         int flags = fcntl(fd[0], F_GETFL);
+   
+         //设置新的flags
+   
+         flags |= O_NONBLOCK;
+   
+         //flags = flags | O_NONBLOCK;
+   
+         fcntl(fd[0], F_SETFL,  flags);
+   
+7. 查看管道缓冲区大小
+
+   - 命令
+
+     - ulimit -a
+
+       ```reStructuredText
+       core file size          (blocks, -c) 0
+       data seg size           (kbytes, -d) unlimited
+       scheduling priority             (-e) 0
+       file size               (blocks, -f) unlimited
+       pending signals                 (-i) 15241
+       max locked memory       (kbytes, -l) 16384
+       max memory size         (kbytes, -m) unlimited
+       open files                      (-n) 1024
+       pipe size            (512 bytes, -p) 8
+       POSIX message queues     (bytes, -q) 819200
+       real-time priority              (-r) 0
+       stack size              (kbytes, -s) 8192
+       cpu time               (seconds, -t) unlimited
+       max user processes              (-u) 15241
+       virtual memory          (kbytes, -v) unlimited
+       file locks                      (-x) unlimited
+       ```
+
+       
+
+   - 函数
+
+     - fpathconf
+
+       ```c
+       #include <stdio.h>
+       #include <unistd.h>
+#include <stdlib.h>
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <fcntl.h>
+       #include <string.h>
+       #include <sys/wait.h>
+       
+       int main(int argc, char const *argv[]){
+           int pipefd[2];
+           int ret = pipe(pipefd);
+           if(ret == -1){
+               perror("pipe error");
+               exit(1);
+           }
+       
+           // 测试管道大小
+           long size = fpathconf(pipefd[0], _PC_PIPE_BUF);
+           printf("pipe size = %ld\n", size);
+           return 0;
+       }
+       ```
+       
+       
+
+### fifo(有名)
+
+1. 特点
+
+   - 有名管道
+   - 在磁盘上有这样一个文件ls -l  -> p
+   - 伪文件,在磁盘大小永远为0
+   - 在内核中有一个对应的缓冲区
+   - 半双工的通信方式
+
+2. 使用场景
+
+   - 没有血缘关系的进程间通讯
+
+3. 创建方式
+
+   - 命令: mkfifo 管道名
+   - 函数: mkfifo
+
+4. fifo文件可以使用IO函数进行操作
+
+   - open/close
+   - read/write
+   - 不能执行lseek操作
+
+5. 进程间通信
+
+   a.fifo文件 -- myfifo
+
+   - 两个不相干的进程,进程A(a.c)和进程B(b.c)
+   - a.c ---> read
+     - int fd = open("myfifo",  O_RDONLY);
+     - read(fd, buf, sizeof(buf));
+     - close(fd)
+
+   b.c --- write
+
+   int fd1 = open("myfifo", O_WRONLY);
+
+   write(fd1, "hello, world", 11);
+
+   close(fd1);
+
+6. 代码:
+
+   - writefifo.c
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     
+     int main(int argc, char const *argv[]){
+         if(argc < 2){
+             printf("./a.out fifoname\n");
+             exit(1);
+         }
+     
+         //判断文件是否存在
+         int ret = access(argv[1], F_OK);
+         if(ret == -1){
+             int r = mkfifo(argv[1], 0664);
+             if(r == -1){
+                 perror("mkfifo error");
+                 exit(1);
+             }
+             printf("有名管道%s创建成功\n", argv[1]);
+         }
+     
+         int fd = open(argv[1], O_WRONLY);
+         if(fd == -1){
+             perror("open error");
+             exit(1);
+         }
+     
+         char* p = "hello,world";
+         while (1){
+             sleep(1);
+             int len = write(fd, p, strlen(p) + 1);
+         }
+     
+         close(fd);
+         
+         return 0;
+     }
+     ```
+
+     
+
+   - readfifo.c
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     
+     int main(int argc, char const *argv[]){
+         if(argc < 2){
+             printf("./a.out fifoname\n");
+             exit(1);
+         }
+     
+         //判断文件是否存在
+         int ret = access(argv[1], F_OK);
+         if(ret == -1){
+             int r = mkfifo(argv[1], 0664);
+             if(r == -1){
+                 perror("mkfifo error");
+                 exit(1);
+             }
+             printf("有名管道%s创建成功\n", argv[1]);
+         }
+     
+         int fd = open(argv[1], O_RDONLY);
+         if(fd == -1){
+             perror("open error");
+             exit(1);
+         }
+     
+         char buf[512];
+         while (1){
+             int len = read(fd, buf, sizeof(buf));
+             buf[len] = 0;
+             printf("buf =  %s, len = %d\n", buf, len);
+         }
+         
+         close(fd);
+         return 0;
+     }
+     ```
+
+     
 
 ### 内存映射区
+
+1. mmap - 创建内存映射区
+
+   - 作用: 将磁盘文件的数据映射到内存,用户通过修改内存就能修改磁盘
+
+   - 函数原型:
+
+     void *mmap(
+
+     ​		void *addr,           // 映射区首地址,传NULL就可以了
+
+     ​		size_t length, 	 // 映射区的大小 
+
+     ​					1.就写文件的大小,实际大小是4k的整数倍
+
+     ​					2.不能为0
+
+     ​					3.一般文件多大,length就指定多大
+
+     ​		int prot, 				// 映射区权限
+
+     ​					1. PROT_READ -- 映射区必须要有读权限的
+
+     ​                    2.PROT_WRITE
+
+     ​                    3.PORT_READ | PORT_WRITE
+
+     ​		int flags, 			  // 标志位参数
+
+     ​					1.MAP_SHARED
+
+     ​							修改了内存数据会同步到磁盘
+
+     ​					2.MAP_PRIVATE
+
+     ​							修改了内存数据不会同步到磁盘
+
+     ​		int fd,					// 文件描述符
+
+     ​					1.干嘛的文件描述符?
+
+     ​							要映射的文件对应的文件
+
+     ​					2.怎么得到?
+
+     ​							open()
+
+     ​		 off_t offset		// 映射文件的偏移量
+
+     ​					1.映射的时候文件指针的偏移量
+
+     ​							必须是4k的整数倍
+
+     ​							0 不偏移,就是从文件的头部开始映射
+
+     );
+
+   - 返回值:
+
+     - 调用成功:   映射区的首地址
+     - 调用失败:  MAP_FAILED
+
+   <img src="../img/20.jpg" alt="18" style="zoom:67%;" />
+
+2. munmap - 释放内存映射区
+
+   - 函数原型:  int munmap(void *addr, size_t length);
+     - addr -- mmap的返回值,映射区的首地址
+     - length -- mmap的第二个参数,映射区的长度
+     - 正确返回0
+     - 错误返回-1
+
+3. 思考问题:
+
+   - 如果对mmap的返回值(ptr)做++操作(ptr++),munmap是否能够成功?
+   - 如果open时O_RDONLY,mmap时port参数指定PORT_READ | PORT_WRITE会怎样?
+   - 如果文件偏移量为1000会怎样?
+   - 如果不检测mmap的返回值会怎样?
+
+## 信号
+
+### 信号的初步认识
+
+### 信号相关函数
+
+### 信号集
+
+### 信号捕捉
+
+### SIGCHLD信号
 
 ## 线程
 
