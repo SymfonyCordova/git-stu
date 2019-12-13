@@ -1008,7 +1008,7 @@ cttl + 空格  输入错误不能删除使用这个可以删除
 ​            exit:退出,但是不保存任何操作
 ​            ?:帮助文档
 
-## 系统痕迹
+## w -系统痕迹
 
 ​    w 显示系统中正在登陆用户的信息
 ​        14:16:49 up  1:09,  1 user,  load average: 1.89, 1.82, 1.76
@@ -2325,7 +2325,442 @@ source 配置文件
    
      cat /etc/pwasswd | grep "/bin/bash"  |  awk  'BEGIN{FS=":"}  $3=="500"  {print  $1}'
    
-     P137
+3. sed命令
+
+   sed主要是用来将数据进行选取、替换、删除、新增的命令
+
+   sed [选项] '[动作]'  文件名
+
+   选项:
+
+   -n:  一般sed命令会把所有数据都输出到屏幕,如果加入此选择,则只会把经过sed命令处理的行输出到屏幕
+
+   -e: 允许对输入数据应用多条sed命令编辑
+
+   -f 脚本文件名:  从sed脚本中读入sed操作。和awk命令的-f非常类似
+
+   -r:  在sed中支持扩展正则表达式
+
+   -i:  用sed的修改结果直接读取数据的文件,而不是由屏幕输出动作
+
+   
+
+   动作:
+
+   a \: 追加,在当前行后添加一行或多行。添加多行时,除最后一行外,每行末尾需要用"\"代表数据未完结
+
+   c \: 行替换,用c后面的字符串替换原来数据行,替换多行时,除最后一行外,每行末尾需用"\"代表数据未完结
+
+   i \:   插入,在当期行前插入一行或多行。插入多行时,除最后一行外,
+
+   d:   删除,删除指定的行
+
+   p:  打印,输出指定的行。
+
+   s:  字符替换,用一个字符替换另外一个字符串。格式为"行范围 s/旧字符串/新字符串/g"
+   
+
+   ```shell
+   sed -n '2p' student.txt  //打印第二行
+   sed   '2,4d' student.txt  //删除第二行,到第四行,显示在屏幕上
+   sed  -i  '2,4d' student.txt  //删除第二行,到第四行,真实的在文件删除了
+   sed  '2a 1111111111' student.txt  追加，只在屏幕上显示了追加
+   sed  -i   '2a 1111111111' student.txt  追加，真实的在文件追加了
+   sed  -i  -e  '3d ; 4d' student.txt  
+   sed  '3,4 s/aa/bb/g' student.txt  替换
+   sed  -i  '3,4 s/aa/bb/g' student.txt  替换,改变了文件的数据
+   sed  's/74/99/g  ;  s/Tg/cangls/g'  student.txt 替换 
+   ```
+
+## 字符处理命令
+
+1. 排序命令sort
+
+   sort [选项] 文件名
+
+   -f : 忽略大小写
+
+   -b: 忽略每行前面的空白部分
+
+   -n:  以数值型进行排序,默认使用字符串型排序
+
+   -r:   反向排序
+
+   -u:  删除重复行，就是uniq命令
+
+   -t:  指定分隔符,默认是分隔符是制表符
+
+   ```shell
+   sort -n -t ":"  -k 3,3    /etc/passwd
+   ```
+
+2. uniq
+
+   uniq命令是用来取消重复行的命令,其实和"sort -u"选项是一样
+
+   -i: 忽略大小写
+
+3. 统计命令wc
+
+   wc   [选项]  文件名
+
+   -l:  只统计行数
+
+   -w:  只统计单词数
+
+   -m:  只统计字符数
+
+## 条件判断
+
+1. 按照文件类型进行判读
+
+   | 测试选项 | 作用                                                         |
+   | -------- | ------------------------------------------------------------ |
+   | -b 文件  | 判断该文件是否存在,并且是否为块设备文件(是块设备文件为真)    |
+   | -c 文件  | 判断该文件是否存在,并且是否为字符设备文件(是字符设备文件为真) |
+   | -d 文件  | 判断该文件是否存在,并且是否为目录文(是目录为真)              |
+   | -e 文件  | 判断该文件是否存在(存在为真)                                 |
+   | -f 文件  | 判断该文件是否存在,并且是否为普通文件(是普通文件为真)        |
+   | -L 文件  | 判断该文件是否存在,并且是否为符号链接文件(是符号链接文件为真) |
+   | -p 文件  | 判断该文件是否存在,并且是否为管道文件(是管道文件为真)        |
+   | -s 文件  | 判断该文件是否存在,并且是否为非空(非空为真)                  |
+   | -S 文件  | 判断该文件是否存在,并且是否为套接字文件(是套接字文件为真)    |
+
+   ```shell
+   test  -e  ip.txt
+   
+   echo $?
+   
+   [ -e  abc ]  &&  echo yes || echo no
+   ```
+
+2. 按照文件的权限进行判断
+
+   | 测试选项 | 作用                                                         |
+   | -------- | ------------------------------------------------------------ |
+   | -r 文件  | 判断该文件是否存在,并且是否该文件拥有读权限(有读权限为真)    |
+   | -w 文件  | 判断该文件是否存在,并且是否该文件拥有写权限(有写权限为真)    |
+   | -x 文件  | 判断该文件是否存在,并且是否该文件拥有执行权限(有执行权限为真) |
+   | -u 文件  | 判断该文件是否存在,并且是否该文件拥有SUID权限(有SUID权限为真) |
+   | -g 文件  | 判断该文件是否存在,并且是否该文件拥有SGID权限(有SGID权限为真) |
+   | -k 文件  | 判断该文件是否存在,并且是否该文件拥有SBit权限(有SBit权限为真) |
+
+3. 两个文件之间进行比较
+
+   | 测试选项          | 作用                                                         |
+   | ----------------- | ------------------------------------------------------------ |
+   | 文件1  -nt  文件2 | 判断文件1的修改时间是否比文件2的新(如果新则为真)             |
+   | 文件1  -ot  文件2 | 判断文件1的修改时间是否比文件2的旧(如果旧则为真)             |
+   | 文件1  -ef  文件2 | 判断文件1是否和文件2的Inode号一致,可以理解为两个文件是否为同一个文件。这个判断用于判断硬链接是很好的办法 |
+
+4. 两个整数之间比较
+
+   | 测试选项          | 作用                                     |
+   | ----------------- | ---------------------------------------- |
+   | 整数1  -eq  整数2 | 判断整数1是否和整数2相等(相等为真)       |
+   | 整数1  -ne  整数2 | 判断整数1是否和整数2不等(不相等为真)     |
+   | 整数1  -gt  整数2 | 判断整数1是否大于整数2(大于为真)         |
+   | 整数1  -lt  整数2 | 判断整数1是否小于整数2(小于为真)         |
+   | 整数1  -ge  整数2 | 判断整数1是否大于等于整数2(大于等于为真) |
+   | 整数1  -le  整数2 | 判断整数1是否小于等于整数2(小于等于为真) |
+
+5. 字符串的判断
+
+   | 测试选项            | 作用                                         |
+   | ------------------- | -------------------------------------------- |
+   | -z  字符串          | 判断字符串是为空(为空返回真)                 |
+   | -n 字符串           | 判断字符串是为非空(非空返回真)               |
+   | 字符串 == 字符串    | 判断字符串1是否和字符串2相等(相等返回真)     |
+   | 字符串1  != 字符串2 | 判断字符串1是否和字符串2不相等(不相等返回真) |
+
+6. 多重条件判断
+
+   | 测试选项         | 作用                                           |
+   | ---------------- | ---------------------------------------------- |
+   | 判断1  -a  判断2 | 逻辑与,判断1和判断2都成立,最终结果才为真       |
+   | 判断1  -o  判断2 | 逻辑或,判断1和判断2有一个成立,最终的结果就为真 |
+   | !判断            | 逻辑非,使原始的判断式取反                      |
+
+
+## 流程控制
+
+1. if条件判断
+
+   if [ 条件判断式 ] ; then
+
+   ​		程序
+
+   fi
+
+   
+
+   if [  条件判断式  ] 
+
+   ​		 then
+
+   ​		程序
+
+   fi
+
+   ```shell
+   #!/bin/bash
+   
+   aa=$(df -h | grep /dev/sda2 | awk '{print $5}' |  cut -d "%" -f 1)
+   
+   if [ "$aa" -ge 30 ]
+       then
+           echo "硬盘快慢了"
+   fi
+   ```
+
+2. 双分支if条件语句
+
+   if [ 条件判断式 ]
+
+   ​	then
+
+   ​		条件成立时,执行的程序
+
+   ​	else
+
+   ​		条件不成立时,执行的程序
+
+   fi
+
+   ```shell
+   #!/bin/bash
+   
+   #	备份mysql数据库 局限性
+   #	Author:zher (E-mail: 724174309@qq.com)
+   
+   # 同步系统事件
+   ntpdate  asia.pool.ntp.org &> /dev/null
+   # 把当前系统按照年月日格式赋值给date
+   date=$(date +%y%m%d)
+   # 统计mysql数据库的大小,并把大小赋值给size变量
+   size=$(du -sh /var/lib/mysql)
+   
+   if [ -d /tmp/dbbak ]
+   	then
+   		echo "Date : $date!" > /tmp/dbbak/dbinfo.txt
+   		echo "Date size : $size" >> /tmp/dbbak/dbinfo.txt
+   		cd /tmp/dbbak
+   		tar -zcvf mysql-lib-$date.tar.gz /var/lib/mysql dbinfo.txt &> /dev/null
+   		rm -rf /tmp/dbbak/dbinfo.txt
+   	else
+   		mkdir /tmp/dbbak
+   		echo "Date : $date!" > /tmp/dbbak/dbinfo.txt
+   		echo "Date size : $size" >> /tmp/dbbak/dbinfo.txt
+   		cd /tmp/dbbak
+   		tar -zcvf mysql-lib-$date.tar.gz /var/lib/mysql dbinfo.txt &> /dev/null
+   		rm -rf /tmp/dbbak/dbinfo.txt
+   if
+   ```
+
+   
+
+   检测80端口,判断apache是否启动中
+
+   ```shell
+   #!/bin/bash
+   
+   aa=$( netstat -tuln | awk '{print $4}' | grep ":80\$" )
+   if  [ "$a" = "" ]
+   	then
+   		echo "httpd is down, must restart"
+   		/etc/rc.d/init.d/httpd  start &> /dev/null
+   	else
+   		echo "httpd is ok"
+   fi
+   ```
+
+   nmap -sT  192.168.4.240
+
+   ```shell
+   #!/bin/bash
+   
+   port=$( nmap -sT 127.0.0.1 | grep tcp | grep http | awk ' { print $2} ' )
+   if [ "$port" == "open" ]
+   	then
+   		echo "$(date) httpd is ok" >> /tmp/autostart-acc.log
+   	else
+   		/etc/rc.d/init.d/httpd start &> /dev/null
+   		echo "$(date) restart httpd !!"  >> /tmp/autostart err.log
+   fi
+   ```
+
+3. 多分支if条件语句
+
+   if  [ 条件判断式1 ]
+
+   ​	then
+
+   ​		当条件判断式1成立时,执行程序1
+
+   elif  [ 条件判断式2 ]
+
+   ​	then
+
+   ​		当条件判断式2成立时,执行程序2
+
+   else
+
+   ​	当所有条件都不成立时,最后执行此程序
+
+   fi
+
+   ```shell
+   #!/bin/bash
+   
+   read -t 30 -p  "please input a filename: " filename
+   
+   if [ -z $filename ]
+   	then
+   		echo "111111111"
+   		exit 101
+   elif [  ! -e  $filename ]
+   	then
+   		echo "222222222"
+   		exit 102
+   elif [ -f $filename  ]
+   	then
+   		echo "$filename  is  putong file"
+   elif [ -d $filename  ]
+   	then
+   		echo "$filename is dire"
+   else
+   	echo "$filename is other file"
+   fi
+   ```
+
+4. 分支case条件语句
+
+    case $变量名 in
+
+   ​		"值1")
+
+   ​				如果变量的值等于值1,则执行程序1
+
+   ​				;;
+
+   ​		"值2")
+
+   ​				如果变量的值等于值2,则执行程序2
+
+   ​				;;
+
+   ​		.....
+
+   ​		*)
+
+   ​				如果变量的值等于值2,则执行程序2
+
+   ​				;;
+
+   esac
+
+   ```shell
+   #!/bin/bash
+   
+   echo "want to beijing,please input 1 "
+   echo "want to shanghai,please input 2 "
+   echo "want to chendu,please input 3 "
+   
+   read -t 30 -p "please input your choice:" choice
+   
+   case $choice in 
+       "1")
+           echo "beijin11111"
+           ;;
+       "2")
+           echo "shanghai222"
+           ;;
+       "3")
+           echo "chendu333"
+           ;;
+       *)
+           echo "error input"
+           ;;
+   esac
+   ```
+
+   
+
+5. for循环
+
+   for 变量 in 值1 值2 值3...
+
+   ​		do
+
+   ​				程序
+
+   ​		done
+
+   ```shell
+   #!/bin/bash
+   
+   for i in 1 2 3 4
+       do
+           echo $i
+       done
+   ```
+
+   for (( 初始化;循环控制条件;变量变化  ))
+
+   ​		do
+
+   ​				程序
+
+   ​		done
+
+   ```shell
+   #!/bin/bash
+   
+   s=0
+   for (( i=1; i<=100; i=i+1 ))
+       do
+           s=$(( $s+$i ))
+       done
+   
+   echo "The sum of 1+2+...+100 is : $s"
+   ```
+
+   对比两种for循环
+   
+   ```shell
+   #!/bin/bash
+   
+   cd /root/sh/tar
+   
+   ls *.tar.gz > tar.log
+   ls *.tgz >> tar.log &> /dev/null
+   
+   aa=$(cat tar.log | wc -l)
+   
+   for(( i=1; i<="$aa"; i=i+1  ))
+       do
+           bb=$(cat tar.log | awk 'NR==$i {print $1}')
+           tar -zxvf $bb -C /root/sh/tar
+       done
+   ```
+   
+   ```shell
+   #!/bin/bash
+   
+   cd /root/sh/tar
+   
+   ls *.tar.gz > tar.log
+   ls *.tgz >> tar.log &> /dev/null
+   
+   for i in $(cat tar.log)
+       do
+           tar -zxvf $i
+       done
+   ```
+   
+   P151
+   
+   
 
 # 启动引导与修复
 
@@ -2428,24 +2863,642 @@ source 配置文件
 
        - [ ] 推荐使用:   修改/etc/rc.d/rc.local文件,设置的服务自启动
 
-         P165
-
    - 基于xinetd服务:   把基于xinetd的服务放在里边
+     
      - 启动:
+     
+       vi /etc/xinetd.d/telnet
+     
+       ​		disabled = yes 改为  disable = no
+     
+       service xinetd restart
+     
      - 自启动:
-
+     
+       chkconfig   telnet on
+     
+       ntsysv
+     
    - chkconfig --list 查询已经安装的服务和区分服务自启动的状态
 
 2. 源码包安装的服务
 
    - 启动:
+   
+     绝对路径启动脚本
+   
    - 自启动:
+     修改/etc/rc.d/rc.local文件,设置的服务自启动
+   
+3. 让源码包服务被服务管理命令识别
+   先源码安装服务
+
+   对服务启动脚本或可执行程序进行软链接，例如:
+
+   ​		ln -s  /usr/local/apache2/bin/apachectl  /etc/rc.d/init.d/
+
+   service apache restart
+
+   让源码包的apache服务被chkconfig命令管理自启动
+
+   ​	vi /etc/init.d/apache 添加
+
+   ```shell
+   #!/bin/bash
+   
+   # chkconfig: 35  86  76
+   # description: source package apache
+   
+   ```
+
+   ​	chkconfig   --add apachectl	
+
+## Linux中常见服务的作用
+
+| 服务名称        | 功能简介                                                     | 建议 |
+| --------------- | ------------------------------------------------------------ | ---- |
+| acpid           | 电源管理接口。如果是笔记本用户建议开启,可以监听内核层的相关电源事件。 | 开启 |
+| anacron         | 系统的定时任务程序。cron的一个子系统,如果定时任务错过了执行时间,可以通过anacron继续唤醒执行。 | 关闭 |
+| alsasound       | Alsa声卡驱动。如果使用alsa声卡,开启                          | 开启 |
+| apmd            | 电管管理模块。如果支持acpid，就不需要apmd，可以关闭          | 关闭 |
+| atd             | 指定系统在特定时间执行某个任务,只能执行一次。如果需要则开启,但我们一般使用crond来进行循环定时任务 | 关闭 |
+| auditd          | 审核子系统。如果开启了此服务,SELinux的审核信息会写入/var/log/audit/audit.log文件,如果不开启,审核信息会记录在syslog中 | 开启 |
+| autofs          | 让服务器可以自动挂载网络中的其他服务器的共享数据,一般用来自动挂载NFS服务。如果没有NFS服务建议关闭 | 关闭 |
+| avahi-daemon    | Avahi是zeroconf协议的实现。它可以在没有DNS服务的局域网里发现基于zeroconf协议的设备和服务。除非有兼容设备或使用zeroconf协议,否则关闭 | 关闭 |
+| bluetooth       | 蓝牙设备支持。一般不会在服务器上启用蓝牙,关闭                | 关闭 |
+| capi            | 仅对使用 ISND设备的用户有用                                  | 关闭 |
+| chargen-dgram   | 使用UDP协议的chargen server。主要功能是提供类似远程打字的功能 | 关闭 |
+| chargen-stream  | 同上                                                         | 关闭 |
+| cpuspeed        | 可以用来调整CPU的频率。当闲置时可以自动降低CPU频率来节省电量 | 开启 |
+| crond           | 系统的定时任务,一般的Linux服务器都需要定时任务帮助系统维护。建议开启 | 开启 |
+| cvs             | 一个版本控制系统                                             | 关闭 |
+| daytime-dgram   | daytime使用TCP协议的Daytime守护进程,该协议为客户机实现从远程服务器获取日期和时间的功能 | 关闭 |
+| daytime-slream  | 同上                                                         | 关闭 |
+| dovecot         | 邮件服务中 POP3/IMAP 服务的守护进程，主要用来接收信件。如果启动了邮件服务则开启：否则关闭 | 关闭 |
+| echo-dgram      | 服务器回显客户服务的进程                                     | 关闭 |
+| echo-stream     | 同上                                                         | 关闭 |
+| firstboot       | 系统安装完成后，有一个欢迎界面，需要对系统进行初始设定，这就是这个服务的作用。既然不是第一次启动了，则建议关闭 | 关闭 |
+| gpm             | 在字符终端 (ttyl~tty6) 中可以使用鼠标复制和粘贴，这就是这个服务的功能 | 开启 |
+| haldaemon       | 检测和支持 USB 设备。如果是服务器则可以关闭，个人机则建议开启 | 关闭 |
+| hidd            | 蓝牙鼠标、键盘等蓝牙设备检测。必须启动 bluetooth 服务        | 关闭 |
+| hplip           | HP 打印机支持，如果没有 HP 打印机则关闭                      | 关闭 |
+| httpd           | apache 服务的守护进程。如果需要启动 apache，就开启           | 开启 |
+| ip6tables       | IPv6 的防火墙。目前 IPv6 协议并没有使用，可以关闭            | 关闭 |
+| iptables        | 防火墙功能。Linux 中的防火墙是内核支持功能。这是服务器的主要防护手段，必须开启 | 开启 |
+| irda            | IrDA 提供红外线设备（笔记本电脑、PDA’s、手机、计算器等）间的通信支持。建议关闭 | 关闭 |
+| isdn            | 使用 ISDN 设备连接网络。目前主流的联网方式是光纤接入和 ADSL，ISDN 己经非常少见，请关闭 | 关闭 |
+| kudzu           | 该服务可以在开机时进行硬件检测，并会调用相关的设置软件。建议关闭，仅在需要时开启 | 关闭 |
+| lvm2-monitor    | 该服务可以让系统支持LVM逻辑卷组，如果分区采用的是LVM方式，那么应该开启。建议开启 | 开启 |
+| mcstrans        | SELinux 的支持服务。建议开启                                 | 开启 |
+| mdmonitor       | 该服务用来监测 Software RAID 或 LVM 的信息。不是必需服务，建议关闭 | 关闭 |
+| mdmpd           | 该服务用来监测 Multi-Path 设备。不是必需服务，建议关闭       | 关闭 |
+| messagebus      | 这是 Linux 的 IPC (Interprocess Communication，进程间通信）服务，用来在各个软件中交换信息。建议关闭 | 关闭 |
+| microcode _ctl  | Intel 系列的 CPU 可以通过这个服务支持额外的微指令集。建议关闭 | 关闭 |
+| mysqld          | MySQL 数据库服务器。如果需要就开启；否则关闭                 | 开启 |
+| named           | DNS 服务的守护进程，用来进行域名解析。如果是 DNS 服务器则开启；否则关闭 | 关闭 |
+| netfs           | 该服务用于在系统启动时自动挂载网络中的共享文件空间，比如 NFS、Samba 等。 需要就开启，否则关闭 | 关闭 |
+| network         | 提供网络设罝功能。通过这个服务来管理网络，建议开启           | 开启 |
+| nfs             | NFS (Network File System) 服务，Linux 与 Linux 之间的文件共享服务。需要就开启，否则关闭 | 关闭 |
+| nfslock         | 在 Linux 中如果使用了 NFS 服务，那么，为了避免同一个文件被不同的用户同时编辑，所以有这个锁服务。有 NFS 时开启，否则关闭 | 关闭 |
+| ntpd            | 该服务可以通过互联网自动更新系统时间.使系统时间永远准确。需要则开启，但不是必需服务 | 关闭 |
+| pcscd           | 智能卡检测服务，可以关闭                                     | 关闭 |
+| portmap         | 用在远程过程调用 (RPC) 的服务，如果没有任何 RPC 服务，则可以关闭。主要是 NFS 和 NIS 服务需要 | 关闭 |
+| psacct          | 该守护进程支持几个监控进程活动的工具                         | 关闭 |
+| rdisc           | 客户端 ICMP 路由协议                                         | 关闭 |
+| readahead_early | 在系统开启的时候，先将某些进程加载入内存整理，可以加快启动速度 | 关闭 |
+| readahead_later | 同上                                                         | 关闭 |
+| restorecond     | 用于给 SELinux 监测和重新加载正确的文件上下文。如果开启 SELinux，则需要开启 | 关闭 |
+| rpcgssd         | 与 NFS 有关的客户端功能。如果没有 NFS 就关闭                 | 关闭 |
+| rpcidmapd       | 同上                                                         | 关闭 |
+| rsync           | 远程数据备份守护进程                                         | 关闭 |
+| sendmail        | sendmail 邮件服务的守护进程。如果有邮件服务就开启；否则关闭  | 关闭 |
+| setroubleshoot  | 该服务用于将 SELinux 相关信息记录在日志 /var/log/messages 中。建议开启 | 开启 |
+| smartd          | 该服务用于自动检测硬盘状态。建议开启                         | 开启 |
+| smb             | 网络服务 samba 的守护进程。可以让 Linux 和 Windows 之间共享数据。如果需要则开启 | 关闭 |
+| squid           | 代理服务的守护进程。如果需要则开启：否则关闭                 | 关闭 |
+| sshd            | ssh 加密远程登录管理的服务。服务器的远程管理必须使用此服务，不要关闭 | 开启 |
+| syslog          | 日志的守护进程                                               | 开启 |
+| vsftpd          | vsftp 服务的守护进程。如果需要 FTP 服务则开启；否则关闭      | 关闭 |
+| xfs             | 这是 X Window 的字体守护进程，为图形界面提供字体服务。如果不启动图形界面，就不用开启 | 关闭 |
+| xinetd          | 超级守护进程。如果有依赖 xinetd 的服务，就必须开启           | 开启 |
+| ypbind          | 为 NIS (网络信息系统）客户机激活 ypbind 服务进程             | 关闭 |
+| yum-updatesd    | yum 的在线升级服务                                           | 关闭 |
+
+# 系统管理
+
+## 进程管理
+
+### 进程管理的作用
+
+判断服务器的健康状态
+
+​		内存不超过70%
+
+​		CPU不超过90%
+
+查看系统中所有的进程
+
+杀死进程
+
+### 进程查看
+
+#### ps -- 命令
+
+ps aux
+
+a:  显示一个终端的所有进程,除了会话引线
+
+u:  显示进程的归属用户及内存的使用情况
+
+x:  显示没有进程终端的过程
+l:  长格式显示.显示更详细的信息
+
+-e:  显示所有进程,和A作用一致
+
+```shell
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.1  0.1 225708  6364 ?        Ss   08:43   0:40 /sbin/init splash
+root         2  0.0  0.0      0     0 ?        S    08:43   0:00 [kthreadd]
+root         3  0.0  0.0      0     0 ?        I<   08:43   0:00 [rcu_gp]
+root         4  0.0  0.0      0     0 ?        I<   08:43   0:00 [rcu_par_gp]
+root         6  0.0  0.0      0     0 ?        I<   08:43   0:00 [kworker/0:0H-kb]
+root         9  0.0  0.0      0     0 ?        I<   08:43   0:00 [mm_percpu_wq]
+root        10  0.0  0.0      0     0 ?        S    08:43   0:01 [ksoftirqd/0]
+root        11  0.2  0.0      0     0 ?        I    08:43   1:07 [rcu_sched]
+root        12  0.0  0.0      0     0 ?        S    08:43   0:00 [migration/0]
+root        13  0.0  0.0      0     0 ?        S    08:43   0:00 [idle_inject/0]
+root        14  0.0  0.0      0     0 ?        S    08:43   0:00 [cpuhp/0]
+```
+
+VSZ:该进程占用虚拟内存的大小,单位:KB
+
+RSS:该进程占用实际物理内存的大小,单位:KB
+
+STAT: 进程状态
+
+​		D:不可被唤醒的睡眠状态,通常用户I/O情况
+
+​		R: 该进程正在运行
+
+​		S: 该进程在睡眠状态,可被唤醒
+
+​		T:停止状态,可能是在后台暂停或进程在除错状态
+
+​		W: 内存交互状态(从2.6内核开始无效)
+
+​		X:死掉的进程(应该不会出现)
+
+​		Z: 僵尸进程。进程已经终止,但是部分程序还在内存当中
+
+​		<: 高优先级(以下状态在BSD格式当中出现)
+
+​		L: 被锁入内存
+
+​		s:包含子进程
+
+​		l:多线程
+
+​		+:位于后台
+
+START: 该进程启动时间
+
+TIME: 该进程占用CPU的运算时间,注意不是系统时间
+
+COMMAMD:产生的进程的命令名
+
+#### top--命令
+
+top [选项]
+
+​		-d 秒数:		指定top命令每隔几秒更新 。默认是3秒
+
+​		-b:		使用批处理模式输出。一般和"-n"选项合用,用于把top命令重定向到文件中
+
+​		-n 次数:	指定top命令执行的次数。一般和"-b"选项合用
+
+​		-p:	指定PID。只查看某个PID进程	
+
+​		-s:	使top在安全模式运行,避免在交互模式中出现错误
+
+​		-u 用户名:	只监听某个用户的进程
+
+在top交互模式当中可以执行的命令:
+
+​		?或h:	显示交互模式的帮助
+
+​		P:	以 CPU使用率排序
+
+​		M:	以内存的使用率排序
+
+​		N:	 以PID排序
+
+​		T:	按照CPU积累运算时间排序,也就是用TIME+项排序
+
+​		k:	按照PID号,给予某个进程一个信号。一般用于终止某个进程,信号9是强制终止的信号。
+
+​		r:	按照PID号,给某个进程重设优先级(Nice)值
+
+​		q:	退出top
+
+```shell
+top - 09:23:35 up 33 min,  1 user,  load average: 1.55, 1.55, 1.38
+任务: 309 total,   3 running, 255 sleeping,   0 stopped,   0 zombie
+%Cpu(s): 13.5 us,  4.3 sy,  0.0 ni, 81.9 id,  0.1 wa,  0.0 hi,  0.3 si,  0.0 st
+KiB Mem :  3950096 total,   229328 free,  2175280 used,  1545488 buff/cache
+KiB Swap:  2097148 total,  2010096 free,    87052 used.   824468 avail Mem 
+
+进�� USER      PR  NI    VIRT    RES    SHR �  %CPU %MEM     TIME+ COMMAND                                                                                                                                        
+ 8335 zler      20   0 2161628 329372 147924 S  24.2  8.3   4:36.06 chrome                                                                                                                                         
+ 8062 zler      20   0  581848 119548  94608 R   8.9  3.0   1:46.70 chrome                                                                                                                                         
+ 3981 zler      20   0 1309968 116376  84584 S   7.0  2.9   1:26.27 Xorg                                                                                                                                           
+ 4129 zler      20   0 3985024 278276 124924 R   6.6  7.0   3:12.41 gnome-shell                                                                                                                                    
+ 8521 zler      20   0  824804  44796  33040 S   3.3  1.1   0:01.14 gnome-terminal-                                                                                                                                
+ 7375 zler      20   0 1224224 150700 108168 S   2.6  3.8   0:48.56 Typora                                                                                                                                         
+ 8019 zler      20   0  886188 181324 131948 S   2.6  4.6   0:40.24 chrome                                                                                                                                         
+ 4173 zler      20   0  438696  14172   6384 S   0.7  0.4   0:36.48 ibus-daemon                                                                                     
+ 
+ top -b -n 1 > test
+ 
+```
+
+#### pstree--命令
+
+pstree [选项]
+
+​		-p: 显示进程的PID
+
+​		-u: 显示进程的所属用户
+
+### 进程的杀死
+
+#### kill-命令
+
+​	kill [信号] PID
+
+​	kill -l PID 重启
+
+#### killall--命令
+
+​	按照进程名杀死进程
+
+​	killall [选项]   [信号]  进程名
+
+​			-i： 交互式,询问是否杀死某个进程
+
+​			-l:	忽略进程名的大小写
+
+#### pkill --命令
+
+​		pkill与killall一样的
+
+​		-t  终端号:  按照终端号踢出用户
+
+​		pkill -9 -t pts/0
+
+## 工作管理
+
+前台程序和后台程序
+
+如何把命令放入后台?
+
+​	1 "命令 &"
+
+​	2  在命令执行过程中按ctrl+z快捷键,命令在后台暂停状态
+
+后台命令管理
+
+#### jobs -- 查看后台的工作
+
+​		-l: 显示工作的PID
+
+#### fg -- 将后台程序恢复到前台程序执行
+
+​		%工作号:  %号可以省略,但是注意工作号和PID的区别
+
+#### bg -- 将后台暂停的工作恢复到后台执行
+
+​		%工作号:  %号可以省略,但是注意工作号和PID的区别
+
+后台命令脱离登陆终端运行?
+
+​		前面的是依赖终端的,那么脱离终端后台执行方法:
+
+​		1 需要执行的命令加入/etc/rc.local文件
+
+​		2 使用系统定时任务
+
+​		3 nohup
+
+#### nohup [命令] &
+
+## 系统资源查看
+
+### vmstat--监控系统资源
+
+bmstat [刷新延时] [刷新次数]
+
+```reStructuredText
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b 交换 空闲 缓冲 缓存   si   so    bi    bo   in   cs us sy id wa st
+ 0  0 306944 347932  56072 1325516    1   10   112    39  422  241 15  5 78  2  0
+ 0  0 306944 347752  56072 1325700    0    0     0    20 2175 6846 18  7 75  0  0
+ 0  0 306944 350540  56072 1322864    0    0     0     0 2662 9139 26  8 66  0  0
+
+```
+
+procs: 进程信息字段
+
+​	r: 等待运行的进程数,数量越大,系统越繁忙
+
+​	b: 不可被唤醒的进程数量,数量越大,系统越繁忙
+
+memory: 内存信息字段
+
+​	swpd; 虚拟内存的使用情况,单位KB
+
+​	free: 空闲的内存容量,单位KB
+
+​	buff: 缓冲的内存容量,单位KB
+
+​	cache: 缓存的内存容量,单位KB
+
+swap: 交换分区的信息字段
+
+​	si:    从磁盘中交换到内存数量的数据,单位KB
+
+​	so:  从内存中交换到磁盘中数据的数量,单位KB
+
+io:  磁盘读写信息字段
+
+​	bi :   从块设备读入数据的总量,单位是块
+
+​	bo:	写到块设备的数据的总量,单位是块。此两个数越大,代表系统的I/O越繁忙
+
+system: 系统信息字段
+
+​	in: 每秒被中断的进程次数
+
+​	cs: 每秒钟进行的事件切换次数.此两个数越大,代表系统与设备的通信非常繁忙
+
+cpu: cpu信息字段
+
+​	us: 非内核进程消耗CPU运算时间的百分比
+
+​	sy: 内核进程消耗CPU运算时间的百分比
+
+​	id: 空闲CPU的百分比
+
+​	wa: 等待I/O所消耗的CPU百分比
+
+​	st: 被虚拟机所盗用的CPU
+
+### dmesg--显示开机时内核检测信息
+
+### free -- 查看内存使用状态
+
+free  [-b|-k|-m|-g]
+
+-b: 以字节为单位显示
+
+-k: 以KB为单位显示,默认就是以KB为单位显示
+
+-m: 以MB为单位显示
+
+-g: 以GB为单位显示
+
+### 查看CPU信息
+
+/proc/cupinfo
+
+### 查看内存信息
+
+/proc/meminfo
+
+### 看用户
+
+w
+
+who
+
+### uptime
+
+uptime命令的作用就是显示系统的启动时间和平均负载,也就是top命令的第一行。其实w命令也能看到这一行数据,具体使用哪一个看个人习惯
+
+### uname--查看系统与内核相关信息
+
+-a: 查看系统所有相关信息
+
+-r: 查看内核版本
+
+-s: 查看内核名称
+
+### file /bin/ls -- 查看系统是多少位的
+
+### lsb_release -a -- Linux发行版本
+
+## 系统定时任务
+
+### at 一次性执行定时任务
+
+at命令要想正确执行,需要atd服务的支持,atd服务是独立的服务
+
+service atd start
+
+白名单: /etc/at.allow
+
+黑名单: /etc/at.deny
+
+at [选项] 时间 回车
+
+-m:  当at工作完成后,无论是否命令有输出,都用email通知执行at命令的用户
+
+-c  工作号:  显示该at工作的实际内容
+
+at 支持的时间格式如下:
+
+HH:MM
+
+HH:MM YYYY-MM-DD
+
+HH:MM[am|pm] [month] [date]
+
+HH:MM[am|pm] + [minutes|hours|days|weeks]
+
+
+
+ at now +2 minutes
+
+at> /root/hello.sh >> /root/hello.log
+
+ctrl + d 保存
+
+
+
+atq查询工作任务号
+
+at - c  工作号
+
+
+
+### crontab循环执行定时任务
+
+crontab命令是crond服务支持
+
+crond服务是独立的服务
+
+service crond restart|start|stop
+
+白名单: /etc/cron.allow
+
+黑名单: /etc/cron.deny
+
+
+
+crontab命令设置任务,针对的是当前用户
+
+crontab [选项]
+
+-e:  编辑crontab定时任务
+
+-l:  查询crontab任务
+
+-r:  删除当前用户所有的crontab任务,如果有多任务,只想删除一个,可以用crontab -e
+
+-u 用户名: 修改或删除其他用户的crontab任务.只有root可用
+
+
+
+\*  \*  \* \* \*  执行的任务
+
+| 项目    | 含义                 | 范围                  |
+| ------- | -------------------- | --------------------- |
+| 第一个* | 一小时当中的第几分钟 | 0-59                  |
+| 第二个* | 一天当中的第几小时   | 0-23                  |
+| 第三个* | 一个月当中的第几天   | 1-31                  |
+| 第四个* | 一年当中的第几月     | 1-12                  |
+| 第五个* | 一周当中的星期几     | 0-7(0和7都代表星期日) |
+
+
+
+| 特殊符号 | 含义                                                         |
+| -------- | ------------------------------------------------------------ |
+| *        | 代表任何时间。比如第一个*代表一小时中每分钟都执行一次        |
+| ,        | 代表不连续的时间。比如 "0 8,12,16 * * * 命令",就代表每天的8点0分,12点0分,16点0分都执行一次命令 |
+| -        | 代表连续的时间范围。比如"0 5 * * 1-6 命令",代表在周一到周六的凌晨5点0分执行命令 |
+| */n      | 代表每隔多久执行一次。比如 "*/10 * * * * 命令",代表每隔10分钟就执行一扁命令 |
+
+举例
+
+| 时间              | 含义                                                         |
+| ----------------- | ------------------------------------------------------------ |
+| 45 22 * * * 命令  | 在22点45分执行命令                                           |
+| 0 17 * * 1 命令   | 每周1的17点0分执行命令                                       |
+| 0 5 1,15 * * 命令 | 每月1号和15号的凌晨5点0分执行命令                            |
+| 40 4 * * 1-5 命令 | 每周一到周五的凌晨4点40分执行命令                            |
+| */10 4 * * * 命令 | 每天的凌晨4点,每隔10分钟执行一次命令                         |
+| 0 0 1,15 * 1 命令 | 每月1号和15号,每周1的0点0分都会执行命令。注意:星期几和几号最好不要同时出现 |
+| * * * * * 命令    | 每分钟执行命令                                               |
+
+crontab的注意事项
+
+​	六个选项都不能为空,必须填写,如果不确定时间使用 * 代表任意时间
+
+​	crontab定时任务,最小有效时间是分钟,最大时间范围是月,像2018年某时执行,3点30分30秒这样把的时间都不能识别
+
+​	在定义时间时,日期和星期最好必要在一条定时任务中出现,因为它们都是以天作为单位,非常容易混淆
+
+​	在定时任务中,不管是直接写命令,还是在脚本中写命令,最好都是绝对路径
+
+
+
+/etc/crontab配置文件设置任务,针对的是所有用户
+
+1 * * * * root run-parts /etc/cron.hourly
+
+### aracron
+
+anacron 【选项】【工作名】
+
+-s:  开始anacron工作，依据/etc/anacrontab文件中的设定的延迟时间执行
+
+-n:  立即执行/etc/anacrontab中所有的工作,忽略所有的延迟时间
+
+-u:  更新/var/spool/anacron/cron.{daily,weekly,monthly}文件中的时间戳,但是不执行任何工作
+
+工作名:  是依据/etc/anacrontab文件中定义的工作名
+
+
+
+## 日志管理
+
+### rsysloged
+
+### 常见的系统日志文件
+
+| 日志文件         | 说明                                                         |
+| ---------------- | ------------------------------------------------------------ |
+| /var/log/cron    | 记录了系统定时任务相关的日志                                 |
+| /var/log/cups/   | 记录打印信息的日志                                           |
+| /var/log/dmesg   | 记录了系统在开机时内核自检的信息。也可以使用dmesg命令直接查看内核自检信息 |
+| /var/log/btmp    | 记录错误登陆的日志。这个文件是二进制文件,不能直接vi查看,而要使用lastb命令查看 |
+| /var/log/lastlog | 记录系统中所有用户最后一次的登陆时间的日志。这个文件也是二进制文件,不能直接vi,而要使用lastlog命令查看 |
+| /var/log/mailog  | 记录邮件记录                                                 |
+| /var/log/message | 记录系统重要信息的日志。这个日志文件中会记录Linux系统的绝大多数重要信息,如果系统出现问题时,首先要检查的就应该是这个日志文件。 |
+| /var/log/secure  | 记录验证和授权方面的信息,只要涉及账户和密码的程序都会记录。比如说系统的登陆,ssh的登陆,su切换用户,sudo授权,甚至添加用户和修改用户密码都会记录在这个日志文件中 |
+| /var/log/wtmp    | 永久记录所有用户的登陆、注销信息、同时记录系统的启动、重启、关机事件。同样这个文件也是一个二进制文件,不能直接vi,而需要使用last命令来查看 |
+| /var/run/utmp    | 记录当前已经登陆的用户信息。这个文件会随着用户的登陆和注销而不断变化,只记录当前登陆用户的信息。同样这个文件不能直接vi,而要使用w,who,users等命令来查询 |
+
+源码包的服务日志
+
+| 日志文件        | 说明                                |
+| --------------- | ----------------------------------- |
+| /var/log/httpd/ | RPM包安装的apache服务的默认日志目录 |
+| /var/log/mail/  | RPM包安装的邮件服务的额外日志目录   |
+| /var/log/samba/ | RPM包安装的samba服务的日志目录      |
+| /var/log/sssd/  | 守护进程安全服务目录                |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+P183
 
 # 登陆终端
 
     本地字符终端  tty1-6        alt+F1-6
     本地图形终端  tty7          ctrl+alt+F7(按住3秒,安装启动图形界面)
     远程终端     pts/0-255
+    ? 系统调用
 
 # google-chrome 正向代理
     sudo apt update
@@ -4466,6 +5519,7 @@ int main(int argc, char const *argv[]){
      - 父子进程间通讯是否需要sleep函数?
        - [ ] 父 写 -- 写的慢
        - [ ] 子 读 -- 读的快
+       - [ ] 不需要
 
    - 注意事项:
 
@@ -4886,7 +5940,7 @@ int main(int argc, char const *argv[]){
 
      ​					1.就写文件的大小,实际大小是4k的整数倍
 
-     ​					2.不能为0
+     ​					2.不能为0，也就是提前磁盘文件必须要有数据
 
      ​					3.一般文件多大,length就指定多大
 
@@ -4928,7 +5982,7 @@ int main(int argc, char const *argv[]){
 
      );
 
-   - 返回值:
+   - 返回值ptr:
 
      - 调用成功:   映射区的首地址
      - 调用失败:  MAP_FAILED
@@ -4946,22 +6000,1091 @@ int main(int argc, char const *argv[]){
 3. 思考问题:
 
    - 如果对mmap的返回值(ptr)做++操作(ptr++),munmap是否能够成功?
-   - 如果open时O_RDONLY,mmap时port参数指定PORT_READ | PORT_WRITE会怎样?
-   - 如果文件偏移量为1000会怎样?
+     - 不能
+   - 如果open时O_RDONLY, mmap时prot参数指定PROT_READ | PROT_WRITE会怎样?
+     - mmap调用失败
+     - open文件指定权限应该大于等于mmap第三个参数prot指定的权限
+   - 如果文件偏移量offset为1000会怎样?
+     - 必须是4096的整数倍
    - 如果不检测mmap的返回值会怎样?
+     - 
+   - mmap什么情况下会调用失败?
+     - 第二个参数length = 0
+     - 第三个参数prot必须指定PROT_READ
+       - [ ] fd对应的打开权限必须大于等于prot
+     - 偏移量: 必须是4k的整数倍
+   - 可以open的时候O_CREAT一个新文件来创建映射区吗?
+     - 可以,需要做文件扩展
+       - [ ] lseek
+       - [ ] truncate(path, length)
+   - mmap后关闭文件描述符,对mmap映射有没有影响?
+     - 没有
+   - 对ptr越界操作会怎样？
+     - 越界操作是非法操作内存,出现段错误
+   
+   ```c
+   #include <stdio.h>
+   #include <unistd.h>
+   #include <stdlib.h>
+   #include <sys/types.h>
+   #include <sys/stat.h>
+   #include <fcntl.h>
+   #include <string.h>
+   #include <sys/wait.h>
+   #include <sys/mman.h>
+   
+   int main(int argc, char const *argv[]){
+       //打开一个文件
+       int fd = open("a.txt", O_RDWR);
+       //获取文件的大小
+       int len = lseek(fd, 0, SEEK_END);
+   
+       //创建内存映射区
+       void* ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+       if(ptr == MAP_FAILED){
+           perror("mmap error");
+           exit(1);
+       }
+   
+       printf("%s", (char*)ptr);
+   
+       //释放内存映射区
+       munmap(ptr, len);
+       close(fd);
+       return 0;
+   }
+   ```
+   
+4. 进程间通信
 
-## 信号
+   - 有血缘关系的
 
-### 信号的初步认识
+     - 父子进程共享内存映射区
 
-### 信号相关函数
+   - 没有血缘关系的进程间通信
 
-### 信号集
+     - 如何通讯?
 
-### 信号捕捉
+       - [ ] 不能使用匿名映射的方式
+       - [ ] 只能借助磁盘文件创建映射区 - hello
+       - [ ] 不阻塞
 
-### SIGCHLD信号
+     - a(a.c)  b(b.c)
+
+       - [ ] a.c
+
+         int fd = open("hello");
+
+         void* ptr = mmap(,,,,,fd, 0);
+
+         对映射区进行读写操作
+
+         - ptr
+
+       - [ ] b.c
+
+         int fd1 = open("hello");
+
+         void* ptr1 = mmap(,,,,fd1, 0);
+
+         对映射区进行读写操作
+
+         - ptr1
+
+5. mmap实现内存映射:
+
+   - 必须有一个文件
+   - 文件数据什么时候用:
+     - 单纯文件映射
+     - 进程间通信
+       - [ ] 文件数据是没有用的
+
+6. 如何创建匿名映射区
+
+   - mmap的时候:
+     - 第二个参数length:  指定映射区大小
+     - 第四个参数flags:  需要添加MAP_ANON宏
+     - 第五个参数fd:  -1
+
+7. 父子进程永远共享的东西?
+
+   - 文件描述符
+   - 内存映射区
+
+8. 代码
+
+   - 父子间通讯 -- 有文件的映射区
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     #include <sys/mman.h>
+     
+     int main(int argc, char const *argv[]){
+         //打开一个文件
+         int fd = open("a.txt", O_RDWR);
+         //获取文件的大小
+         int len = lseek(fd, 0, SEEK_END);
+     
+         //创建内存映射区
+         void* ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         if(ptr == MAP_FAILED){
+             perror("mmap error");
+             exit(1);
+         }
+         close(fd);
+     
+         pid_t pid = fork();
+         if(pid == -1){
+             perror("fork error");
+             exit(1); 
+         }
+     
+         if(pid > 0){
+             // 写数据
+             strcpy((char *)ptr, "你是我儿子吗?");
+             // 回收
+             wait(NULL);
+         }
+     
+         if(pid == 0){
+             // 读数据
+             printf("%s\n", (char *)ptr);
+         }
+     
+         //释放内存映射区
+         int ret = munmap(ptr, len);
+         if(ret == -1){
+             perror("munmap error");
+             exit(1);
+         }
+         
+         return 0;
+     }
+     ```
+
+     
+
+   - 父子间通讯 -- 匿名文件映射区
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     #include <sys/mman.h>
+     
+     int main(int argc, char const *argv[]){
+         //创建匿名内存映射区
+         int len = 4096;
+         void* ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0);
+         if(ptr == MAP_FAILED){
+             perror("mmap error");
+             exit(1);
+         }
+     
+         pid_t pid = fork();
+         if(pid == -1){
+             perror("fork error");
+             exit(1); 
+         }
+     
+         if(pid > 0){
+             // 写数据
+             strcpy((char *)ptr, "你是我儿子吗?");
+             // 回收
+             wait(NULL);
+         }
+     
+         if(pid == 0){
+             // 读数据
+             printf("%s\n", (char *)ptr);
+         }
+     
+         //释放内存映射区
+         int ret = munmap(ptr, len);
+         if(ret == -1){
+             perror("munmap error");
+             exit(1);
+         }
+         
+         return 0;
+     }
+     ```
+
+   - 没有血缘关系的进程间通讯
+
+     不能使用匿名内存映射,只能使用文件内存映射
+
+     父进程代码
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     #include <sys/mman.h>
+     
+     void printError(const char* errorString){
+         perror(errorString);
+         exit(1);
+     }
+     
+     int main(int argc, char const *argv[]) {
+         if(argc < 2){
+             printError("./a.out not found mmap file");
+         }
+     
+         int fd = open(argv[1], O_CREAT | O_RDWR, 0664);
+         if(fd == -1){
+             printError("open error");
+         }
+     
+         //因为mmap的第二个参数不能为0
+         int ret = ftruncate(fd, 4096);
+         if(ret == -1){
+             printError("ftruncate error");
+         }
+     
+         int len = lseek(fd, 0, SEEK_END);
+         if(len == -1){
+             printError("lseek error");
+         }
+     
+         void* ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         if(ptr == MAP_FAILED){
+             printError("mmap error");
+         }
+         close(fd);
+     
+         while (1){
+             char* p = (char*)ptr;
+             strcpy(p, "hello parent, i am your 朋友!!!\n");
+             sleep(2);
+         }
+         
+         ret = munmap(ptr, len);
+         if(ret == -1){
+             printError("munmap error");
+         }
+         return 0;
+     }
+     ```
+
+     子进程代码
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     #include <sys/mman.h>
+     
+     void printError(const char* errorString){
+         perror(errorString);
+         exit(1);
+     }
+     
+     int main(int argc, char const *argv[]) {
+         if(argc < 2){
+             printError("./a.out not found mmap file");
+         }
+     
+         int fd = open(argv[1], O_CREAT | O_RDWR, 0664);
+         if(fd == -1){
+             printError("open error");
+         }
+     
+         int ret = ftruncate(fd, 4096);
+         if(ret == -1){
+             printError("ftruncate error");
+         }
+     
+         int len = lseek(fd, 0, SEEK_END);
+         if(len == -1 || len == 0){
+             printError("lseek error");
+         }
+     
+         void* ptr = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         if(ptr == MAP_FAILED){
+             printError("mmap error");
+         }
+         close(fd);
+     
+         while (1){
+             sleep(1);
+             printf("%s\n", (char*)ptr);
+         }
+     
+         ret = munmap(ptr, len);
+         if(ret == -1){
+             printError("munmap error");
+         }
+         return 0;
+     }
+     ```
+
+     
+
+9. 优点
+
+   它不需要文件IO操作
+
+   数据是在内存中操作的
+
+   不阻塞
+
+   效率高了,但是写的数据和读的数据是有出入的,因为它阻塞,所以要考虑数据的先后问题
+
+### 信号
+
+#### 信号的初步认识
+
+1. 特点:
+
+   - 简单
+   - 携带的信息量少
+   - 使用在某个特定的场景中
+
+2. 信号的状态
+
+   - 产生
+
+   - 未决状态 - 没有被进程处理的状态
+
+   - 递达 -  信号被进程处理了
+
+     ![21](../img/21.jpg)
+
+     我们需要做的是捕捉然后修改为用户自定义的动作
+
+     ![21](../img/22.jpg)
+
+     
+
+3. 处理方式
+
+4. 信号的四要素
+
+5. 通过man文档查询信号
+
+   - man 7 signal
+
+   - The signals SIGKILL and SIGSTOP cannot be caught, blocked,or ignored.
+
+   - 无法捕获、阻塞或忽略SIGKILL和SIGSTOP信号。
+
+   - Linux常见信号一览表
+
+     Term：终止进程 
+
+     Ign:　忽略信号(默认即时对该种信号忽略操作) 
+
+     Core： 终止进程，生成core文件(查验进程死亡原因,用于gdb调试) 
+
+     Stop:  强制暂停进程 
+
+     Cont：继续运行进程
+
+     
+
+     | 编号   | 信号              | 对应事件                                                     | 默认动作             |
+     | ------ | ----------------- | ------------------------------------------------------------ | -------------------- |
+     | 1      | SIGHUP            | 当用户退出shell时，由该shell启动的所有进程将收到这个信号，默认动作为终止进程 | 终止进程             |
+     | 2      | SIGINT 【】       | 当用户按下ctrl+c组合键时，用户终端向正在运行中的由该终端启动的程序发出此信号．默认动作为终止进程． | 终止进程             |
+     | 3      | SIGQUIT 【】      | 当用户按下ctrl+\组合按键时产生该信号，用户终端向正在运行中的由该终端启动的程序发出些信号．默认动作为终止进程 | 终止进程             |
+     | 4      | SIGILL            | CPU检测到某进程执行了非法指令．默认动作为终止进程产生core文件 | 终止进程产生core文件 |
+     | 5      | SIGTRAP           | 该信号由断点指令或其他trap指令产生．默认动作为终止里程并产生core文件 | 终止进程产生core文件 |
+     | 6      | SIGABRT【】       | 调用abort函数时产生该信号．默认动作为终止进程并产生core文件  | 终止进程产生core文件 |
+     | 7      | SIGNBUS           | 非法访问内存地址，包括内存对齐出错，默认动作为终止进程产生core文件 | 终止进程产生core文件 |
+     | 8      | SIGFPE            | 在发生致命的运算错误时发出．不仅包括浮点运算错误，还包括溢出及除数为0等所有的算法错误．默认动作为终止进程并产生core文件 | 终止进程产生core文件 |
+     | 9      | SIGKILL【】       | 无条件终止进程．本信号不能被忽略，处理和阻塞．默认动作为终止进程．它向系统管理员提供了可以杀死任何进程的方法 | 终止进程             |
+     | 10     | SIGUSE1           | 用户定义的信号．即程序员可以在程序中定义并使用该信号．默认动作为终止进程 | 终止进程             |
+     | 11     | SIGSEGV【】       | 指示进程进行了无效内存访问．默认动作为终止进程产生core文件   | 终止进程产生core文件 |
+     | 12     | SIGUSR2           | 另外一个用户自定义信号，程序员可以在程序中定义并使用该信号．默认动作为终止进程 | 终止进程             |
+     | 13     | SIGPIPE【】       | Broken pipe向一个没有读端的管道写数据．默认动作终止进程      | 终止进程             |
+     | 14     | SIGALRM【】       | 定时器超时，超时的时间　由系统调用alarm设置．默认动作为终止进程 | 终止进程             |
+     | 15     | SIGTERM           | 程序结束信号，与SIGKILL不同的是，该信号可以被阻塞和终止．通常用来要表示程序正常退出．执行shell命令kill时，缺省产生这个信号．默认动作为终止进程 | 终止进程             |
+     | 16     | SIGSTKFLT         | linux早期版本出现的信号，现仍保留向后兼容．默认动作为终止进程 | 终止进程             |
+     | 17     | SIGCHLD 【】      | 子进程结束时，父进程会收到这个信号．默认动作为忽略这个信号   | 忽略信号             |
+     | 18     | SIGCONT           | 如果进程已停止，则使其继续运行．默认动作为继续/忽略          | 忽略信号             |
+     | 19     | SIGSTOP【】       | 停止进程的执行．信号不能被忽略，处理和阻塞．默认动作为暂停进程 | 强制暂停进程         |
+     | 20     | SIGTSTP【】       | 停止终端交互进程的运行．按下ctrl+z组合键时发出这个信号．默认动作为暂停进程 | 强制暂停进程         |
+     | 21     | SIGTTIN           | 后台进程读终端控制台．默认动作为暂停进程                     | 强制暂停进程         |
+     | 22     | SIGTTOU           | 该信号类似于SIGTTIN，在后台进程要向终端输出数据时发生．默认动作为暂停进程 | 强制暂停进程         |
+     | 23     | SIGURG            | 套接字上有紧急数据时，向当前正在运行的进程发出些信号，报告有紧急数据到达．如网络带外数据到达，默认动作为忽略该信号 | 忽略信号             |
+     | 24     | SIGXCPU           | 进程执行时间超过了分配给该进程的CPU时间，系统产生该信号并发送给该进程．默认动作为终止进程 | 终止进程             |
+     | 25     | SIGXFSZ           | 超过文件的最大长度设置．默认动作为终止进程                   | 终止进程             |
+     | 26     | SIGVTALRM         | 虚拟时钟超时时产生该信号．类似于SIGALRM,但是该信号只计算该进程占用CPU的使用时间．默认动作为终止进程 | 终止进程             |
+     | 27     | SGIPROF           | 类似于SIGVTALRM，它不仅包括该进程占用CPU时间还包括执行系统调用时间．默认动作为终止 | 终止进程             |
+     | 28     | SIGWINCH          | 窗口变化大小时发出                                           | 忽略该信号           |
+     | 29     | SIGIO             | 此信号向进程指示发出了一个异步IO事件                         | 忽略该信号           |
+     | 30     | SIGWR             | 关机                                                         | 终止进程             |
+     | 31     | SIGSYS            | 无效的系统调用                                               | 终止进程产生core文件 |
+     | 34～64 | SIGRTMIN~SIGRTMAX | Linux的实时信号,它们没有固定的含义(可以由用户自定义)         | 终止进程             |
+
+6. 概念:阻塞信号集,未决信号集
+
+   - 在pcb中,也就是在内核里面
+   - 不能直接操作
+   - 阻塞信号集: 不想让当前进程处理哪一个信号,就把哪个信号放在阻塞信号集里面
+     - 要屏蔽的信号
+   - 未决信号集: 如果信号被放在阻塞信号集,就被屏蔽了,该信号集会在未决信号集有记录
+     - 没有被处理的信号的集合
+     - 当把信号从阻塞信号集合去除,也就是不屏蔽不阻塞了,那么未决信号集也就没有了该信号的记录了
+
+#### 信号相关函数
+
+1. kill -- 发送信号给指定进程
+
+   - 函数原型: int kill(pid_t pid, int sig);
+
+     - 参数:
+
+       - [ ] pid:
+         - pid > 0: 发送信号给指定的进程
+         - pid = 0: 发送信号给与调用kill函数进程属于同一进程组的所有进程
+         - pid < -1: 取|pid|发给对应的进程组
+         - pid = +1:  发送给进程有权限发送的系统中所有进程
+
+     - 返回值
+
+       0：成功
+
+       -1: 失败
+
+2. raise -- 自己给自己发送信号
+
+   - 函数原型:  int raise(int sig);
+
+     - 返回值:
+
+       0：成功
+
+       -1: 失败
+
+3. abort -- 给自己发送异常终止信号
+
+   - 函数原型: void abort(void);
+     - 没有参数没有返回值,永远不会调用失败
+
+4. 闹钟(定时器)
+
+   - alarm -- 设置定时器(每个进程只有一个定时器)
+
+     - 使用的是自然定时法
+
+       - [ ] 不受进程状态的影响
+
+     - 函数原型:  unsigned int alarm(unsigned int seconds);
+
+       - [ ] 参数: 秒
+
+       - [ ] 当是时间到达之后,函数发出一个信号: SIGALRM
+
+       - [ ] 返回值:
+
+         ![23](../img/23.jpg)
+
+     - 练习:  测试你的电脑1s能数多少个数字?
+
+       - [ ] 测试程序运行的时间: time可执行程序
+
+         ```c
+         #include <stdio.h>
+         #include <unistd.h>
+         #include <stdlib.h>
+         #include <sys/types.h>
+         #include <sys/stat.h>
+         #include <fcntl.h>
+         #include <string.h>
+         #include <sys/wait.h>
+         #include <sys/mman.h>
+         #include <signal.h>
+         
+         int main(int argc, char const *argv[]){
+             alarm(1);
+             int i = 0;
+             while (1){
+                 printf("%d\n", i++);
+             }
+             return 0;
+         }
+         ```
+
+         
+
+         ```shell
+         #!/bin/bash
+         
+         time ./shushu > file
+         
+         real	0m1.002s
+         user	0m0.215s
+         sys	0m0.653s
+         ```
+
+         real = 用户+内核+损耗
+
+         - 损耗来自文件IO操作(频繁的open,close)
+
+   - setitimer -- 定时器,并实现周期性定时
+
+     - 函数原型: 
+
+       int setitimer(int which,
+
+       ​					 const struct itimerval *new_value,
+       ​                     struct itimerval *old_value
+
+       );
+       
+       struct itimerval {
+                  struct timeval it_interval; // 定时器循环周期
+                  struct timeval it_value;    //第一次 触发定时器的时间
+       
+        };
+       
+        struct timeval {
+              time_t      tv_sec;         /* 秒 seconds  */
+              suseconds_t tv_usec;        //微妙microseconds 
+       
+       ​	//这两个值向加的值是最终得到的值
+       
+        };
+       
+     - 参数:
+     
+       - [ ] which:定时的法则
+         - ITIMER_REAL 自然定时法则，对应SIGALRM信号
+         - real = 用户+内核+损耗
+         - ITIMER_REAL real时间的用户时间，对应SIGVTALRM信号
+         - ITIMER_PROF real时间的用户+内核时间,对应SIGPROF,信号
+         - 由于对应的信号不一样所以捕捉的时候需要看which对应的是什么信号
+       - [ ] new_value: 设置定时
+       - [ ] old_value:获取上次定时,一般不同传NULL
+     
+     - 返回值:
+     
+       正确:0
+     
+       错误:-1
+     
+       ```c
+       #include <stdio.h>
+       #include <unistd.h>
+       #include <stdlib.h>
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <fcntl.h>
+       #include <string.h>
+       #include <sys/wait.h>
+       #include <sys/mman.h>
+       #include <signal.h>
+       #include <sys/time.h>
+       
+       int main(int argc, char const *argv[]){
+           //设置定时器
+           struct itimerval newValue;
+           //第一次触发的时间
+           newValue.it_value.tv_sec = 2;
+           newValue.it_value.tv_usec = 0;
+           //周期性定时
+           newValue.it_interval.tv_sec = 1;
+           newValue.it_interval.tv_usec = 0;
+           int ret = setitimer(ITIMER_REAL, &newValue, NULL);
+           if(ret == -1){
+               perror("setitimer error");
+               exit(1);
+           }
+       
+           //倒计时2s
+           while (1){
+               printf("hello, world\n");
+               sleep(1);
+           }
+       
+           return 0;
+       }
+       ```
+     
+       
+
+#### 信号集
+
+信号集操作相关函数
+
+1. 概念:
+
+   - 未决信号集:
+     - 没有被当前进程处理的信号
+   - 阻塞信号集:
+     - 将某个信号放到阻塞信号集,这个信号就不会被处理
+     - 阻塞解除之后,信号被处理
+
+   ![24](../img/24.jpg)
+
+2. 自定义信号集
+
+   - 集合都是sigset_t *set
+
+   - int sigemptyset(sigset_t *set); 
+
+     - 将set集合置空(将所有的标志为置为0)
+
+   -  int sigfillset(sigset_t *set); 
+
+     - 将所有信号加入set集合(将所有的标志为置为1)
+
+   -  int sigaddset(sigset_t *set, int signum); 
+
+     - 将signo信号加入到set集合(将某个的标志为置为1)
+
+   -  int sigdelset(sigset_t *set, int signum);
+
+     - 从set集合中移除signo信号(将某个的标志为置为0)
+
+   -  int sigismember(const sigset_t *set, int signum);
+
+     - 判断信号是否存在(判读某个的标志是否置为1)
+
+     
+
+3. sigprocmask函数
+
+   - 屏蔽and接触信号屏蔽,将自定义信号集设置给阻塞信号集
+
+   - 函数原型:
+
+     int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+     
+     - 参数:
+     
+       - [ ] how:
+     
+         ​	SIG_BLOCK: 当how设置为此值,set表示需要屏蔽的信号。相当于mask=mask|set
+     
+         ​	SIG_UNBLOCK: 当how设置为此值,set表示需要解除屏蔽的信号。相当于mask=mask&～set
+     
+         ​	SIG_SETMASK: 当how设置为此值,set表示用于替代原始屏蔽及新屏蔽集。相当于mask=set若调用sigprocmask解除了对当前若干信号的阻塞,则在sigprocmask返回前,至少将其中一个信号递达
+     
+         （覆盖）
+     
+         how使用SIG_BLOCK就可以了
+     
+       - [ ] set: 自定义信号集
+     
+       - [ ] oldset: 传出参数,获取设置之前的阻塞信号集的状态
+
+4. sigpending -- 读取当前进程的未决信号集
+
+   - 函数原型:int sigpending(sigset_t *set);
+   - 参数: set -- 内核将未决信号集写入set
+
+5. 练习:
+
+   - 编写程序, 设置阻塞信号集并把所有常规信号的未决状态打印至屏幕
+   
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     #include <sys/mman.h>
+     #include <signal.h>
+     #include <sys/time.h>
+     
+     int main(int argc, char const *argv[]) {
+         // 手动的屏蔽某个信号,设置自定义信号集
+         // 1.自定义信号集合
+         sigset_t myset;
+         // 2.所有设置为0
+         sigemptyset(&myset);
+         // 3.添加要阻塞的信号
+         sigaddset(&myset, SIGINT); // ctrl+c
+         sigaddset(&myset, SIGQUIT);// ctrl+反斜杠
+         sigaddset(&myset, SIGKILL);
+         
+         // 4.自定义集合数据设置给内核阻塞信号集
+         sigprocmask(SIG_BLOCK, &myset, NULL);
+     
+         //每隔1s读一次内存的未决信号集
+         while (1){
+             sigset_t set;
+             sigpending(&set);
+             // 1-31
+             for (int i = 0; i < 32; i++) {
+                 //对每一个信号一次判断
+                 if(sigismember(&set, i) == 1){
+                     printf("1");
+                 } else{
+                     printf("0");
+                 } 
+             }
+             printf("\n");
+             sleep(1);
+         }
+         
+         return 0;
+     }
+     ```
+   
+     
+
+#### 信号捕捉
+
+1. signal函数
+
+   - typedef void (*sighandler_t)(int);
+
+   - sighandler_t signal(int signum, sighandler_t handler);
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     #include <sys/mman.h>
+     #include <signal.h>
+     #include <sys/time.h>
+     
+     void myfunc(int no){
+         printf("catch you signal: %d\n", no);
+     }
+     
+     int main(int argc, char const *argv[]){
+         // 捕捉ctrl+c
+         // 注册捕捉函数
+         signal(SIGINT, myfunc);
+     
+         while (1) {
+             printf("hello\n");
+             sleep(1);
+         }
+         
+         return 0;
+     }
+     ```
+
+     
+
+2. sigaction函数
+
+   - 函数原型:
+
+     int sigaction(
+
+     ​					int signum,  //捕捉的信号
+
+     ​					const struct sigaction *act, //
+     ​                     struct sigaction *oldact //上一次的捕捉的设置,一般传NULL
+
+     );
+
+     struct sigaction {
+                    void     (\*sa_handler)(int); //
+                    void     (*sa_sigaction)(int, siginfo_t *, void \*);
+                    sigset_t   sa_mask;*
+     
+     ​					在信号处理函数执行过程中,临时屏蔽指定的信号
+     
+     ​					当函数处理完之后,临时屏蔽的信号又自动的解除屏蔽,又将被进程处理
+     
+     ​					需要的时候用,不需要的时候传空的集合
+     
+     ​               int        sa_flags;
+     
+     ​					0 - sa_handler
+     
+     ​               void     (*sa_restorer)(void); //废弃
+      };
+     
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <fcntl.h>
+     #include <string.h>
+     #include <sys/wait.h>
+     #include <sys/mman.h>
+     #include <signal.h>
+     #include <sys/time.h>
+     
+     void myfunc(int no){
+         printf("hello,world\n");
+         sleep(3);
+         printf("wake up");
+     }
+     
+     int main(int argc, char const *argv[]){
+         struct sigaction act;
+         
+         act.sa_flags = 0;
+         sigemptyset(&act.sa_mask);
+         // 添加临时屏蔽信号
+         sigaddset(&act.sa_mask, SIGQUIT);
+         act.sa_handler = myfunc;
+     
+         sigaction(SIGINT, &act, NULL);
+     
+         while (1);
+         return 0;
+     }
+     ```
+     
+     
+
+
+#### SIGCHLD信号
+
+## 守护进程
+
+1. 守护进程的特点
+
+   - 后台服务进程
+   - 独立于控制终端
+   - 周期性执行某个任务
+   - 不受用户登陆注销影响
+   - 一般采用以d结尾的名字(服务)
+
+2. 进程组
+
+   - 进程的组长?
+     - 组里边的第一进程
+     - 进程组的ID == 进程组的组长ID
+   - 进程组组长的选择
+     - 进程中的第一个进程
+   - 进程组ID的设定
+     - 进程组的id就是组长的进程ID
+
+3. 会话 - 多个进程组
+
+   - 创建一个会话注意事项:
+     - 不能是进程组长
+     - 创建会话的进程成为新进程组的组长
+     - 有些linux版本需要root权限执行此操作(ubuntu不需要)
+     - 创建出的新会话会丢弃原有的控制终端
+     - 一般步骤:先fork,父亲死,儿子执行创建会话操作(setsid)
+   - 获取进程所属的会话ID
+     - pid_t getsid(pid_t pid);
+   - 创建一个会话
+     - pid_t setsid(void);
+
+   ```c
+   #include <stdio.h>
+   #include <unistd.h>
+   #include <stdlib.h>
+   #include <sys/types.h>
+   #include <sys/stat.h>
+   #include <fcntl.h>
+   #include <string.h>
+   #include <sys/wait.h>
+   #include <sys/mman.h>
+   #include <signal.h>
+   #include <sys/time.h>
+   
+   int main(int argc, char const *argv[]){
+       // 创建一个会话
+       // 将子进程成为会长
+       pid_t pid = fork();
+       if(pid > 0){
+           exit(1);
+   #if 0
+           kill(getpid(), SIGKILL);
+           raise(SIGKILL);
+           abort();
+   #endif
+       }
+   
+       if(pid == 0){
+           // 变成会长
+           // 会长就是一个守护进程
+           setsid();
+           // 让子进程一直活着
+           while(1);    
+       }
+       return 0;
+   }
+   ```
+
+   
+
+4. 创建守护进程模型
+
+   - fork子进程,父进程退出
+
+     - 必须
+
+   - 子进程创建新会话
+
+     - 必须
+     - setsid();
+
+   - 改变当前工作目录chdir
+
+     - 插了一个U盘，a.out，在U盘目录中启动a.out
+     - a.out启动过程中,U盘拔掉了
+     - 不是必须的
+
+   - 重设文件掩码
+
+     - 子进程会继承父进程的掩码
+     - 增加子进程程序操作的灵活性
+     - umask(0);
+     - 不是必须的
+
+   - 关闭文件描述符
+
+     - 都脱离了终端,终端都没有了,要打开终端的描述符没什么用了
+
+     - close(0)
+     - close(1)
+     - close(2)
+     - 释放资源
+     - 不是必须的
+
+   - 执行核心工作
+
+     - 必须的
+
+5. 练习:
+
+   写一个守护进程,每隔2s获取一次系统时间,
+
+   将这个时间写入到磁盘
+   
+   - 创建守护进程
+   - 需要一个定时器,2s触发一次
+   - setitimer
+   - 信号捕捉
+   
+   ```c
+   #include <stdio.h>
+   #include <unistd.h>
+   #include <stdlib.h>
+   #include <sys/types.h>
+   #include <sys/stat.h>
+   #include <fcntl.h>
+   #include <string.h>
+   #include <sys/wait.h>
+   #include <sys/mman.h>
+   #include <signal.h>
+   #include <sys/time.h>
+   #include <time.h>
+   
+   void dowork(int no){
+       time_t curtime;
+       // 获取当前系统时间
+       time(&curtime);
+       // 格式化时间
+       char* pt = ctime(&curtime);
+       // 将时间写入文件
+       int fd = open("./temp++++.txt", O_CREAT | O_WRONLY | O_APPEND, 0664);
+       write(fd, pt, strlen(pt)+1);
+       close(fd);
+   }
+   
+   int main(int argc, char const *argv[]){
+       pid_t pid = fork();
+       if(pid>0){
+           // 父进程退出
+           exit(1);
+       }
+       if(pid == 0){
+           // 变成会长,脱离控制终端 守护进程
+           setsid();
+           // 改变进程的工作目录
+           chdir("./");
+           // 重设文件掩码
+           umask(0);
+           // 关闭文件描述符
+           close(STDIN_FILENO);
+           close(STDOUT_FILENO);
+           close(STDERR_FILENO);
+           // 执行核心操作
+           // 注册信号捕捉
+           struct sigaction act;
+           act.sa_flags = 0;
+           act.sa_handler = dowork;
+           sigemptyset(&act.sa_mask);
+           sigaction(SIGALRM, &act, NULL);
+           // 创建一个定时器
+           struct itimerval newValue;
+           // 第一次触发定时器的时间
+           newValue.it_value.tv_sec=2;
+           newValue.it_value.tv_usec=0;
+           // 循环周期
+           newValue.it_interval.tv_sec=2;
+           newValue.it_interval.tv_usec=0;
+           setitimer(ITIMER_REAL, &newValue, NULL); //发SIGALRM信号
+           
+           // 保证子进程处于运行状态
+           while (1);
+       }
+       return 0;
+   }
+   ```
+   
+   
 
 ## 线程
+
+![25](../img/25.jpg)
+
+![26](../img/26.jpg)
+
+图中的第二个不共享应改为栈
+
+
+
+
+
+
+
+### 线程操作函数
+
+线程相关概念
+
+- 自行安装线程man page 命令:
+
+  sudo apt-get install manpages-posix-dev
+
+- 查看指定线程的LWP号:
+
+  - 线程号和线程ID时有区别的
+  - 线程号是给内核看的
+  - 查看方式
+    - 找到程序的进程ID
+    - ps -Lf pid
+
+### 线程属性
 
 # Linux 网络编程
