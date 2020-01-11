@@ -3459,39 +3459,2041 @@ anacron 【选项】【工作名】
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 P183
+
+# 网络服务
+
+## centos6和centos7区别
+
+centos6.x
+
+​	文件系统: EXT4
+
+​	防火墙: iptables
+
+​	内核版本: 2.6.x-x
+
+​	默认数据库: MySQL
+
+​	时间同步: ntpq -p
+
+​	修改时区: /etc/sysconfig/clock
+
+​	修改语言: /etc/sysconfig/i18n
+
+​	主机名: /etc/sysconfig/network(永久设置)
+
+​	网卡名: eth0
+
+​	网络配置命令: ifconfig/setup
+
+​	网络服务: network 服务
+
+centos7.x
+
+​	文件系统:XFS
+
+​	防火墙: firewalld
+
+​	内核版本: 3.10.x-x
+
+​	默认数据库: MariaDB
+
+​	时间同步: chronyc sources
+
+​	修改时区: timedatectl set-timezone Asia/Shanghai
+
+​	修改语言: localectl set-locale LANG=zh_CN.UTF-8
+
+​	主机名: /etc/hostname(永久设置)
+
+​					hostnamectl set-hostname atguigu.com
+
+​	网卡名: ens33
+
+​	网络配置命令: ip/nmtui
+
+​	网络服务: NetworkManager 服务（network作为备用）
+
+| 操作行为               | CentOS6                | CenntOS7                  |
+| ---------------------- | ---------------------- | ------------------------- |
+| 启动指定服务           | service 服务名 start   | systemctl start 服务名    |
+| 关闭指定服务           | service 服务名 stop    | systemctl stop 服务名     |
+| 重启指定服务           | service 服务名 restart | systemctl restart 服务名  |
+| 查看指定服务状态       | service 服务名 status  | systemctl status 服务名   |
+| 查看所有服务状态       | service --status-all   | systemctl list-units      |
+| 设置服务自重启         | chkconfig 服务名 on    | systemctl enable 服务名   |
+| 设置服务不自重启       | chkconfig 服务名 off   | systemctl disable 服务名  |
+| 查看所有服务自启动状态 | chkconfig --list       | systemctl list-unit-files |
+
+## centos7网卡配置文件
+
+​	配置文件目录: /etc/sysconfig/network-scripts/ifcfg-ens33
+​	配置管理命令: ifconfig/ip  address show 
+
+​	配置文件内容:
+
+​		DEVICE=ens33	#设备名称
+
+​		NAME=ens33	#网卡名称
+
+​		BOOTPROTO=static	#连接方式(dhcp/static)
+
+​		ONBOOT=yes	#是否开机加载
+
+​		IPADDR=192.168.12.250	#IP地址
+
+​		NETMASK=255.255.255.0	#子网掩码(PREFIX=24)
+
+​		GATEWAY=192.168.12.1	#网关
+
+​		DNS1=8.8.8.8	#DNS
+
+​	注意: 选项要大写,参数小写
+
+## centos7修改网卡名
+
+​	修改网卡配置文件名(建议将原配置文件备份)
+
+​		cp -a ifcfg-ens33 ifcfg-eth0
+
+​	修改网卡配置文件内容
+
+​		NAME=eth0
+
+​		DEVICE=eth0
+
+​	修改grub配置文件
+
+​		vi /etc/default/grub
+
+​		GRUB_CMDLINE_LINUX=''crashkernel=auto rhgb quiet net.ifnames=0 biosdevname=0"
+
+​		#在指定位置新增红色参数,关闭一致性命令规则
+
+​	更新grub配置文件，并加载新的参数
+
+​		grub2-mkconfig -o /boot/grub2/grub.cfg
+
+​	重启操作系统
+
+​		reboot
+
+## 常见网络协议和端口
+
+​	应用层协议: FTP、HTTP 、SMTP、Telnet、 DNS等
+
+​	传输层协议:TCP、UDP等
+
+​	网络层协议:IP、ICMP、ARP等
+
+​	数据链路层协议: PPP协议等
+
+​	物理层: 不常用
+
+​	
+
+​	端口配置文件: /etc/services
+
+| 20/21 | ftp服务               | 文件共享       |
+| ----- | --------------------- | -------------- |
+| 22    | ssh服务               | 安全远程管理   |
+| 23    | telnet服务            | 不安全远程管理 |
+| 25    | smtp:简单邮件传输协议 | 发信           |
+| 465   | smtp(ssl)             | 发信           |
+| 110   | pop3:邮局协议         | 收信           |
+| 143   | imap4                 | 收信           |
+| 993   | imap4(ssl)            | 收信           |
+| 80    | www服务(http://)      | 网页访问       |
+| 443   | www服务(https://)     | 加密网页访问   |
+| 3306  | mysql端口             | 数据库连接端口 |
+| 53    | DNS端口               | 域名解析端口   |
+
+## 路由和网关
+
+​	路由:
+
+​		不同网段数据转发
+
+​		路由选择
+
+​			动态分配
+
+​			静态分配
+
+​	网关:
+
+​		不同网段数据转发
+
+​		路由选择
+
+​		默认路由
+
+​		NAT转换
+
+​		可以是硬件和软件实现
+
+​	route -n 查看系统中的路由表信息
+
+​		临时:
+
+​			网关: 
+
+​				添加: route add default gw ip
+
+​				删除: route del default gw ip
+
+​		永久:
+
+​			网关:
+
+​				/etc/sysconfig/network-scripts/ifcfg-eth0
+
+## DNS配置命令
+
+nslookup:域名解析测试命令
+
+配置文件：
+
+局部:/etc/sysconfig/network-scripts/ifcfg-eth0
+
+DNS=ip
+
+全局:/etc/resolv.conf
+
+nameserver ip
+
+相关配置文件/etc/hosts
+
+## 网络查看命令
+
+netstat查看系统的网络连接状态、路由、接口
+
+常用选项:
+
+​	-a: 显示所有活动连接
+
+​	-n: 以数字形式显示
+
+​	-t: 查看TCP协议相关信息
+
+​	-u: 查看UDP协议相关信息
+
+​	-p: 显示PID和进程名
+
+​	-l: 监听
+
+
+
+traceroute: 测试从当前主机到目的主机之间经过的网络节点,用于追踪数据包在网络上传输时全部路径,它默认发送的数据包大小是40字节，默认使用ICMP协议
+
+常用选项:
+
+​	-p: 使用UDP端口进行测试,默认端口为33434
+
+​	-q 3: 指定测试时发送的数据包个数(即测试次数)
+
+​	-n: 以IP的方式进行连接测试,避开DNS的解析
+
+注意: 该命令在使用NAT模式时无法实现效果,请切换桥接模式
+
+
+
+ping: 测试网络连通性
+
+常见选项:
+
+-i: 指定间隔时间
+
+-c: 指定ping的次数
+
+-s: 指定数据包的大小
+
+
+
+arp: 地址解析协议,将ip地址解析成MAC地址
+
+常见选项:
+
+-a: 查看所有
+
+-d: ip地址,删除某条ARP记录
+
+
+
+nmap: 网络探测扫描命令
+
+-sP: 探测某网段内有哪些主机是存活的
+
+-sT: 探测某主机开启了哪些TCP端口
+
+
+
+## 远程连接工具
+
+Windows->Linux: Xshell、SecurceCRT等
+
+Linux -> Windows: rdesktop命令(图形界面)
+
+Linux -> Linux: ssh命令
+
+## ssh安全远程管理
+
+### 什么是ssh
+
+​		ssh是Secure Shell的缩写,是一个建立在应用层上的安全远程管理协议。ssh是目前较为可靠的传输协议，专为远程登陆会话和其他网络服务提供安全性。利用ssh协议可以有效防止远程管理过程中的信息泄露问题。
+
+​		ssh可用于大多数UNIX和类UNIX操作系统中,能够实现子符界面的远程登陆管理,它默认使用22端口,采用密文的形式在网络中传输数据,相对于通过明文传输的Telnet协议,具有更高的安全性
+
+### ssh的登陆验证模式
+
+​		ssh提供了基于账户密码(口令)和密钥对两种登陆验证方式,这两者都是通过密文传输数据的。
+
+#### 账户密码验证:
+
+​				账户密码登陆认证过程中传输的是用户的账户名和密码,密码具有足够的复杂度才能有更高的安全性
+
+​				Linux主机之间的远程管理工具是ssh命令,所以我们直接使用ssh进行远程登陆
+
+​				格式:
+
+​					ssh 用户名@IP地址
+
+​					ssh root@192.168.88.20
+
+​				windows远程登陆Linux主机一般使用第三方工具,比如Xshell等工具
+
+#### 密钥对验证:
+
+​				首先需要在Client上创建一对密钥,并且需要把公钥放在需要访问的Server上
+
+​				当Client需要建立Server时,Client端的软件就会向Server端发出登陆请求,请求使用密钥对中的公钥进行安全验证
+
+​				Server收到请求之后,会在该用户的家目录下查询公钥文件,拿Client发送过来的公钥和自己家目录下的公钥进行比较
+
+​				如果两个公钥一致,Server就用公钥加密"challenge(质疑)",并把它发送给Client软件,Client收到加密内容之后,使用本地的私钥进行解密,再把解密结果发送给Server端,Server端验证成功后,允许登陆
+
+​		注意: 若第3个步骤对比结果失败,则Server端会通知Client端此公钥未在本机注册,无法验证登陆
+
+### 配置ssh服务
+
+#### 	环境准备
+
+​		准备好两台Linux操作系统的主机,配置好相关网络参数,实现可以正常通信,并将主机名修改为不同的名字
+
+​		临时关闭防护功能:
+
+​			iptables - F #清空防火墙规则
+
+​			setenforce 0 #临时关闭SELinux
+
+​		永久关闭防护功能:
+
+​			chkconfig iptables off #设置防火墙开机不自启动
+
+​			sed -i '7s/enforcing/disabled' /etc/selinux/config #永久关闭SELinux
+
+​			注意: 以上两条命令执行后,需要重启服务器才生效,切记
+
+#### 	用户密码登陆
+
+​		ssh root@192.168.88.20
+
+#### 	密钥对验证
+
+##### 		Linux主机之间的密钥对登陆验证
+
+​				1客户端生成密钥对文件
+
+​						ssh-keygen -t rsa -b 2048
+
+​						-t 指定加密类型(rsa/dsa等)
+
+​						-b 指定密钥对加密长度
+
+​						询问1:执行过程中会询问保存位置,一般默认保存在当前家目录下的.ssh/目录下
+
+​						询问2:是否对密钥文件进行加密
+
+​								加密:若加密,则在调用密钥文件时需要先验证的密钥的密码,密码正确才能使用密钥文件
+
+​								不加密: 若不加密,则密钥文件可以直接被调用,整个登陆验证过程中无需输入任何密码,即为免密登陆
+
+​				2将公钥文件上传至服务端
+
+​						ssh-copy-id 用户名@服务器IP地址
+
+​						#该用户名和要用来登陆服务器的用户名一致
+
+​				3客户端尝试登陆服务器
+
+​						ssh 用户名@服务名IP地址
+
+​						#密钥对验证优先级大于账户密码验证
+
+##### 		Windows使用密钥对登陆Linux
+
+​				1使用Xshell自带的密钥对生成向导生成密钥对
+
+​						新建用户密钥生成向导
+
+​				2将公钥导入Linux主机的指定用户下的指定公钥文件内
+
+​					后面用哪个用户登陆就放在谁家里,这里我们先用root用户做实验
+
+​					在root家目录下,找到.ssh目录,然后在里面创建authorized_keys文件,并且将个公钥写入进去
+
+​				3使用windows尝试登陆指定用户
+
+#### 	禁止使用密码登陆
+
+​		当我们学会了使用密钥对进行验证后,建议生产环境下将账户密码登陆功能关掉
+
+​		配置文件: /etc/ssh/sshd_config
+
+​		选项:
+
+​				PasswordAuthentication no
+
+​		注意:ssh的配置文件中并不是注释掉的就是不生效的,有些是默认生效,需要修改时一定要取消注释再修改
+
+#### 	禁止使用root远程登陆
+
+​		root在系统中是一个可以为所欲为的角色,我们可以在平时的操作中用普通用户操作,在有需要修改一些系统配置的时候再从普通用户切换到root用户,这样可以最大限度的避免因为误操作而对系统造成破坏,同时也可以避免黑客在暴力破解后直接使用root用户登陆系统,一般在远程登陆管理上我们会禁止直接使用root用户登陆
+
+​		配置文件: /etc/ssh/sshd_config
+
+​		选项:
+
+​			PermitRootLogin no
+
+#### 	修改默认端口、限制ssh监听IP
+
+​		修改默认端口: ssh作为一个用来远程管理服务器的工具,需要特别安全,默认情况下使用TCP的22端口,若不进行修改,很容易被利用遭到攻击,所以我们一般都会修改端口,尽量修改一个高位端口(范围1-65535)
+
+​		配置文件: /etc/ssh/sshd_config
+
+​		选项:
+
+​			Port 59527
+
+​			ssh -p 用户名@服务器IP
+
+​			ssh 用户名@服务器IP 服务器端口
+
+​		限制ssh监听IP: 有些服务器则安全级别更高一些,不允许使用外网直接登陆,只有通过局域网才能登陆,我们可以在机房里设置其中一台能够被外网远程连接,其他的主机都通过这个机器进行远程连接即可
+
+​		配置文件: /etc/ssh/sshd_config
+
+​		选项:
+
+​			ListenAddress 192.168.88.100
+
+### 	ssh服务相关命令
+
+​		scp: 安全的远程文件复制命令
+
+​		scp是secure copy的简写,用于在Linux下进行远程拷贝文件的命令.类似于命令有cp，scp传输是加密的,所以可能稍微影响一点速度。另外,scp还非常不占用资源,不会提高多少系统负荷
+
+​		格式: scp 本地文件 用户名@服务器IP:目录
+
+​					scp /root/abc.txt root@192.168.0.3:/tmp
+
+​					-P 端口 #若端口不是默认22,则需要使用此格式指定端口
+
+​		sftp:安全的文件传输协议
+
+​		sftp是Secure FileTransferProtocol的缩写,安全文件传送协议.sftp于ftp有着几乎一样的语法和功能.由于这种传输方式使用了加密/解密技术,所以sftp比ftp更安全一些,但传输效率比普通的FTP要低得多
+
+​		格式: sftp 用户名@服务器IP
+
+​		选项: -oPort=端口 #若端口不是默认22,则需要使用此格式指定端口
+
+​		交互命令:
+
+​				help: 查看在交互模式下支持哪些命令
+
+​				pwd|lpwd：pwd是查看服务器所在路径;lpwd是查看客户端所在路径
+
+​				ls|lls: ls是查看服务器当前目录下的文件列表;lls是查看客户机当前所在路径的所有文件列表
+
+​				put: 将客户机的指定文件上传服务器
+
+​				get: 将服务器端的指定文件下载到客户机的的当前所在目录
+
+​				rm: 删掉服务器端的指定文件
+
+​				quit: 退出sftp的交互模式,断开和服务器之间的连接
+
+## TCP Wrappers(简单防火墙)
+
+### TCP Wrappers简介
+
+TCP Wrappers是一个工作在第四层(传输)的安全工具,对有状态连接(TCP)的特定服务进行安全检测并实现访问控制,界定方式是凡是调用libwrap.so库文件的程序就可以受TCP_Wrappers的安全控制.它的主要就是控制谁可以访问,常见的程序有rpcbind、vsftpd、sshd, telnet
+
+判断方式:
+
+​	1查看对应服务命令所在位置
+
+​	2查看指定命令执行时是否调用libwrap.so文件
+
+​		ldd /usr/sbin/sshd | grep libwrap.so
+
+### TCP Wrappers工作原理
+
+以ssh为例,每当有ssh的连接请求时,先读取系统管理员所设置访问控制文件,符合要求,则会把这次连接原封不动的转给ssh进程，由ssh完成后续工作;如果这次连接发起的ip不符合访问控制文件中的设置,则会中断连接请求,拒绝提供ssh服务
+
+1优先查看hosts.allow匹配即停止
+
+2允许个别,拒绝所有: hosts.allow文件添加允许的策略,hosts.deny文件添加all
+
+3拒绝个别,允许所有: hosts.allow文件为空,hosts.deny文件添加单个拒绝的策略
+
+### TCP Wrappers的使用
+
+TCP_Wrappers的使用主要依靠两个配置文件/etc/hosts.allow,/etc/hosts.deny.以此实现访问控制,默认情况下,
+
+/etc/hosts.allow, /etc/hosts.deny什么都没有添加,此时没有限制
+
+配置文件编写规则:
+
+service_list@host: client_list
+
+service_list: 是程序(服务)的列表,可以是多个,多个时,使用,隔开
+
+@host:设置允许或禁止他人从自己的哪个网口进入。这一项不写,就代表全部。
+
+client_list:是访问者的地址,如果需要控制的用户较多,可以使用空格或,隔开
+
+格式如下:
+
+​		基于IP地址:192.168.88.1  192.168.88.
+
+​		基于主机名:www.aa.com  aa.com较少用
+
+​		基于网络/掩码: 192.168.0.0/255.255.255.0
+
+​		内置ACL: ALL(所有主机)、LOCAL(本地主机)
+
+实验案例:
+
+​		拒绝单个IP使用ssh远程连接
+
+​				配置文件:
+
+​				hosts.allow: 空着
+
+​				hosts.deny: ssh:192.168.23.20
+
+​		拒绝某个网端使用ssh远程连接:
+
+​				hosts.all: 空着
+
+​				hosts.deny: ssh:192.168.30.
+​		仅允许某一IP使用ssh远程连接
+
+​				hosts.allow: ssh:192.168.88.20
+
+​				hosts.deny: ALL
+
+## DHCP服务
+
+### DHCP简介
+
+DHCP(Dynamic Host Configuration Protocol,动态主机配置协议)是一个工作在应用层局域网网络协议,数据传输时使用UDP不可靠传输协议工作,通常被应用在大型的局域网络环境中,主要作用是集中的管理、分配网路资源,使网络环境中的主机能动态的获得IP地址、Gateway地址、DNS服务器地址等信息,并能够提升地址的使用率
+
+### DHCP工作原理(租约四部曲+续租)
+
+![27](../img/27.jpg)
+
+#### DHCP客户端进行IP请求
+
+​		当一个DHCP客户机启动时,会自动将自己的IP地址配置0.0.0.0，由于使用0.0.0.0不能进行正确通信,所以客户机就必须通过DHCP服务器来获取一个合法的地址。由于客户机不知道DHCP的IP地址,所以它使用0.0.0.0的地址作为源地址,使用255.255.255.255作为目标地址,使用UDP 67端口作为目的端口来广播请求IP地址信息。广播信息DHCP Discover中包含了DHCP客户机的MAC地址和计算机名，以便使DHCP服务器确定是哪个客户机发送的请求。
+
+#### DHCP服务器相应请求
+
+​		当DHCP服务器接收到客户机请求IP地址的信息时,它就在自己的IP地址池中查找是否由合法的IP地址提供给客户机。如果有,DHCP服务器就将此IP地址做上标记,加入到DHCP OFFER的消息中,然后DHCP服务器就广播一则包括下列信息的DHCP OFFER消息:
+
+​		DHCP客户机MAC地址；DHCP服务器提供的合法IP地址；子网掩码；默认网关(路由);租约的期限;DHCP服务器的IP地址-MAC
+
+​		因为DHCP客户机还没有IP地址,所以DHCP服务器使用自己的IP地址作为源地址,使用255.255.255.255作为目标地址,使用UDP 68端口作为源端口来广播DHCP OFFER信息
+
+#### DHCP客户机选择IP
+
+​		DHCP客户机从接收到第一个DHCP OFFER	消息中选择IP地址,发出IP地址的DHCP服务器将该地址保留,这样该地址就不能提供给另一个DHCP客户机.当客户机从第一个DHCP服务器接收DHCP OFFER并选择IP地址后,DHCP租约的第三过程发生.客户机将DHCP REQUEST消息广播到所有的DHCP服务器,表明它接收提供的内容.DHCP REQUEST消息包括为该客户机提供IP配置的服务器的服务标识符(IP地址).DHCP服务器查看服务器标识符字段,以确定它自己是否被选择为指定的客户机提供IP地址,如果那些DHCP OFFER被拒绝,则DHCP服务器会取消提供并保留其IP地址以用于下一个IP租约请求.
+
+​		在客户机选择IP过程中,虽然客户机选择了IP地址,但是还没有配置IP地址,而一个网路中可能有几个DHCP服务器,所以客户机仍然使用0.0.0.0的地址作为源地址,使用255.255.255.255作为目标地址,使用UDP 67端口作为目的端口来广播DHCP REQUEST信息	
+
+#### DHCP服务器确租约
+
+​		DHCP客户机在租期过去50%的时候,直接向为其提供IP地址的DHCP服务器发送DHCP REQUEST消息包.如果客户机接收到该服务器回应的DHCP ACK消息包,客户机就根据包中提供的新的租期以及其它已经更新的TCP/IP参数,更新自己的配置,IP租用更新完成.如果没有收到该服务器的回复,则客户机继续使用现有的IP地址,因为当前租期还有50%.
+
+​		如果在租期过去50%的时候没有更新,则DHCP客户机将在租期过去87.5%的时候再次向为其提供IP地址的DHCP服务器联系。如果还不成功,则租约的100%时候,DHCP客户机必须放弃这个IP地址,重新申请.如果此时无DHCP服务器可用,DHCP客户机会使用169.254.0.0/16中随机的一个地址,并且每隔5分钟再进行尝试.
+
+
+
+#### DHCP客户机续租
+
+### DHCP服务搭建
+
+#### 准备实验环境
+
+​		两台机器,网络连接模式设为自定义VMnet*模式
+
+​		防护的关闭:
+
+​				1iptables -L #防火墙
+
+​				2getenforce #SELinux
+
+​				3关闭Vmware虚拟网络编辑器的DHCP功能,切记
+
+#### DHCP相关信息
+
+​		软件名:
+
+​				dhcp		#DHCP服务软件包
+
+​				dhcp-common		#DHCP命令软件包(默认已安装)
+
+​		服务名:
+
+​				dhcd		#DHCP服务名
+
+​				dhcrelay		#DHCP中继服务名
+
+​		端口号:
+
+​				udp	67		#作为客户端的目标端口,接收客户端的请求DHCP请求
+
+​				udp	68		#作为服务器的源端口,用来向客户端回复数据包
+
+​		配置文件:
+
+​				dhcp /etc/dhcp/dhcp.conf		#此配置文件默认是空的,需要找到模板文件重新生成
+
+​				dhcp.conf.sample /usr/share/doc/dhcp-4.\*.\*/dhcp.conf.sample		#DHCP的模板配置文件
+
+​				dhcrelay /etc/sysconfig/dhcrelay		#该文件时中继配置文件,中继实验中用到
+
+#### DHCP配置文件详细
+
+subnet 192.168.88.0 netmask 255.255.255.0{			#声明要分配的网段和子网掩码
+
+​		range	192.168.88.3	192.168.88.254;				 #声明可用IP地址池
+
+​		option domain-name "zler.com";						   #设置DNS域
+
+​		option domain-name-server 8.8.8.8;				     #设置DNS服务器地址		
+
+​		option routers 192.168.88.2;									  #默认网关的地址
+
+​		option broadcast-address 192.168.88.255;		 #广播地址(可不写)
+
+​		default-lease-time 600;												#默认租约(s)
+
+​		max-lease-time 7200;													#最大租约(s)	
+
+}
+
+### DHCP实验部署
+
+#### DHCP基本功能实验
+
+生成配置文件
+
+​		cp -a /usr/share/doc/dchp-4.\*.\*/dhcpd.conf.sample  /etc/dhcp/dhcpd.conf
+
+修改配置文件
+
+​		将配置文件的前几个subnet声明注释掉.修改最后一个subnet声明
+
+​		# 注意配置文件每行结尾的分号和结束大括号,谢谢
+
+​		subnet 192.168.88.0 netmask 255.255.255.0{			#声明要分配的网段和子网掩码
+
+​		range	192.168.88.3	192.168.88.254;				 #声明可用IP地址池
+
+​		#option domain-name "zler.com";						   #设置DNS域
+
+​		#option domain-name-server 8.8.8.8;				     #设置DNS服务器地址		
+
+​		option routers 192.168.88.2;									  #默认网关的地址
+
+​		#option broadcast-address 192.168.88.255;		 #广播地址(可不写)
+
+​		default-lease-time 600;												#默认租约(s)
+
+​		max-lease-time 7200;													#最大租约(s)	
+
+​	}
+
+重启服务
+
+​		service dhcpd start
+
+​		ifdown eth0;ifup eth0 客户机重启网卡
+
+#### 保留地址(固定地址分配)
+
+1获取客户端的mac地址
+
+​		arp -a #查看客户机的mac地址
+
+2修改/etc/dhcp/dhcpd.conf文件
+
+​		host fantasia {
+
+​			hardware ethernet mac 地址; #客户机的mac的地址
+
+​			fixed-address IP地址; #固定分配给客户机的ip地址(可以使用地址池以外的IP)
+
+​		}
+
+3重启DHCP服务
+
+​		service dhcpd restart
+
+4重启客户机网卡验证IP获取是否成功
+
+​		ifdown eth0; ifup eth0
+
+#### 超级作用于域(同一局域网)
+
+1超级作用域介绍
+
+​		DHCP服务器可为单个物理网络上的客户端提供多个作用域租约地址
+
+![28](../img/28.jpg)
+
+2实验环境准备
+
+​		三台虚拟机同一网络模式,一个DHCP服务器,两个客户机
+
+3实验步骤
+
+​		1设置DHCP服务器的单臂路由所需子网卡
+
+​				cp -a ifcfg-eth0 ifcfg-eth0:0 #编辑此文件,修改网卡名和IP地址即可
+
+​		2开启路由转发
+
+​				vim /etc/sysctl.conf
+
+​						net.ipv4.ip_forward = 1 #此选项修改为1即可
+
+​				sysctl -p	#刷新内核参数配置文件
+
+​		3修改/etc/dhcp/dhcpd.conf文件
+
+​				#之前的网段声明和主机声明全部注释掉!
+
+​				shared-network public {
+
+​						subnet 192.168.88.0 netmask 255.255.255.0 {
+
+​								option routers 192.168.88.10;
+
+​								range 192.168.88.100  192.168.88.100;
+
+​						}
+
+​						subnet 192.168.99.0 netmask 255.255.255.0 {
+
+​								option routers 192.168.88.10;
+
+​								range 192.168.88.100  192.168.88.100;
+
+​						}
+
+​				}
+
+​				#剩余内容注释掉或删除掉,切记别落下括号
+
+​		4重启DHCP服务器
+
+​				service dhcpd restart
+
+​		5分别重启两台机器的网卡,查看获取的地址
+
+#### DHCP中继
+
+​		1DHCP中继介绍
+
+​				DHCP Relay(DHCPR) DHCP中继是一个小程序,可以实现在不同子网和物理网段之间处理和转发dhcp信息的功能。
+
+![29](../img/29.jpg)
+
+
+
+
+
+​		2实验环境实验
+
+​				DHCP服务器:
+
+​						eth0(192.168.10.10) VMnet10
+
+​				DHCP中继:
+
+​						eth0(192.168.10.20) VMnet10
+
+​						eth0(100.100.100.20) VMnet11
+
+​				外网客户机:
+
+​						eth0(IP地址自动获取) VMnet11
+
+​				注: 关闭所有防护: iptables、SELinux
+
+​		3配置DHCP服务器
+
+​				1软件安装:
+
+​						yum -y install dhcp
+
+​				2修改/etc/dhcp/dhcpd.conf文件:
+
+​						#声明两个subnet，其他无光可以不做操作或删除
+
+​						subnet 192.168.10.0 netmask 255.255.255.0 {	#实验中并未用到该地址池分配IP
+
+​								range 192.168.10.100  192.168.10.110;
+
+​								option  routers  192.168.10.20;
+
+​						}
+
+​						subnet 100.100.100.0 netmask 255.255.255.0 {
+
+​								range 100.100.100.100  100.100.100.110;
+
+​								option  routers  100.100.100.20;
+
+​						}
+
+​				3重启dhcp服务
+
+​						service  dhcpd  start
+
+​				4指定网关
+
+​						只能中继的内网IP为网关地址
+
+​		4配置DHCP中继服务器
+
+​				1网卡配置
+
+​						一块网卡ip=192.168.10.20
+
+​						一块网卡ip=100.100.100.20
+
+​				2软件安装
+
+​						yum -y install dhcp
+
+​				3修改中继配置文件
+
+​						vim /etc/sysconfig/dhcrelay文件
+
+​								INTERFACES="eth0 eth1"
+
+​								DHCPSERVERS="192.168.10.10"
+
+​				4开启路由转发
+
+​						vim /etc/sysctl.conf文件
+
+​								netipv4.ip_forward = 1
+
+​						sysctl -p
+
+​				5重启中继服务
+
+​						service dhcrelay start
+
+​				6测试外网主机
+
+​						重启网卡 ifdown ifup ifconfig
+
+## DNS域名系统服务器
+
+### DNS的介绍
+
+1. 什么是域名?
+
+   域名(Domain Name)，简称域名、网域，是由一串用点分隔的名字组成的Internet上某一台计算机或计算机组的名称,用于在数据传输时标识计算机的电子方位。具有独一无二,不可重复的特性。
+
+2. 什么是DNS?
+
+   域名系统(Domain Name System,缩写:DNS)是互联网的一项服务。域名解析是把域名指向网站空间IP，让人们通过注册的域名可以方便地访问到网站的一种服务。IP地址是网络上标识站点的数字地址,为了方便记忆,采用域名来代替IP地址标识站点地址。域名解析就是域名到IP地址转换过程。
+
+   域名解析工作由DNS服务器完成。可以理解为DNS就是翻译官
+
+   正向解析: 域名--》IP地址
+
+   反向解析:IP地址--》域名
+
+3. 域名的组成和分类
+
+   常见格式: www.zler.com
+
+   完整格式: www.zler.com.
+
+   .:	根域,可省略不写
+
+   com:顶级域名,由ICANN组织指定和管理
+
+   分类:
+
+   ​		国家地区域名: cn(中国)、hk(香港)、sg(新加坡)等
+
+   ​		通用顶级域名: com(商业机构)、org(非营利组织)、edu(教育机构)等
+
+   ​		新通用顶级域名: red(红色、热情)、top(顶级、高端)等
+
+   zler: 二级域名(注册域),可由个人或组织申请注册
+
+   www: 三级域(子域),服务器网站名代表
+
+   主机名: s1.www.zler.com.中的s1就是主机名,一般用来表示具体某一台主机
+
+   
+
+   扩展: com.cn属于"二级域名",是cn顶级域的子域
+
+### 域名解析过程
+
+![31](../img/31.jpg)
+
+![32](../img/32.jpg)
+
+1.客户机首先查看查找本地hosts文件,如果有则返回,否则进行下一步
+
+2.客户机查看本地缓存,是否存在本条目的缓存,如果有则直接返回，否则进行下一步
+
+3.将请求转发给指向的DNS服务器
+
+4.查看域名是否是本地解析,是则本地解析返回,否则进行下一步。
+
+5.本地DNS服务器首先在缓存中查找,有则返回,否则进行下一步。
+
+6.向全球13个根服务器发起DNS请求,根域返回org域的地址列表。
+
+7.使用某一个org域的IP地址,发起DNS请求,org域返回kernel域服务器地址列表
+
+8.使用某一个kernel域IP地址,发起DNS请求,kernel域返回www.kernel.org主机的IP地址,本地DNS服务收到后,返回给客户机,并在本地DNS服务器保存一份
+
+### 分布式DNS服务器
+
+![33](../img/33.jpg)
+
+### DNS软件信息
+
+软件名称:
+
+​		bind
+
+​		安装 yum -y install bind
+
+服务名称:
+
+​		named
+
+软件端口:
+
+​		UDP 53 数据通信(域名解析)
+
+​		TCP 53 数据同步(主从同步)
+
+配置文件:
+
+​		主配置文件: /etc/named.conf(服务器运行参数)
+
+```reStructuredText
+options {
+		listen-on port 53 { 127.0.0.1; }; #设置服务器监听网卡(可以写具体某一个IP(比如本机IP地址)，也可以写any)
+		listen-on-v6 port 53 { ::1;  };  # 写any
+		directory	"/var/named"; 	#数据文件位置
+		dump-file	"/var/named/data/cache_dump.db"; 	#数据文件位置
+		statistics-file	"/var/named/data/named_stats.txt"; 	#数据文件位置
+		allow-query		{ localhost; }; #设置可以访问服务器的客户端IP(可用any)
+		recursion	yes;
+}
+```
+
+​		区域配置文件: /etc/named.rfc1912.zones(服务器解析的区域配置,正反向区域定义信息)
+
+```reStructuredText
+zone	"localhost.localdomain"	IN	{ #正向区域配置文件标签,修改为要解析的域
+		type	master; #DNS服务器类型(master/slave)
+		file	"named.localhost"; #正向数据配置文件名称(默认保存在/var/name下)
+		allow-update	{ none; }; #允许数据更新的列表(填写IP地址)
+}
+
+zone 	"1.0.0.127.in-addr.arpa"	IN { #反向区域配置文件标签,仅修改IP位置,并且将IP写反
+		type	master;										#例如: 30.0.168.192.in-addr.arpa
+		file	"named.localhost";
+		allow-update	{  none;  }
+}
+```
+
+​		数据配置文件: /var/named/xx.xx(主机名和IP地址的对应解析关系,及主从同步信息)
+
+![34](../img/34.jpg)
+
+​	记录类型
+
+| A:     | 地址记录,用来指定域名IPv4地址的记录                          |
+| ------ | ------------------------------------------------------------ |
+| CNAME: | 将域名指向另一个域名,再由另一个域名提供IP地址,就需要添加CNAME记录 |
+| TXT:   | 可填写任何东西,长度限制255。绝大多数的TXT记录是用来做SPF的(反垃圾邮件) |
+| NS:    | 域名服务器记录,如果需要把子域名交给其他DNS服务商解析,就需要添加NS记录。 |
+| AAAA:  | 地址记录，用来指定域名的IPv6地址的记录                       |
+| MX:    | 邮件交换记录,如果需要设置邮件,让邮箱能收到邮件,就需要添加MX记录 |
+
+
+
+### DNS实验搭建
+
+1. DNS服务搭建
+
+   先关闭服务器和客户机上的防火墙和SELinux
+
+   1.1 软件安装
+
+   ​		yum -y insall bind
+
+   1.2 配置主配置文件(/etc/named.conf)
+
+   1.3 配置区域文件(/etc/named.rfc1912.zones)
+
+   ​		注: 先对区域文件进行备份,删除多余的模板,只留下一个正向和一个反向(反向修改时,网络位的反写格式,如 192.168.100.2-->100.168.192.)
+
+   1.4 配置数据文件/var/named/
+
+   ​		A.先复制生成正向解析文件和反向解析文件
+
+   ​		B.编辑正向解析文件(注意域名结尾的".")
+
+   ​		C.编辑反向解析文件(注意域名结尾的".")
+
+   1.5 重启DNS服务器
+   		service named restart
+
+   1.6 客户端测试
+
+   ​		在网卡配置文件中添加DNS服务器的地址,然后nslookup测试
+
+2. 主从DNS服务器
+
+   实验目的:
+
+   ​	减轻主服务器的压力
+
+   ​	先关闭服务器和客户机上的防火墙和SELinux
+
+   实验准备:
+
+   ​	一台主服务器,一台从服务器，一台测试机
+
+   搭建过程:
+
+   ​	搭建主服务器步骤(同上,不截图了):
+
+   ​		a.安装bind软件
+
+   ​		b.主配置文件的修改
+
+   ​		c.区域配置文件的修改
+
+   ​		d.配置数据文件
+
+   ​			正向数据文件
+
+   ​			反向数据文件(可选做)
+
+   ​		e.启动named服务
+
+   ​		注意:主DNS的区域配置文件中allow-update参数添加从服务器IP地址。
+
+   ​	搭建从服务器步骤:
+
+   ​		a.安装bind软件
+
+   ​		b.修改主配置文件/etc/named.conf
+
+   ​		c.配置区域文件(/etc/named.rfc1912.zones)
+
+   ​			注意:从配置文件的类型需要修改为slave,并且需要填写主服务器的地址,如下
+
+   ```reStructuredText
+   type slave:
+   masters { 192.168.0.10; }; # 大括号两侧留有空格
+   文件保存位置修改为file "slaves/zler.localhost" ;
+   ```
+
+   ​		d.重启服务
+
+   ​		e.在测试机上填写从服务器的IP,并且使用nslookup测试
+
+3. DNS缓存服务器
+
+   先关闭服务器和客户机上的防火墙和SELinux
+
+   实验作用:
+
+   ​	加快解析速度,提高工作效率
+
+   实验软件:
+
+   ​	dnsmasq
+
+   配置文件:
+
+   ```reStructuredText
+   /etc/dnsmasq.conf
+   		domain=域名		#需要解析的域名
+   		server=ip				#主DNS服务器IP
+   		cache-size=15000		#声明缓存条数
+   ```
+
+   重启服务:
+
+   ​	service dnsmasq restart
+
+   测试效果:
+
+   ​	在测试机上填写DNS缓存服务器的ip地址
+
+4. 智能DNS(分离解析)
+
+   实验原理: DNS分离解析即将相同域名解析为不同的IP地址。显示网络中一些网站为了让用户有更好的体验效果解析速度更快,就是把来自不同的运营商的用户解析到相应的服务器这样就大大提升了访问速度
+
+   实验环境:
+
+   ​	一台内网测试机(单网卡)
+
+   ​	一台网关+DNS(双网卡)
+
+   ​	一台外网测试机(单网卡)
+
+   ​	一台web服务器(双网卡)
+
+   先关闭服务器和客户机上的防火墙和SELinux
+
+   实验步骤
+
+   ​	1.安装bind软件
+
+   ​	2.内核配置文件开启路由转发,修改/etc/sysctl.conf
+
+   ​	3.修改主配置文件/etc/named.conf
+
+   ```reStructuredText
+   view lan {
+   	match-clients { 192.168.10.0/24; };
+   	zone "." IN {
+   		type hint;
+   		file "named.ca";
+   	};
+   	include "lan.zones";
+   };
+   view lan {
+   	match-clients { 192.168.10.0/24; };
+   	zone "." IN {
+   		type hint;
+   		file "named.ca";
+   	};
+   	include "wan.zones";
+   }
+   #include  "/etc/named.rfc1912.zones";
+   include  "/etc/named.root.key";
+   ```
+
+   ​	注意:不同的解析放在了各自的区域配置文件(便于区分和维护更新)
+
+   ​	4.生成自己定义的区域文件(反向解析省略掉了)
+
+   ​		cp  -a  named.rfc1912.zones lan
+
+   ​		cp  -a  named.rfc1912.zones wan
+
+   ​	5.配置数据文件
+
+   ​		配置内网的正向解析文件
+
+   ​		配置外网的正向解析文件
+
+   ​	6.重启服务
+
+   ​		service named restart
+
+   ​	7.效果检测
+
+   ​		内网客户端网卡配置
+
+   ​			
+
+## VSFTP
+
+### VSFTP概述
+
+​	FTP是File Transfer Protocol （文件传输协议）的英文简称，用于Internet上的文件的双向传输。使用FTP来传输时,具有一定程度的危险性,因为数据在因特网上面是完全没有受保护的明文传输方式!
+
+​	VSFTP是一个基于GPL发布的类Unix系统上使用的FTP服务器软件，它的全称是Very Secure FTP,从名称定义上基本可以看出,这是为了解决ftp传输安全性问题的。
+
+#### 安全特性
+
+​	1.vsftp程序的运行者一般是普通用户,降低了相对应进程的权限,提高了安全性
+
+​	2.任何需要执行较高权限的指令都需要上层程序许可
+
+​	3.ftp所需使用的绝大多数命令都被整合到了vsftp中,基本不需要系统额外提供命令
+
+​	4.拥有chroot功能,可以改变用户的根目录,限制用户只能在自己的家目录
+
+### VSFTP链接类型
+
+控制连接(持续连接) -》 TCP21(命令信道) -》用户收发FTP命令
+
+数据连接(按需连接) -》TCP20(数据信道) -》用于上传下载数据
+
+### VSFTP工作模式
+
+![35](../img/35.jpg)
+
+![36](../img/36.jpg)
+
+
+
+### VSFTP传输模式
+
+Binary模式: 不对数据进行任何处理,适合进行可执行文件、压缩文件、图片等。
+
+ASCII模式: 进行文本传输时,自动适应目标操作系统的结束符,如回车等。
+
+Linux的红帽发行版中VSFTP默认采用的是Binary模式,这样能保证绝大多数文件传输后能正常使用
+
+切换方式:在ftp>提示符下输入ascii即转换到ASCII方式,输入bin，即转换到Binary方式
+
+### VSFTP软件信息
+
+服务段软件名:vsftpd
+
+客户端软件名;vsftpd
+
+端口号: 20、21、指定范围内随机端口
+
+配置文件: /etc/vsftpd/vsftpd.conf
+
+### 登陆验证方式
+
+匿名用户验证:
+
+​	账户账号名称: ftp或anonymous
+
+​	账户账号密码: 无密码
+
+​	工作目录:/var/ftp
+
+​	默认权限: 默认可下载不可上传,上传权限由两部分组成(主配置文件和文件系统)
+
+本地用户验证:
+
+​	用户账号名称: 本地用户(/etc/passwd)
+
+​	用户账号密码: 用户密码(/etc/shadow)
+
+​	工作目录:登陆用户的宿主目录
+
+​	权限: 最大权限(drwx------)
+
+虚拟(virtual)用户验证:
+
+​	1.创建虚拟用户用来代替本地用户,减少本地用户曝光率
+
+​	2.使用本地用户作为虚拟用户的映射用户,为虚拟用户提供工作目录和权限控制
+
+​	3.能够设置严格的权限(为每一个用户生成单独的配置文件)
+
+### VSFTP实验部署
+
+注:先关闭服务器和客户机上的防火墙和SELinux
+
+#### 匿名用户验证实验
+
+匿名权限控制:
+
+```shell
+	anonymous_enable=YES	#启动匿名用户访问
+
+​	anon_umask=022					#匿名用户所上传文件的权限掩码
+
+​	anon_root=/var/ftp				#匿名用户的FTP根目录
+
+​	anon_upload_enable=YES	#允许上传文件
+
+​	anon_mkdir_write_enable=YES	#允许创建目录
+
+​	anon_other_write_enable=YES	#开放其他写入权(删除、覆盖、重命名)
+
+​	anon_max_rate=0		#限制最大传输速率(0为不限速,单位:bytes/秒)
+```
+
+
+
+实验需求与流程:
+
+​	注意:在客户端登陆后,默认情况下是可以下载的,但不能上传
+
+​	1.实现可以上传
+
+​		a. anon_upload_enable=YES	#允许上传文件
+
+​		b. 在/var/ftp下创建上传目录
+
+​		c. 修改上传目录的权限或所有者,让匿名用户有写入权限
+
+​	2.实现创建目录和文件其他操作
+
+​		anon_mkdir_write_enable=YES	#允许创建目录
+
+​		anon_other_write_enable=YES	#开放其他写入权(删除、覆盖、重命名)
+
+​	3.用户进入某个文件夹时,弹出相应的说明
+
+​		a. 在对应目录下创建.message文件,并写入相应内容
+
+​		b. 确认dirmessage_enable=YES是否其用
+
+​		c. 尝试切换目录查看效果(同一次登陆仅提示一次)
+
+​	4.实现上传的文件可下载
+
+​		默认情况下开放上传权限后,上传文件是无法被下载的，因为文件的其他人位置没有r权限
+
+​		设置anon_umask=022，可以让上传的文件其他人位置拥有r权限,然后才能被其他人下载
+
+#### 本地用户验证实验
+
+```shell
+ ​	local_enable=YES		# 是否启用本地系统用户
+
+​	local_umask=022			 #本地用户所上传文件
+
+​	local_root=/var/ftp		 #设置本地用户的FTP根目录
+
+​	chroot_local_user=YES	#是否将用户禁锢在主目录
+
+​	local_max_rate=0		#限制最大传输速率
+
+​	ftpd_banner=Wecome to blah FTP service		#用户登陆时显示的欢迎信息
+
+​	userlist_enable=YES & userlist_deny=YES
+	#禁止/etc/vsftpd/user_list文件中出现的用户名登陆FTP
+
+​	userlist_enable=YES & userlist_deny=YES
+	#仅允许/etc/vsftpd/user_list文件中出现的用户名登陆FTP
+	
+	配置文件:ftpusers
+	#禁止/etc/vsftp/ftpusers文件中出现的用户名登陆FTP,权限比user_list更高,即时生效。
+```
+
+实验需求与流程
+
+1. 服务段需要创建用户并设置密码(所创建的用户,不需要登陆操作系统,仅用来登陆VSFTP)
+
+   useradd -r -s /sbin/nologin  username
+
+2. 将所有用户禁锢在自己的家目录下
+
+   注:默认没有禁锢用户时,客户端登陆后可以随意切换目录，查看文件所在位置和文件名
+
+   chroot_local_user=YES
+
+   #开启用户家目录限制,限制所有用户不能随便切换目录
+
+3. 将部分用户禁锢在自己的家目录下
+
+   chroot_list_enable=YES
+
+   #开启白名单功能,允许白名单中的用户随意切换目录
+
+   chroot_list_file=/etc/vsftpd/chroot_list
+
+   #白名单文件所在位置(需自己创建)
+
+4. 配置文件:/etc/vsftpd/ftpusers
+
+   所有写入此文件内的用户名都不允许登陆ftp，立即生效。
+
+5. 修改被动模式数据传输使用端口
+
+   pasv_enable=YES
+
+   pasv_min_port=30000
+
+   pasv_max_port=35000
+
+#### 虚拟用户验证实验
+
+1. 建立FTP的虚拟用户的用户数据库文件(在/etc/vsftpd)
+
+   vim vsftpd.user
+
+   注:该文件名可以随便定义,文件内容格式: 奇数行用户,偶数行密码
+
+   db_load	-T	-t	bash	-f	vsftpd.user	vsftpd.db
+
+   #将用户密码的存放文本转化为数据库类型,并使用hash加密
+
+   chmod 600 vsftpd.db
+
+   #修改文件权限为600，保证其安全性
+
+2. 创建FTP虚拟用户的映射用户,并制定其用户家目录
+
+   useradd	-d	/var/ftproot	-s	/sbin/nologin	virtual
+
+   #创建virtual用户作为ftp的虚拟用户的映射用户
+
+3. 建立支持虚拟用户的PAM认证文件,添加虚拟用户支持
+
+   cp	-a	/etc/pam.d/vsftpd	/etc/pam.d/vsftpd.pam
+
+   #使用模板生成自己的认证配置文件,方便一会调用
+
+   编辑新生成的文件vsftpd.pam(清空原来内容,添加下列两行)
+
+   auth	required	pam_userdb.so	db=/etc/vsftpd/vsftpd
+
+   account	required	pam_userdb.so	db=/etc/vsftpd/vsftpd
+
+   在vsftpd.conf文件中添加支持配置
+
+   修改:
+
+   ​	pam_service_name=vsftpd.pam
+
+   添加:
+
+   ​	guest_enable=YES
+
+   ​	guest_username=virtual
+
+   ​	user_config_dir=/etc/vsftpd/dir
+
+4. 为虚拟用户建立独立的配置文件,启动服务测试
+
+   注: 做虚拟用户配置文件设置时,将主配置文件中自定义的匿名用户相关设置注释掉
+
+   用户可以上传:
+
+   ​	anon_upload_enable=YES	#允许上传文件
+
+   用户可以创建目录或文件:
+
+   ​	anon_mkdir_write_enable=YES	#允许创建目录
+
+   用户可以修改文件名:
+
+   ​	anon_upload_enable=YES		#允许上传文件(为了覆盖启动)
+
+   ​	anon_other_write_enable=YES	#允许重名和删除文件、覆盖
+
+   注: 给映射用户的家目录 设置o+r 让虚拟用户有读权限。
+
+#### openssl+vsftpd加密验证实验
+
+​	扩展:使用tcpdump工具进行指定端口抓包,抓取ftp登陆过程中的数据包
+
+​	tcpdump	-i	eth0	-nn	-X	-vv	tcp	port	21	and	ip	host 来源IP
+
+​	-i	#interface:指定tcpdump需要监听的接口
+
+​	-n	#对地址以数字方式显示,否则显示为主机名
+
+​	-nn	#除了-n的作用外,还把端口显示为数值,否则显示端口服务名
+
+​	-X	#输出包的头部数据，会以16进制和ASCII两种方式同时输出
+
+​	-vv	#产出更详细的输出
+
+1. 查看是否安装了openssl
+
+   rpm -q openssl
+
+2. 查看vsftpd是否支持openssl
+
+   ldd /usr/sbin/vsftpd | grep libssl
+
+3. 生成加密信息的密钥和证书文件
+
+   位置: /etc/ssl/certs/
+
+   a.openssl	genrsa	-out	vsftpd.key	1024
+
+   #建立服务器私钥,生成RSA密钥
+
+   b.openssl req -new -key vsftpd.key -out vsftpd.csr
+
+   #需要依次输入国家，地区，城市，组织，组织单位,Email等信息。最重要的是有一个common name,
+
+   可以写你的名字或者域名。如果为了https申请,这个必须和域名吻合,否则会引发浏览器报警。
+
+   生成的csr文件交给CA签名后形成服务端自己的证书
+
+   c. openssl x509 -req -days 365 -sha256 -in vsftpd.csr -signkey vsftpd.key -out vsftpd.crt
+
+   #使用CA服务端签证发证,设置证书的有效等信息
+
+   注意1: 生成完密钥和证书文件后,将本目录{/etc/ssl/certs/}的权限修改为500
+
+   注意2: 实验环境中可以使用命令生成测试,在生产环境中必须要在https证书厂商注册(否则浏览器不识别)
+
+4. 修改主配置文件/etc/vsftpd/vsftpd.conf
+
+   ssl_enable=YES
+
+   #启用ssl认证
+
+   ssl_t1sv1=YES
+
+   ssl_sslv2=YES
+
+   ssl_sslv3=YES
+
+   #开启tlsv1、sslv2、sslv3都支持
+
+   allow_anon_ssl=YES
+
+   #允许匿名用户{虚拟用户}
+
+   force_anon_logins_ssl=YES
+
+   force_anon_data_ssl=YES
+
+   #匿名登陆和传输时强制使用ssl
+
+   force_local_logins_ssl=YES
+
+   force_local_data_ssl=YES
+
+   #本地登陆和传输时强制ssl
+
+   rsa_cert_file=/etc/ssl/certs/vsftpd.crt
+
+   #rsa格式证书
+
+   rsa_private_key_file=/etc/ssl/certs/vsftpd.key
+
+   #rsa格式的密钥
+
+   注: 密钥文件要在配置文件中单独声明(写入配置文件时,注释要单独一行,否则会报错)
+
+5. 重启服务器
+
+   service vsftpd restart
+
+6. 测试(使用第三方客户端连接)
+
+   FileZilla-FTP(第三方客户端工具)
+
+   连接测试时选择:
+
+   ​	服务器类型: 显示TLS/SSL
+
+   ​	登陆类型: 一般或匿名
+
+## SAMBA
+
+### Samba概述
+
+SMB(Server Messages Block,信息服务块)是一种在局域网上共享文件和打印机的一种通讯协议,它是局域网内不同操作系统的计算机之间提供文件及打印机等资源的共享服务。SMB协议是客户机/服务器协议,客户机通过该协议可以访问服务器上的共享文件系统、打印机及其它资源。如图:
+
+![37](../img/37.jpg)
+
+
+
+#### 为什么要讲SAMBA?
+
+ftp的优缺点:
+
+​	优点:文件传输、应用层协议、可跨平台
+
+​	缺点:只能实现文件传输,无法实现文件系统挂载;无法直接修改服务器端文件
+
+Samba的特性:
+
+​	使用smb/cifs协议、可跨平台、可实现文件系统挂载、可实现服务器端修改文件
+
+#### smb协议和cifs之间的关系
+
+随着Internet的流行,Microsoft希望将这个协议扩展到Internet上去，成为Internet上计算机之间相互共享数据的一种标准。因此它将原有的几乎没有多少技术文档的SMB协议进行整理,重新命名为CIFS(Common Internet File System)，它使程序可以访问远程Internet计算机上的文件并要求此计算机提供服务。客户程序请求远程在服务器上的服务器程序为它提供服务。服务器获得请求并返回相应。CIFS是公共的或开放的SMB协议版本,并由Microsoft使用。SMB协议在局域网上用于服务器文件访问和打印协议。
+
+### Samba服务详解
+
+#### Samba软件相关信息
+
+1. 协议: SMB/CIFS
+
+2. 服务:
+
+   smb 实现资源共享、权限验证	TCP  139  445
+
+3. 配置文件(/etc/samba/)
+
+   smb.conf	主配置文件
+
+   smbusers	别名配置文件
+
+#### 登录验证模式(安全级别)
+
+- share匿名验证
+
+- user本地用户验证(Samba服务器默认的安全级别,用户在访问共享资源之前必须提供用户名和密码进行验证)
+
+  扩展:tdbsam:该方式是使用一个数据库文件来验证。数据库文件叫passdb.tdb。可以通过pdbedit -a向数据库中添加新用户,不过要建立的Samba用户必须先是系统用户。也可以理解为我们使用pdbedit -a将系统用户转化为了samba用户。pebedit命令的参数很多,列出几个主要的
+
+  pdbedit -a username: 新建Samba账户(将系统用户转化为samba用户,并设置密码)
+
+  pdbedit -x username: 删除Samba账户
+
+  pdbedit -L: 列出Samba用户列出、读取passdb.tdb数据库文件
+
+- 别名用户访问(虚拟用户)
+
+#### 常见配置参数解释
+
+​	[global]用于定义Samba服务器的总体特性,其配置项对所有共享资源生效
+
+​		workgroup = WORKGROUP
+
+​		#设定 Samba Server 所要加入的工作组或者域
+
+​		server string = Samba Server Version %v
+
+​		#设定 Samba Server 的注释,可以是任何字符串,也可以不填。宏%v表示显示Samba的版本号
+
+​		interfaces = lo eth0 192.168.12.2/24
+
+​		#设定 Samba Server 监听哪些网卡,可以写网卡名,也可以写该网卡的IP地址。
+
+​		hosts allow = 127.	192.168.1.	192.168.10.1
+
+​		#表示允许连接到Samba Server的客户端,多个参数以空格隔开。可以用一个IP表示,也可以用一个网段表示。
+
+​		hosts deny 与hosts allow刚好相反(二选一)
+
+​		例如:
+
+​				hosts allow=172.17.2 EXCEPT172.17.2.50
+
+​				表示容许来自172.17.2.\*.\*的主机连接,但排除172.17.2.50
+
+​				hosts allow=172.17.2.0/255.255.0.0
+
+​				表示允许来自172.17.2.0/255.255.0.0子网中的所有主机连接
+
+​		log file = /var/log/samba/log.%m
+
+​		#设置Samba Server日志文件的存储位置以及日志文件名称。在文件名后加上宏%m(主机名),表示对每台访问
+
+​		Samba Server的机器都单独记录一个日志文件
+
+​		max log size = 50
+
+​		#设置Samba Server日志文件的最大容量,单位为kb，0代表不限制
+
+​		security = user
+
+​		#设置用户访问Samba Server的验证方式
+
+​		passdb backend = tdbsam
+
+​		load printers = yes/no
+
+​		#设置是否在启动Samba时就共享打印机
+
+​	[homes]用于设置用户宿主目录的共享属性(特殊共享)
+
+​		[homes]	#共享名(特殊共享,泛指每个用户对应的家目录)
+
+​		comment = Host Directories	#共享描述
+
+​		browseable = no	# 贡献是否可被查看	
+
+​		writable = yes	#共享是否可写
+
+​		；valid users = %s	#允许访问该共享的用户
+
+​		例如: valid users = bob, @bob(多个用户或者组中间用逗号隔开,如果要加入一个组就用"@组名"表示。)
+
+​	[printers]用于设置打印机共享资源的属性(特殊共享,共享打印设备,现在基本不用)
+
+​		[printers]	#共享名
+
+​		comment = All Printers	#共享描述
+
+​		path = /var/spool/samba	#共享路径
+
+​		browseable = no	#共享是否可被查看
+​		guest ok = no	#是否可以匿名访问,类似于public
+
+​		writable = no	#是否可写
+
+​		printable = yes	#是否可以打印
+
+​	[自定义]自定义共享区
+
+​		[自定义]	#共享名
+
+​		comment = the share is xbz	#共享描述
+
+​		path = /share/zdy	#贡献路径
+
+​		public = yes	#是否可以匿名访问,类似于guest ok
+
+​		browseable = yes	#共享是否可被查看
+
+​		writable = yes	#是否可写(同时设置目录的W)
+
+配置文件检查工具
+
+​		testparm: 若显示"Loaded services file OK."信息表示配置文件的语法是正确的
+
+​		-v: 显示samba所支持的所有选项
+
+​		
+
+#### 访问控制
+
+​	写入权限的控制方式(类似于vsftp的限制方式)
+
+​	配置文件开启,文件系统严格控制(尽量采用这种)
+
+​		writable = yes
+
+​		setfacl 或 chmod 777
+
+​	文件系统开启,配置文件严格控制
+
+​		chmod	777  /dir
+
+​		read only = yes
+
+​		write list = 用户, @组
+
+#### 服务启动管理
+
+- 启动、停止、重新启动和重新加载Samba服务
+
+  service smb start|stop|restart|reload
+
+- 开机自动启动samba服务
+
+  chkcomfig	--level 2345 smb on|off
+
+#### 客户端登陆方式
+
+- linux端:
+
+  smbclient	-U	用户名	-L	//服务端IP	#查看服务器共享
+
+  smbclient	-U	用户名	//服务器ip/共享名
+
+- window端:
+
+  \\\\服务器ip\共享名
+
+  net use * /del	#清空登陆缓存
+
+### Samba部署与实验
+
+注: 先关闭服务器和客户机上的防火墙和SELinux
+
+部署流程:
+
+1. 服务器安装samba
+
+   yum -y install samba
+
+2. 确认客户端和相关命令软件包是否安装(默认是安装)
+
+   rpm -q samba-client
+
+   rpm -q samba-common
+
+3. 创建共享区域
+
+   备份主配置文件
+
+   创建独立的共享区间(仿照模板编写)
+
+4. 启动smb服务并查看默认共享区域
+
+   service smb start
+
+   smbclient -U 用户名 -L smbserverIP
+
+#### 本地验证(登陆、上传、下载)
+
+1. 修改配置位文件(添加自定义共享)
+
+   [自定义]
+
+   comment = the share is xbz
+
+   path = /share/zdy
+
+   public = yes
+
+   browseable = yes
+
+   writable = yes
+
+2. 创建共享目录并给定相应权限
+
+   mkdir /share/zdy
+
+   chmod 777 /share/zdy	#最好使用ACL权限
+
+3. 测试配置文件并重启服务
+
+   testpart
+
+   service smb restart
+
+4. 首先,创建Linux用户
+
+   useradd -s  /sbin/nologin zhangsan
+
+   ~~passwd zhangsan~~	#不需要创建系统密码
+
+5. 转化为samba用户
+
+   pdbedit -a zhangsan
+
+6. 客户端查看共享文件夹并登陆测试
+
+   smbclient -U zhangsan -L IP地址
+
+   smbclient -U zhangsan //IP地址/共享名
+
+   注: 由于未设置上传文件的默认权限,指定用户上传的文件只有自己能修改和覆盖
+
+#### 访问控制 - 通过配置限制
+
+valid users 仅允许部分用户访问共享区域
+
+注: 前提条件是指定目录权限给到最大,通过修改配置文件来实现实验结果
+
+
+
+部分用户登陆samba服务器
+
+​	修改/etc/samba/smb.conf中自定义的共享区域
+
+​		添加: 设置合法用户列表
+
+​		valid users = 用户, @组(多个逗号分隔)
+
+部分用户对共享区域有写权限
+
+​	修改/etc/samba/smb.conf中自定义的共享区域
+
+​		添加: 开启只读,设置可写列表
+
+​		read only = yes
+
+​		write list = lisi
+
+设置上传文件的默认权限
+
+​	create mask	文件的默认权限
+
+​	directory mask 目录的默认权限
+
+​	修改配置文件自定义的共享区域
+
+​		添加:
+
+​		create mask = 666
+
+​		directory mask = 777
+
+#### 用户别名
+
+1. 添加别名(/etc/samba/smbusers)
+
+   添加:
+
+   ​	zhangsan = zs
+
+2. 启动别名(修改主配置文件)
+
+   vim /etc/samba/smb.conf
+
+   添加:
+
+   ​	username map = /etc/samba/smusers
+
+3. 测试
+
+   smbclient -U 别名 //服务器ip/共享名
+
+#### 映射网络驱动器(挂载)
+
+Linux下:
+
+​	临时挂载:
+
+​		mount -t cifs -o username=xxx,password=xxx //服务器ip/服务器共享 /本地挂载目录
+
+​	永久挂载: /etc/fstab
+
+​		//服务器ip/服务器共享 /本地挂载目录 cifs  defaults,username=xxx,password=xxx 0 0
+
+Window下:
+
+​	我的电脑、计算机、此电脑、这台电脑等右键映射网络驱动器【注意是反斜杆 \】
+
+#### 图形化web管理界面
+
+1. 安装(导入安装包)
+
+   使用 yum -y install * 安装所有上传的rpm包
+
+2. 修改/etc/xinetd.d/swat
+
+   添加:
+
+   only_from = 登陆来源IP
+
+   disable = no
+
+3. 重启xinetd服务
+
+   service xinetd restart
+
+4. 测试
+
+   浏览器: IP:901 #登陆时注意端口号
+
+
+
+## NFS
+
+### 什么是NFS？
+
+​	NFS是Network File System的缩写,即网络文件系统。一种使用于分散式文件系统的协定,由Sun公司开发,于	1984年向外公布。功能是通过网络让不同的机器、不同的操作系统能够彼此分享个别的数据,让应用程序在客户端通过网络访问位于服务器磁盘中的数据,是在类Unix系统间实现磁盘文件共享的一种方法
+
+​	它的主要功能是通过网络让不同的机器系统之间可以彼此共享文件和目录。NFS服务器可以允许NFS客户端将远端NFS服务器端的共享目录挂载到本地的NFS客户端中。在本地的NFS客户端的机器看来,NFS端服务器共享的目录就好像自己的磁盘分区和目录一样。一般客户端挂载到本地目录的名字可以随便,但是方便管理,我们要和服务器端一样比较好
+
+
+
+NFS一般用来存储共享视频,图片等静态数据
+
+### NFS挂载原理
+
+​	NFS是通过网络来进行服务端和客户端之间的数据传输。两者之间要传输数据就要有相对应的网络端口来进行传输。NFS服务器到底使用什么网络端口来传输数据的,NFS服务器端其实是随机选择端口来进行数据传输。那NFS客户端又是如何知道NFS服务端到底使用的是哪个端口呢? 其实NFS服务器时通过远程过程调用(remote procedure call简称RPC)协议/服务来实现的。也就是说RPC服务会统一管理NFS的端口,客户端和服务端通过RPC来先沟通NFS使用了哪些端口,之后再利用这些端口(小于1024)来进行数据的传输。
+
+​	也就是RPC管理服务端的NFS端口分配,客户端要传数据,那客户端的RPC会先跟服务端的RPC去要服务器的端口,要到端口后再建立连接,然后传输数据。
+
+<strong style="color:#f00">那RPC和NFS之间又是如何之间相互通讯的?</strong>
+
+​	首先当NFS启动后,就会随机的使用一些端口,然后NFS就会向RPC去注册这些端口。RPC就会记录下这些端口。并且RPC会开启111端口,等待客户端RPC的请求,如果客户端有请求,那服务端的RPC就会将记录的NFS端口信息告知客户端。
+
+<strong style="color:#f00">RPC和NFS的启动顺序是怎样的?</strong>
+
+​	在启动NFS SERVER之前,首先要启动RPC服务(即portmap服务,下同)否则NFS SERVER就无法向RPC服务区注册,另外,如果RPC服务重新启动,原来已经注册好的NFS端口数据就会全部丢失。因此此时RPC服务管理的NFS程序也要重新启动以重新向RPC注册。特别注意: 一般修改NFS配置文档后,是不需要重启NFS的,直接在命令执行
+
+/etc/init.d/nfs reload
+
+
+
+<strong style="color:#f00">总结: 客户端NFS和服务端NFS通讯过程</strong>
+
+1. 首先服务端启动RPC服务,并开启111端口
+2. 启动NFS服务,并向RPC注册端口信息
+3. 客户端启动RPC(portmap服务),向服务端的RPC(portmap)服务请求服务端的NFS端口
+4. 服务端的RPC(portmap)服务反馈NFS端口信息给客户端
+5. 客户端通过获取的NFS端口来建立和服务端的NFS连接并进行数据的传输
+
+![38](../img/38.jpg)
+
+### NFS相关协议及软件安装管理
+
+协议:
+
+​	RPC(Remote Procedure Call Protocol) -- 远程过程调用协议
+
+软件:
+
+​	nfs-uitls-*: 包括NFS命令与监控程序
+
+​	rpcbind-*: 支持安全NFS RPC服务的连接
+
+注: 通常情况下,是作为系统的默认包安装的
+
+Cenos6.* 之前rpcbind叫portmap
+
+### NFS系统守护进程
+
+nfs: 它是基本的NFS守护进程,主要功能是管理客户端是否能够登陆服务器
+
+rpcbind: 主要功能是进行端口映射工作。当客户端尝试连接并使用RPC服务器提供的服务(如NFS服务)时,rpcbind会将所管理的与服务对应的端口提供给客户端,从而使客户端可以通过该端口向服务器请求服务
+
+### NFS服务器的配置
+
+NFS服务器的配置相当于比较简单,只需要在相应的配置文件中进行设置，然后启动NFS服务器即可。
+
+NFS服务的配置文件为/etc/exports，这个文件是NFS的主要配置文件,不过系统并没有默认值,所以这个文件不一定会存在,可能要使用vim手动建立,然后在文件里面写入配置内容
+
+/etc/exports文件内容格式:
+
+```reStructuredText
+共享目录	客户端1(访问权限,用户映射,其他) 客户端2(访问权限,用户映射,其他)
+```
+
+a.共享目录: 共享目录是指NFS服务器共享给客户机使用的目录
+
+b.客户端: 客户端是指网络中可以访问这个NFS共享目录的计算机
+
+客户端常用的指定方式:
+
+​	指定ip地址的主机: 192.168.0.200
+
+​	指定子网中的所有主机: 192.168.88.0
+
+​	指定域名的主机: www.zler.com
+
+​	指定域中的所有主机: *.zler.com
+
+​	所有主机: *
+
+P255
+
+### NFS服务器的启动与停止
+
+### 实验相关实例
+
+### 相关命令
+
+# 集群
+
+概念:集群是一组协同工作的服务器,各有分工,对外表现为一个整体
+
+负载均衡集群LBC: 分担服务的总体压力
+
+高可用集群HAC: 尽可能的保障服务状态的可用性
+
+高性能运算集群 HPC: 提供单台服务器提供不了的计算能力
+
+## 负载均衡集群
+
+
 
 # 登陆终端
 
@@ -7084,7 +9086,305 @@ int main(int argc, char const *argv[]){
   - 查看方式
     - 找到程序的进程ID
     - ps -Lf pid
+  
+- 相同点:函数调用成功返回0，失败返回错误号
+
+- 创建线程 -- pthread_create
+
+  - 函数原型:
+
+    //如果成功返回0，失败返回错误号
+
+    //perror()不能使用该函数打印错误信息
+
+    int pthread_create(
+
+    ​		pthread_t *thread,  //线程ID=无符号长整形
+
+    ​		const pthread_attr_t *attr, //线程属性,NULL
+    ​        void \*(\*start_routine) (void *), //线程处理函数
+
+    ​		void *arg);//线程处理函数参数
+
+    - 参数:
+      - [ ] thread:传出参数,线程创建成功之后,会被设置一个合适的值
+      - [ ] attr:默认传NULL
+      - [ ] start_routine: 子线程的处理函数
+      - [ ] arg: 回调函数的参数
+
+    ```c
+    #include <pthread.h>
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <string.h>
+    
+    void* myfunc(void *arg)
+    {
+        //取数据
+        // int num = *((int*)arg);
+        int num = (int)arg;
+        // 打印子线程的ID
+        printf("%dth child thread id: %lu\n", num, pthread_self());
+        return NULL;
+    }
+    
+    int main(int argc, char const *argv[])
+    {
+        // 创建一个子线程
+        pthread_t pthid[5]; //线程ID
+    
+        for(int i = 0; i < 5; ++i){
+            // 第4个参数传递的是地址，根据具体情况到底是传地址还是传值
+            //int ret = pthread_create(&pthid[i], NULL, myfunc, (void*)&i); //传地址
+            int ret = pthread_create(&pthid[i], NULL, myfunc, (void*)i); //传值会失去精度
+            if(ret != 0)
+            {
+                printf("error number: %d\n", ret);
+                // 打印错误信息
+                printf("%s\n", strerror(ret));
+            }
+        }
+        
+        printf("parent thread id: %lu\n", pthread_self());
+    
+        for (int i = 0; i < 5; i++)
+        {
+            printf("i = %d\n", i);
+        }
+        sleep(2);
+        return 0;
+    }
+    ```
+
+    ```shell
+    gcc pthread_create.c -lpthread
+    ```
+
+    
+
+  - 主线程先退出,子线程会被强制结束
+
+  - 验证线程之间共享全局变量
+
+  ```c
+  #include <pthread.h>
+  #include <stdio.h>
+  #include <unistd.h>
+  #include <string.h>
+  #include <stdlib.h>
+  
+  void* myfunc(void *arg)
+  {
+      // 打印子线程的ID
+      printf("child thread id: %lu\n", pthread_self());
+      for(int i = 0; i < 5; i++){
+          printf("child i = %d\n", i);
+          if(i == 2){
+              // 子线程退出
+              // exit(1);
+              // return NULL; 可以
+              int number = 100;
+              pthread_exit(NULL);
+          }
+      }
+      return NULL;
+  }
+  
+  int main(int argc, char const *argv[])
+  {
+      pthread_t pthid; //线程ID
+  
+      int ret = pthread_create(&pthid, NULL, myfunc, NULL);
+      if(ret != 0){
+          printf("error number: %d\n", ret);
+          // 打印错误信息
+          printf("%s\n", strerror(ret));
+      }
+      printf("parent thread id: %lu\n", pthread_self());
+  
+      int i = 0;
+      while (1)
+      {
+          printf("parent i = %d\n", i++);
+      }
+  
+      // 退出主线程
+      pthread_exit(NULL);
+      return 0;
+  }
+  ```
+
+  
+
+- 单个线程退出 -- pthread_exit
+
+  - exit(0);
+
+  - 函数原型:  void pthread_exit(void *retval);
+    - retval指针:必须执行全局,堆
+
+- 阻塞等待线程退出,获取线程退出状态 -- pthread_join
+
+  - 函数原型: 
+
+    int pthread_join(pthread_t thread, void **retval);
+    
+    - thread: 要回收的子线程的线程id
+    - retval:  读取线程退出的时候携带的状态信息
+      - [ ] 传出参数
+      - [ ] void* ptr
+      - [ ] pthread_join(pthid, &ptr)
+      - [ ] 指向的内存和pthread_exit参数指向同一块内存地址
+
+  ```c
+  #include <pthread.h>
+  #include <stdio.h>
+  #include <unistd.h>
+  #include <string.h>
+  #include <stdlib.h>
+  
+  int number = 100;
+  void* myfunc(void *arg)
+  {
+      // 打印子线程的ID
+      printf("child thread id: %lu\n", pthread_self());
+      for(int i = 0; i < 5; i++){
+          printf("child i = %d\n", i);
+          if(i == 2){
+              // 子线程退出
+              // exit(1);
+              // return NULL; 可以
+              //int number = 100;
+              pthread_exit(&number); //number必须执行全局,堆
+          }
+      }
+      return NULL;
+  }
+  
+  int main(int argc, char const *argv[])
+  {
+      pthread_t pthid; //线程ID
+  
+      int ret = pthread_create(&pthid, NULL, myfunc, NULL);
+      if(ret != 0){
+          printf("error number: %d\n", ret);
+          // 打印错误信息
+          printf("%s\n", strerror(ret));
+      }
+      printf("parent thread id: %lu\n", pthread_self());
+  
+      //阻塞等待子线程的退出,并且回收其pcb
+      void* ptr = NULL;
+      pthread_join(pthid, &ptr);
+      printf("number = %d\n", *(int*)ptr);
+  
+      int i = 0;
+      while (i< 10)
+      {
+          printf("parent i = %d\n", i++);
+      }
+  
+      return 0;
+  }
+  ```
+
+  
+
+- 线程分离 -- pthread_detach
+
+  - 函数原型:  int pthread_detach(pthread_t thread);
+  - 调用该函数之后不需要pthread_join
+  - 子线程会自动回收自己的pcb
+
+- 杀死(取消)线程 -- pthread_cancel
+
+  - 函数原型: int pthread_cancel(pthread_t thread);
+  - 使用注意事项:
+    - 在要杀死的子线程对应的处理的函数的内部,必须做过一次系统调用
+      - [ ] pthread_testcancel();设置一个系统调用
+    - write read printf
+    - int a;
+    - a = 2;
+    - int b = a+3;
+
+- 比较两个线程ID是否相等(预留函数) -- pthread_equal
+
+  - 函数原型:
+
+    int pthread_equal(pthread_t t1, pthread_t t2);
 
 ### 线程属性
+
+通过属性设置线程的分离
+
+1. 线程属性类型:pthread_attr_t attr;
+2. 线程属性操作函数:
+   - 对线程属性变量的初始化
+     - int pthread_attr_init(pthread_attr_t *attr);
+   - 设置线程分离属性
+     - int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
+     - 参数：
+       - [ ] attr: 线程属性
+       - [ ] detachstate: 
+         - PTHREAD_CREATE_DETACHED(分离)
+         - PTHREAD_CREATE_JOINABLE(非分离)
+   - 释放线程资源函数
+     - int pthread_attr_destroy(pthread_attr_t *attr);
+
+```c
+#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+
+void* myfunc(void *arg)
+{
+    printf("child thread id:%lu\n", pthread_self());
+    return NULL;
+}
+
+int main(int argc, char const *argv[])
+{
+    pthread_t pthid; //线程ID
+    //创建线程的时候设置线程分离
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    
+    int ret = pthread_create(&pthid, &attr, myfunc, NULL);
+    if(ret != 0){
+        printf("error number: %d\n", ret);
+        // 打印错误信息
+        printf("%s\n", strerror(ret));
+    }
+
+    printf("parent thread id: %lu\n", pthread_self());
+    int i = 0;
+    while (i < 10)
+    {
+        printf("parent i = %d\n", i++);
+    }
+    sleep(2);
+    
+    pthread_attr_destroy(&attr);
+    return 0;
+}
+```
+
+案例线程数数
+
+![30](../img/30.jpg)
+
+数据混乱的原因
+
+- 操作了共享资源
+- cpu调度问题
+
+解决:
+
+- 线程同步
+- 什么叫同步: 
+  - 协同步调,按照先后顺序执行操作
 
 # Linux 网络编程
