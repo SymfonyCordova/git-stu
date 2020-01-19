@@ -589,8 +589,8 @@ rel: 定义当前文档与被链接文档之间的关系,在这里需要指定�
     </ul>
 </div>
 <div class="sitenav">
-    <div class="site-l"></div>
-    <div class="site-r"></div>
+    <div class="site-l">左侧侧导航栏</div>
+    <div class="site-r"><a href="#">登陆</a></div>
 </div>
 ```
 
@@ -601,14 +601,61 @@ rel: 定义当前文档与被链接文档之间的关系,在这里需要指定�
 3. 主导航栏里面的一级菜单链接文字颜色为绿色
 
 ```css
-
+.site-r a {
+    color: red;
+}
+.nav ul li a {
+    color: skyblue;
+}
+.nav, .sitenav {
+    font-size: 14px;
+    font-family: "microsoft yahei";
+}
+.nav > ul > li > a {
+    color: green;
+}
 ```
 
 
 
 ## 属性选择器
 
+选取标签带有某些特殊属性的选择器 我们称为属性选择器
+
+| 选择器       | 示例 | 含义                             |
+| ------------ | ---- | -------------------------------- |
+| E[attr]      |      | 存在attr属性即可                 |
+| E[attr=val]  |      | 属性值完全等于val                |
+| E[attr*=val] |      | 属性值里包含字符并且在"任意"位置 |
+| E[attr^=val] |      | 属性值里包含字符并且在"开始"位置 |
+| E[attr$=val] |      | 属性值里包含字符并且在"结束"位置 |
+
+```html
+<div class="font12">属性选择器</div>
+<div class="12font12">属性选择器</div>
+<div class="12font">属性选择器</div>
+<div class="font">属性选择器</div>
+```
+
+
+
+```css
+div[class=font] {
+    color: pick;
+}
+div[class=font] {
+    color: skyblue;
+}
+div[class=font] {
+    color: red;
+}
+```
+
+
+
 ## 伪元素选择器(CSS3)
+
+1. E::
 
 # CSS书写规范
 
