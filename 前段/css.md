@@ -655,15 +655,123 @@ div[class=font] {
 
 ## 伪元素选择器(CSS3)
 
-1. E::
+1. E::first-letter文本的第一个单词或字(如中文、日文、韩文)
+
+2. E::first-line文本第一行
+
+3. E::selection可改变选中文本的样式
+
+   ```css
+   p::first-letter { /*选择第一个字*/
+       color: red;
+       font-size: 50px;
+   }
+   p::first-line { /*选择第1行*/
+       color: green;
+   }
+   p::selection { /*当我们选中文字的时候,可以变化的样式*/
+       color: pink;
+   }
+   ```
+
+   
+
+4. E::before和E::after
+
+   在E元素内部的开始位置和结束位置创建一个元素,该元素为行内元素,且必须结合content属性使用
+
+   ```css
+   div::before { /*before和after在盒子div的内部的前面插入或者内部的后面插入*/
+       content: "俺"
+   }
+   div::after {
+       content: "18岁"
+   }
+   ```
+
+   E:after、E:before在旧版本里面是伪元素,CSS3的规范里":"用来表示伪类,"::"用来表示伪元素,但是在高版本浏览器下E:after、E:before会被自动识别为E::after、E::before,这样做的目的是用来做兼容处理。
+
+   E:after、E::before后面的练习中会反复用到,目前只需要有个大致了解
+
+   ":"与"::"区别在于区分伪类和伪元素
 
 # CSS书写规范
 
+开始就形成良好的书写规范,是你专业化的开始
+
 ## 空格规范
+
+【强制】选择器 {之间必须包含空格。
+
+示例:	.select {}
+
+【强制】属性名与之后的:之间不允许包含空格, :与属性之间必须包含空格
+
+示例:
+
+font-size: 12px;
 
 ## 选择器规范
 
+【强制】当一个rule包含多个selector时,每个选择器声明必须独占一行
+
+示例:
+
+```css
+/*good*/
+.post,
+.page,
+.comment {
+	line-height: 1.5;
+}
+
+/*bad*/
+.post, .page, .comment {
+    line-height: 1.5;
+}
+```
+
+【建议】选择器的嵌套层级不大于3级,位置靠后的限定条件应尽可能精确。
+
+示例:
+
+```css
+/* good */
+#username input {}
+.comment .avatar {}
+
+/* bad */
+.page .header .login #username input {}
+.comment div * {}
+```
+
+
+
 ## 属性规范
+
+【强制】属性定义必须另起一行
+
+示例:
+
+```css
+/* good */
+.selector {
+    margin: 0;
+    padding: 0;
+}
+/* bad */
+
+```
+
+【强制】属性定义必须以分号结尾
+
+示例:
+
+```css
+
+```
+
+
 
 # CSS背景(background)
 
