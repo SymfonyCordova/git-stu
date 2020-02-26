@@ -5563,7 +5563,587 @@ NGINX(B/S)
 
 #### LVS DR 构建
 
+P325
 
+# 虚拟化技术
+
+## docker 命令
+
+```reStructuredText
+docker info			守护进程的系统资源设置
+docker search	仓库的查询
+docker pull
+docker images	镜像查询
+docker rmi			镜像删除
+docker ps			容器查询
+docker run
+docker start/stop
+```
+
+## 单一容器管理
+
+```reStructuredText
+docker ps --no-trunc 									   查看
+docker stop/start CONTAINERID 
+docker start/stop MywordPress  
+docker inspect MywordPress
+docker logs MywordPress 						    查看容器日志
+docker stats MywordPress 							查看容器所占用的系统资源 
+docker exec 容器名 容器内执行的命令 	  容器执行命令
+docker exec -ti 容器名  /bin/bash               登入容器的bash
+
+还可以加的一些参数
+--restart=always					 容器的自动启动
+-h x.xx.xx									  设置容器主机名
+--dns xx.xx.xx.xx					   设置容器使用的DNS服务器
+--dns-search							 DNS搜索设置
+--add-host hostname:IP		注入hostname <> IP解析
+-rm												   服务停止时自动删除
+```
+
+WordPress
+
+​	docker run --name db  --env MYSQL_ROOT_PASSWORD=example -d mariadb
+
+​	docker run --name MyWordPress --link db:mysql -p 8080:80 -d wordpress
+
+运行一个不能一直运行的镜像
+
+​	docker run -ti --name sfswoole -d ubuntu:16.04 bash
+
+## 多容器管理docker-compose
+
+​	两个容器需要数据交流,使用--link,前提是要注一开启的顺序和关闭顺序
+​	容器编排工具,允许用户在一个模板(YAML格式)中定义一组相关的容器,会根据--link等参数,对启动的优先级进行排序
+
+​	docker-compose的命令
+
+```reStructuredText
+    -f			  指定使用的yaml文件位置
+  	ps			列出服务相关的容器
+    restart  重新启动容器
+    logs		查看日志信息
+    config -q 验证yaml配置文件是否正确
+    stop    停止容器
+    start	启动容器
+    up -d    启动容器项目
+    pause	暂停容器
+    unpause 恢复暂停
+    rm      删除服务中的哥哥容器
+```
+
+wordpress.ymal
+
+```yaml
+version:	'2'
+
+services:
+	db:
+		image: mysql:5.7
+		restart: always
+		environment: 
+			MYSQL_ROOT_PASSWORD: somewordpress
+			MYSQL_DATABASE: wordpress
+			MYSQL_USER: wordpress
+			MYSQL_PASSWORD: wordpress
+	
+	wordpress:
+		depends_on:    # 相当于 --link
+			- db
+		image: wordpress:latest
+		restart: always
+		port:
+			- "8000:80"
+		environment:
+			WORDPRESS_DB_HOST: db:3306
+			WORDPRESS_DB_USER: wordpress
+			WORDPRESS_DB_PASSWORD: wordpress
+```
+
+## 镜像
+
+Dockerfile语法
+
+```reStructuredText
+1.FROM(指定基础image):
+构建指令，必须指定且需要在Dockerfile其他指令的前面。后续的指令都依赖于该指令指定的image。FROM指令指定的基础image可以是官方远程仓库中的,也可以位于本地仓库
+example:
+	FROM centos:7.2
+	FROM centos
+	
+2.MAINTAINER(用来指定镜像创建者信息):
+构建指令，用于将image的制作者相关信息写入到image中,当我们对该image执行docker inspect命令时，输出中有相应的字段记录该信息。
+example:
+	MAINTAINER  zhanglei  "724174309@qq.com"
+	
+3.RUN(安装软件用)
+构建指令，RUN可以运行任何被基础image支持的命令。如基础image选择了centos，那么软件管理部分只能使用Centos的包管理命令
+example:
+	RUN cd /tmp && curl -L 'http://archive.apache.org/dist/tomcat/tomcat-7/v7.0.8/bin/apache-tomcat-7.0.8.tar.gz' | tar -xz
+	RUN ["/bin/bash", "-c", "echo hello"]
+	
+4.CMD(设置container启动时执行的操作):
+设置指令,用于container启动时指定的操作。该操作可以是执行自定义脚本,也可以执行系统命令。该指令只能在文件中存在一次，如果有多个，则执行最后一条
+example:
+	CMD echo "hello, world"
+	
+5.ENTRYPOINT(设置container启动时执行的操作):
+设置指令，指定容器启动时执行的命令，可以多次设置，但是只有最后一次有效。
+example:
+	ENTRYPOINT ls -l
+
+# 该命令的使用分为两种情况,一种是独自使用,另一种和CMD指令配合使用。当独自使用时，如果你还使用CMD命令且CMD是一个完整的可执行的命令，那么CMD指令和ENTRYPOINT会相互覆盖只有最后一个CMD或者ENTRYPOINT有效
+		# CMD指令将不会被执行，只有ENTRYPOINT指令被执行
+		CMD echo "hello world"
+		ENTRYPOINT ls -l
+		
+#另一种用法和CMD指令配合使用来指定ENTRYPOINT的默认参数，这时CMD指令不是一个完整的可执行命令，仅仅是参数部分；ENTRYPOINT指令只能使用JSON方式指定执行命令，而不是指定参数
+		FROM ubuntu
+		CMD ["-l"]
+		ENTRYPOINT ["/usr/bin/ls"]
+
+6.USER(设置container容器的用户):
+设置指令,设置启动容器的用户,默认是root用户
+example:
+		USER daemon = ENTRYPOINT ["memcached", "-u",  "daemon"]
+
+7.EXPOSE(指定容器需要映射到宿主机器的端口):
+设置指令，该指令会将容器中的端口映射成宿主机器中的某个端口。当你需要访问容器的时候，可以不用容器的IP地址而是使用宿主机器的IP地址和映射后的端口。要完成真个操作需要两个步骤，首先在Dockerfile使用EXPOSE设置需要映射的容器端口，然后在运行容器的时候指定-p选项加上EXPOSE设置的端口，这样EXPOSE设置的端口会被随机映射成宿主机器中的一个端口号。也可以指定需要映射到宿主机器的那个端口，这时要确保宿主机上的端口没有被使用。EXPOSE指令可以一次设置多个端口号，相应的运行容器的时候，可以配套的多次使用-p选项
+example:
+	映射一个端口
+	EXPOSE 22
+	相应的运行容器使用的命令
+	docker run -p port1 image
+	
+	映射多个端口
+	EXPOSE port1 port2 port3
+	相应的运行容器使用的命令
+	docker run -p port1 -p port2 -p port3 image
+	还可以指定需要映射到宿主机器上的某个端口号
+	docker run -p host_port1:port1 -p host_port2:port2 -p host_port3:port3  image
+
+8. ENV(用于设置环境变量): 构建指令，在image中设置一个环境变量
+example:
+	设置了后，后续的RUN命令都可以使用，container启动后，可以通过docker inspect查看这个环境变量，也可以通过docker run --env key=value时设置或修改环境变量。假如你安装了JAVA程序，需要设置JAVA_HOME，那么可以在Dockerfile中这样写:
+	ENV JAVA_HOME  /path/to/java/dirent
+
+9. ADD(从src复制文件到container的dest路径)可以自动解压:
+example:
+		ADD <src>  <dest>
+				 <src>是相对被构建的源目录的相对路径，可以是文件或目录的路径，也可以是一个远程的文件url;
+				 <dest>是container中的绝对路径
+
+10. COPY(从src复制文件到container的dest路径)不会做自动解压工作:
+example:
+		COPY <src> <dest>
+
+11.VOLUME(指定挂在点):
+设置指令，使容器中的一个目录具有持久化存储数据的功能，该目录可以被容器本身使用，也可以共享给其他容器使用。我们知道容器使用的是AUFS，这种文件系统不能持久化数据，当容器关闭后，所有的更改都会丢失。当容器中的应用有持久化数据的需求时可以在Dockerfile中使用这指令
+example:
+	FROM base
+	VOLUME ["/tmp/data"]
+	
+12. WORKDIR(切换目录): 设置指令，可以多次切换(相当于cd命令)，对RUN，CMD，ENTRYPOINT生效
+example:
+		WORKDIR /p1 WORKDIR p2 RUN vim a.txt        RUN cd /p1/p2  && vim a.txt
+		
+13. ONBUILD(在子镜像中执行) : ONBUILD指令的命令在构建镜像时并不执行，而是在它的子镜像中执行
+example:
+		ONBUILD  ADD   .   /app/src
+		ONBUILD  RUN   /usr/local/bin/python-build  --dir   /app/src
+```
+
+案例
+
+```reStructuredText
+FROM centos:6.7
+MAINTAINER  zhanglei  "724174309@qq.com"
+
+ADD ./apache-tomcat-7.0.42.tar.gz  /root
+ADD ./jdk-7u25-linux-x64.tar.gz  /root
+
+ENV JAVA_HOMT /root/jdk1.7.0_25
+ENV PATH $JAVA_HOME/bin:$PATH
+
+EXPOSE 8080
+ENTRYPOINT /root/apache-tomcat-7.0.42/bin/startup.sh  &&  tailf /root/apache-tomcat-7.0.42/logs/catalina.out
+```
+
+docker build -t tomcat:v1.0 .
+
+## Docker仓库构建
+
+### 官方版本搭建私有仓库构建
+
+```reStructuredText
+仓库服务器配置:
+		docker run -d -v /opt/registry:/var/lib/registry -p 5000:5000  --restart=always registry
+		vim /etc/docker/daemon.json
+				{
+						"insecure-registrise": ["10.10.10.11:5000"]
+				}
+客户机设置:
+		vim /etc/sysconfig/docker
+				--insecure-registry 10.10.10.11:5000
+				
+		curl -XGET http://10.10.10.11:5000/v2/_catalog  查看已有的镜像
+```
+
+docker push  10.10.10.11:5000/tomcat:v1.0
+
+### Harbor 搭建企业级的仓库
+
+## Docker网络通讯
+
+容器与容器之间
+
+容器访问外部网络
+
+外部网络访问容器
+
+docker网络模式修改
+
+```reStructuredText
+-b，--bridge=""  指定Docker使用的网桥设备，默认情况下Docker会自动创建和使用docker0网桥设备，通过此参数可以使用已存在的设备
+--bip 指定Docker0的IP和掩码，使用标准的CIDR形式，如10.10.10.10/24
+--dns 配置容器的DNS，在启动Docker进程是添加，所有容器全部生效
+```
+
+容器修改
+
+```reStructuredText
+--dns 用于指定启动的容器的DNS
+--net 用于指定容器的网络通许方式，有以下四个值
+	bridge: Docker默认方式，网络桥接
+	none:  容器没有网络栈
+	container: 使用其他容器的网络栈，Docker容器会加入其他容器的network namespace
+	host: 表示容器使用Host的网络，没有自己独立的网络栈。容器可以完全访问Host网络，不安全
+```
+
+修改/etc/docker/daemon.json文件
+
+```json
+{
+    "bip": "192.168.1.5/24",
+    "fixed-cidr" : "10.20.0.0/16",
+    "fixed-cidr-v6": "2001:db8::/64",
+    "mtu": "1500",
+    "default-gateway":"10.20.1.1",
+    "default-geteway-v6": "2001:db8:abcd:89",
+    "dns": ["10.20.1.2", "10.20.1.3"]
+}
+```
+
+常见隔离方式
+
+docker network ls 查看当前可用的网络类型
+
+docker network create -d 类型 网络空间名称
+
+​		类型分为:
+
+​				overlay network
+
+​				bridge network
+
+example:
+
+​		docker network create -d  bridge lamp
+
+​		docker run --name tomcat 11 --network11=lamp  -d tomcat:v1.0
+
+## 数据存储
+
+关闭并重启容器，其数据不受影响；但删除Docker容器,则其改变将会全部丢失
+
+## 资源限制
+
+docker容器默认会榨干系统的资源
+
+### 内存资源限制
+
+-m --memory: 容器能使用的最大内存大小，最小值为4m
+
+--memory-swap:  容器能够使用的swap大小
+
+--memory-swappiness:  默认情况下，主机可以把容器使用的匿名页(anonymous page) swap出来，你可以设置一个0-100之间的值，代表允许swap出来的比例
+
+--memory-reservation:  设置一个内存使用的soft limit，设置值小于 -m 设置
+
+--kernel-memory:  容器能够使用的kernel memory大小，最小值为4m
+
+--oom-kill-disable:  是否运行OOM的时候杀死容器。只有设置了-m，才可以把这个选项设置为false,否则容器会耗尽主机内存，而且导致主机应用被杀死
+
+| --memory-swap | --memory | 功能                                                         |
+| ------------- | -------- | ------------------------------------------------------------ |
+| 正数S         | 正数M    | 容器可用总空间为S，其中ram为M,swap为(S-M)，若S=M,则无可用swap资源 |
+| 0             | 正数M    | 相当于未设置swap(unset)                                      |
+| unset         | 正数M    | 若主机(Docker Host)其启动了swap，则容器的可用swap为2*M       |
+| -1            | 正数M    | 若主机(Docker Host)启用了swap，则容器可使用最大至主机上的所有swap空间的swap资源 |
+
+注意: 在容器内使用free命令可以看到的swap空间并不具有所展现出的空间指示意义
+
+### CPU资源限制
+
+```reStructuredText
+--cpuset-cpus=""  允许使用的CPU集，值可以为0-3，0，1
+-c, --cpu-shares=0  CPU共享权值(相对权重)，默认值1024
+--cpuset-mems=""  允许在上执行的内存节点(MEMs)
+--cpu-period=0  即可设置调度周期，CFS周期的有效范围是1ms~1s，对应的--cpu-period的数值范围是1000～1000000
+--cpu-quota=0  设置在每个周期内容器能使用的CPU时间，容器的CPU配额必须小于1ms,即--cpu-quota的值必须>=1000,单位微妙
+--cpus  能够限制容器可以使用的主机CPU个数，并且还可以指定入1.5之类的小数
+```
+
+example
+
+​	docker run -ti --cpu-period=50000 --cpu-quota=25000 ubuntu:16.04 /bin/bash
+
+​	docker run -ti --cpu-period=10000 --cpu-quota=20000 ubuntu:16.04 /bin/bash
+
+限制实验
+
+​	docker stats stress
+
+## openstack
+
+### 组件说明
+
+Compute(Nova)计算服务
+
+Image Service(Glance)镜像服务
+
+Object Storage(Swift)对象存储
+
+Block Storage(Cinder)块存储
+
+Networking(Neutron)网络服务
+
+Dashboard(Horizon)仪表板
+
+Identity Service(Keystone)认证服务
+
+Orchestration(Heat)编排
+
+Telemetry(Ceilometer)监控
+
+Database Service(Trove)数据库服务
+
+Data Processing(Sahara)数据处理
+
+### 安装结构说明
+
+资源配置情况
+
+![46](../img/46.jpg)
+
+```reStructuredText
+controller
+	2U	1.5GB	1N	100GB
+compute
+	MAX U	MAX	U	2N	100GB
+nuetron
+	2U	1.5GB	3N	20GB
+block
+	2U	1GB		1N	20GB	100GB	100GB
+```
+
+
+
+### 基础环境构建
+
+```reStructuredText
+一、先决条件
+		1.关闭防火墙
+			systemctl stop NetworkManager
+			system31tl disable NetworkManager
+		2.关闭防护墙
+			systemctl distable firewalld
+			systemctl stop firewalld
+		3.设置主机名
+			hostnamectl  set-homename  xx.xx.xx
+	
+二、配置DNS服务器或者使用hosts进行主机名的IP对应
+	controller.nice.com  192.168.x.5
+	network.nice.com  192.168.x.6
+	compute1.nice.com  192.168.x.10
+	compute2.nice.com  192.168.x.11
+	block1.nice.com  192.168.x.20
+	block2.nice.com  192.168.x.21
+	object1.nice.com  192.168.x.30
+	object2.nice.com  192.168.x.31
+	
+三、配置时间同步服务器
+	controller.nice.com  ntp  server  controller
+	other  server                ntp  client 
+	
+四、安装OpenStack预备包
+	1.安装yum-plugin-priorities包，防止高优先级软件被低优先级覆盖
+		yum  -y install yum-plugin-priorities
+	
+	2.安装epel扩展yum源
+		yum -y install  http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-2.noarch.rpm
+	
+	3.安装OpenStack  YUM源
+		yum  -y  install  http://rdo.fedorapeople.org/openstack-juno/rdo-release-juno.rpm
+	
+	4.更新操作系统
+		yum upgrade
+		
+	5.安装OpenStack-selinux自动管理Selinux
+		yum -y install  openstack-selinux
+
+五、为controller节点安装数据库
+	1.安装mariadb软件包
+		yum -y install  mariadb  mariadb-server MYSQL-python
+	
+	2.编辑/etc/my.cnf软件：设置绑定IP，默认数据库引擎及默认字符集为UTF-8
+		[mysql]
+		bind-address = 192.168.x.5
+		default-storage-engine = innodb
+		innodb_file_per_table
+		collation-serverv = utf8_general_ci
+		init-connect = 'SET NAMES utf8'
+```
+
+Keystone认证组件  
+
+P420
+
+## K8S	
+
+![47](../img/47.jpg)
+
+高可用集群副本数据最好是>=3奇数个
+
+api server: 所有服务访问统一入口
+
+controllerManager: 维持副本期望数目
+
+scheduler: 负责接收任务，选择合适的节点进行分配任务
+
+etcd: 键值对数据库,存储K8S集群所有重要的信息(持久化)
+
+
+
+kubelet: 直接跟容器引擎交互实现容器的声明周期管理
+
+kube proxy: 负责写入规则至iptables、ipvs实现服务映射访问的
+
+
+
+其他插件
+
+CoreDNS: 可以为集群中SVC创建一个域名IP对应关系解析
+
+Ingress Controller: 官方只能实现四层，Ingress可以实现七层代理
+
+Prometheus: 提供K8S集群的监控能力
+
+Dashboard: 给K8s集群提供一个B/S结构访问体系
+
+Federation: 提供一个可以跨集群中心多K8S统一管理的功能
+
+ELK: 提供K8S集群日志统一分析介入平台
+
+
+
+### POD
+
+自主式Pod
+
+控制器管理的Pod
+
+ReplicationController & ReplicaSet & Deployment
+
+​	>HPA(HorizontalPodAutoScale)
+
+​		容器交给Pod进行组合成一个整体共用网络和卷,pod交给controller自动管理，官方已经将ReplicationController替换成replicationSet,将 replicationSet交给 deployment自动管理，deployment可以回滚，新增。
+
+​		RS如何根据资源进行水平扩展的增加和减少POD，HPA可以做到
+
+StatefulSet
+
+​		稳定的持久化存储
+
+​		稳定的网络标志
+
+​		有序部署，有序扩展，即POD启动是有顺序的
+
+​		有序收缩，有序删除		
+
+DaemonSet
+
+​		确保全部(或者一些)Node上运行一个Pod的副本。
+
+Job,Cronjob
+
+​		定时任务
+
+网络模式
+
+​	Flannel:让集群中不同节点主机创建的Docker容器都具有全集群唯一的虚拟IP地址
+
+![48](../img/48.jpg)
+
+​	ETCD之Flannel提供说明:
+
+​			存储管理Flannel可分配的IP地址段资源
+
+​			监控ETCD中每个Pod的实际地址，并在内存中建立维护Pod节点路由表
+
+### 集群安装
+
+k8s-master01
+
+k8s-node01
+
+k8s-node02
+
+Harbor私有仓库
+
+Router
+
+```reStructuredText
+设置系统主机名及host文件
+	hostnamectl  set-home  k8s-master01
+	hostnamectl  set-home  k8s-node01
+	hostnamectl  set-home  k8s-node02
+安装依赖包
+	yum install -y contrack ntpdate  ntp ipvsadm  ipset  jq  iptables curl sysstat libseccomp wget  vim net-tools git
+设置防火墙为iptables并设置空规则
+	systemctl stop firewalld  && systemctl disable  firewalld
+	yum -y install iptables-services && systemctl start iptables && systemctl enable iptables && iptables -F 
+	&& service iptables save
+关闭selinux
+	swapoff  -a  && sed -i '/ swp  /  s/^\(.*\)$/#\1/g' /etc/fstab
+	setenforce 0 && sed -i 's/^SELINUX=.*/SELINUX=disabled' /etc/selinux/config
+```
+
+
+
+## k8s2
+
+1. 创建配置文件 sudo touch /etc/apt/sources.list.d/kubernetes.list
+
+2. 添加写权限
+
+   sudo chmod 666 /etc/apt/sources.list.d/kubernetes.list
+
+   再添加内容如下:
+
+   u
+
+3. 更新源
+
+   sudo apt update
+
+4. 添加证书
+
+   sudo gpg --keyserver keyserver.ubuntu.com  --recv-keys BA07F4FB
+
+   sudo gpg --export --armor BA07F4FB | sudo apt-key add - 
+
+5. 
 
 # 登陆终端
 
