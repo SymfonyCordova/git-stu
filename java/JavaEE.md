@@ -2,26 +2,373 @@
     将本地服务器映射的外网
     natapp.cn 方便调试支付宝 微信
 
+# xml
+
+```reStructuredText
+1.XML概述
+	1.1XML：XML一种数据存储格式，这种数据存储格式在存储数据内容的同时，还能够保存数据之间的关系
+	1.2XML保存数据的方法：XML利用标签来保存数据的内容，利用标签之间的嵌套关系来保存数据之间的关系。
+	1.3XML的应用场景：
+		1.3.1利用XML跨平台的特性，用来在不同的操作系统不同的开发语言之间传输数据。如果说java是一门跨平台的语言，那XML就是跨平台的数据。
+		1.3.2利用XML可以保存具有关系的数据的特性，还常常被用来做为配置文件使用。，
+	1.4XML文件：把XML格式的数据保存到文件中，这样的文件通常起后缀名为.XML，这样的文件就叫做XML文件，XML文件是XML数据最常见的存在形式，但是，这不是XML的唯一存在形式（在内存中或在网络中也可以存在），不要把XML狭隘的理解成XML文件。
+	1.5XML校验：浏览器除了内置html解析引擎外还内置了XML解析器，利用浏览器打开XML格式的数据，就可以进行XML校验。
+2.XML语法
+	2.1文档声明：一个格式良好的XML必须包含也只能包含一个文档声明，并且文档声明必须出现在XML文档第一行，其前不能有其他任何内容。
+		2.1.1最简单的写法：<?XML version="1.0" ?>其中的version代表当前XML所遵循的规范版本。
+		2.1.2使用encoding属性指定文档所使用的字符集编码：<?XML version="1.0" encoding="gb2312" ?>
+					注意：encoding属性指定的编码集和XML真正使用的编码应该一致，如果不一致就会有乱码问题。
+								encoding属性默认值为老外喜欢的iso8859-1
+		2.1.3使用standalone属性指定当前XML文档是否是一个独立文档：<?XML version="1.0" standalone="no" ?>,standalone默认值为yes表示是一个独立文档。
+				注意：很多的解析器会忽略这个属性，但是学习知识要按标准去学，所以这个属性也要掌握。
+	2.2元素
+		2.2.1元素分为开始标签和结束标签，在开始标签和结束标签之间的文本称为标签体，如果一个标签即不含标签体也不包含其他标签，那这样的标签可以把开始标签和结束标签进行合并，这样的标签叫自闭标签。
+		<a>xxxxx</a>   <a/>
+		2.2.2一个元素也可以包含若干子元素，但是要注意所有的标签都要进行合理嵌套。
+		2.2.3一个格式良好的XML文档应该具有并且只能有一个跟标签，其他标签都应该是这个跟标签的子孙标签。
+		2.2.4元素的命名规范：
+			区分大小写，例如，<P>和<p>是两个不同的标记。
+			不能以数字或标点符号或"_"开头。
+			不能以XML(或XML、或Xml 等)开头。
+			不能包含空格。
+			名称中间不能包含冒号（:）
+	2.3属性
+		一个元素可以包含多个属性，属性的值要用单引号或双引号括起来。如果属性的之中包含双引号，就要用单引号了。
+		属性的命名规范，参照元素的命名规范。
+	2.4注释
+		<!--这是一段注释-->
+		注意：注释不能出现在文档声明之前。实验：把注释写到文档声明之前，用ie打开是没问题，但是用chrome打开是报错的。这就看出来了不同的解析器有不同的处理，我们学习的时候还是按标准去学。
+			注释不能嵌套注释
+	2.5CDATA区、转义字符
+		都可以用来转义特殊字符。
+		2.5.1CDATA区<![CDATA[这是要转义的内容]]>
+			被CDATA区扩起来的内容，将会被浏览器当作文本来处理。
+		2.5.2转义字符
+			& --> &amp;
+			< --> &lt;
+			>	--> &gt;
+			" --> &quot;
+			' --> &apos;			
+		2.5.3CDATA区和转义字符的区别
+			(1)CDATA区可以成段的进行转义，而转义字符一次只能转义一个字符
+			(2)CDATA区转义的字符可以保存数据本来的格式只是通知解析器按文本去处理。转义字符改变了数据本身的内容，利用其他字符替代了转义字符。请思考，如果要转义的内容是一段js程序的话，如果用转义字符合适不合适？
+	2.6处理指令:一段指令通知解析器以何种方式解析XML
+			<?XML-stylesheet type="text/css" href="1.css" ?>指定解析器使用1.css去渲染当前的XML数据
+			其实文档声明就是一个最常见的处理指令。
+3.DTD技术
+	3.1DTD是一门XML约束技术，用来约束XML写法。
+	3.2如何在XML中引入一个DTD
+			3.2.1外部引入：dtd约束文件存在在一个外部文件中，我们在XML中引入该约束。
+				(1)本地文件引入：该dtd文件存在在本地硬盘中
+					<!DOCTYPE 根元素的名称 SYSTEM "文件所在的路径">
+				(2)公共位置文件引入:dtd约束文件存在在一个公共网络上，我们在XML引入该约束
+					<!DOCTYPE 根元素的名称 PUBLIC "dtd名称" "dtd所在的URL">
+			3.2.2在XML内部写dtd约束
+				在文档声明下<!DOCTYPE 根元素名称 [dtd约束的内容]>
+	3.3利用dtd约束XML中的元素
+		<!ELEMENT 元素名称 元素约束> 
+		3.3.1元素约束
+				(1)存放类型
+					ANY:当前声明的元素可以包含任意子元素
+					EMPTY:当前声明的元素不能包含任何元素
+				(2)存放内容：利用小括号括起来的元素的名称，用来表示该元素中可以存放哪些内容
+					<!ELEMENT "元素名" (可以包含的元素的名称)>
+					小括号中的内容，可以有多个子元素的名称
+						如果用“,”分割这些子元素就表明这些子元素必须按指定的顺序出现
+						如果用“|”分割这些内容就表明这些子元素只能出现其中之一
+						使用“+”来表明内容可以出现一次或多次
+						使用“*”来表明内容可以出现零次或多次
+						使用“?”来表明内容可以出现零次或一次
+						#PCDATA表明该元素可以包含标签体
+						可以利用()进行组操作：
+						<!ELEMENT MYFILE ((TITLE*, AUTHOR?, EMAIL)* | COMMENT)>
+	3.4利用dtd约束XML中的属性
+			<!ATTLIST 元素名
+						属性名 属性类型 属性约束
+						。。。。>
+			3.4.1属性类型
+			（1）CDATA：表明该属性的值是一个普通的文本值。
+			（2）ENUMERATED：表明该属性的值只能取指定范围内的其中之一
+			（3）ID:表明该属性值在整个文档中必须唯一，注意ID类型的属性的值必须以字母下划线开头，并且不能以数字开头，不能包含空白字符
+			
+			3.4.2属性约束
+			（1）#REQUIRED 来表明当前这个属性是必须存在的属性
+			（2）#IMPLIED 来表明当前这个属性是可选的属性
+			（3）#FIXED "固定值" 来表明当前这个属性具有一个默认的值，可以不明确指定该属性，解析器会帮你加上，如果你硬是指定了一个其他的值，会出错。
+			（4）"默认值" 来表明当前属性具有一个默认的值，如果给这个属性指定一个值就用指定的值，如果不指定呢，就使用默认值。
+			
+	3.5实体：可以理解为对一段内容的引用，如果有一段内容到处在被使用，可以将其设计为一个实体
+			3.5.1引用实体：用在XML中的实体
+			声明实体：<!ENTITY 实体名称 "实体内容">
+			引用引用实体：&实体名称;
+				
+			3.5.2参数实体：用在DTD文件中的实体
+			声明实体:<!ENTITY % 实体名称 "实体内容">
+			引用参数实体: %实体名称;
+
+2.XML编程:利用java程序去增删改查(CRUD)xml中的数据
+	
+	解析思想:
+		dom解析
+		sax解析
+	基于这两种解析思想市面上就有了很多的解析api
+		sun jaxp既有dom方式也有sax方式,并且这套解析api已经加入到j2se的规范中,意味这不需要导入任何第三方开发包就可以直接使用这种解析方式.但是这种解析方式效率低下,没什么人用.
+		dom4j 可以使用dom方式高效的解析xml.
+		pull
+	
+	!!dom4j
+		导入开发包,通常只需要导入核心包就可以了,如果在使用的过程中提示少什么包到lib目录下在导入缺少的包即可
+
+
+3.Schema -- xml的约束技术  --- 需要掌握名称空间的概念,会读简单的Schema就可以了,不需要大家自己会写
+
+	Schema是xml的约束技术,出现的目的是为了替代dtd
+	本身也是一个xml,非常方便使用xml的解析引擎进行解析
+	对名称空间有非常好的支持
+	支持更多的数据类型,并且支持用户自定义数据类型
+	可以进行语义级别的限定,限定能力大大强于dtd
+	相对于dtd不支持实体
+	相对于dtd复杂的多,学习成本比较的高
+	
+	如何在xml中引入Schema --- !!!!!名称空间的概念:全世界独一无二的名字,用来唯一的标识某个资源,通常是公司的域名,只是名字而已并不真的表示资源的位置.
+
+    
+    ~~~ Schema的语法---参照Schema的文档,了解即可
+```
+
+
+
+# tomcat
+
+```reStructuredText
+一、web概述
+    静态web资源：内容是静态的，不同的人在不同的时间来访问时都是相同的内容。HTML、CSS、JS
+    动态web资源：内容是由程序生成的，不同的人在不同的时间访问的内容很可能是不同的。
+    常见的动态web资源开发技术：
+    ASP、PHP、JSP/Servlet
+    C/S B/S之争
+    云、移动互联网、html5、物联网
+			
+二、TOMCAT服务器的安装与配置
+	1.常见服务器：WebLogic（BEA）、webSphere（IBM）、Tomcat（Apache）
+	2.Tomcat 的下载与安装
+		tomcat5要求jdk1.4以上
+        tomcat6要求jdk1.5以上
+        tomcat7要求jdk1.6以上
+        下载地址：http://tomcat.apache.org/
+        安装目录不能包含中文和空格
+        JAVA_HOME环境变量指定Tomcat运行时所要用的jdk所在的位置，注意，配到目录就行了，不用指定到bin
+		端口占用问题：netstat -ano命令查看端口占用信息
+		Catalina_Home环境变量：startup.bat启动哪个tomcat由此环境变量指定，如果不配置则启动当前tomcat，推荐不要配置此环境变量
+    3.Tomcat的目录结构
+        bin--存放tomcat启动关闭所用的批处理文件
+        conf--tomcat的配置文件，最终要的是server.xml
+        *实验:修改servlet.xml,更改tomcat运行所在的端口号，从8080改为80
+        lib--tomcat运行所需jar包
+        logs--tomcat运行时产生的日志文件
+        temp--tomcat运行时使用的临时目录，不需要我们关注
+        webapps--web应用所应存放的目录
+        work--tomcat工作目录，后面学jsp用到
+	4.虚拟主机（一个真实主机可以运行多个网站，对于浏览器来说访问这些网站感觉起来就像这些网站都运行在自己的独立主机中一样，所以，我们可以说这里的每一个网站都运行在一个虚拟主机上，一个网站就是一个虚拟主机）
+		4.1配置虚拟主机
+			在server.xml中<Engine>标签下配置<Host>,其中name属性指定虚拟主机名，appBase指定虚拟主机所在的目录
+			只在servlet.xml中配置Hosts，还不能是其他人通过虚拟主机名访问网站，还需要在DNS服务器上注册一把，我们可以使用hosts文件模拟这个过程
+			默认虚拟主机：在配置多个虚拟主机的情况下，如果浏览器使用ip地址直接访问网站时，该使用哪个虚拟主机响应呢？可以在<Engine>标签上设置defaultHost来指定
+	5.web应用（web资源不能直接交给虚拟主机，需要按照功能组织用目录成一个web应用再交给虚拟主机管理）
+        5.1web应用的目录结构
+            web应用目录
+            |
+            -html、css、js、jsp
+            |
+            -WEB-INF
+            |
+            -classes
+            |
+            -lib
+            |
+            -web.xml
+        5.2web.xml文件的作用：
+            某个web资源配置为web应用首页
+            将servlet程序映射到某个url地址上
+            为web应用配置监听器
+            为web应用配置过滤器
+            但凡涉及到对web资源进行配置，都需要通过web.xml文件
+            *实验：配置一个web应用的主页
+		5.3web应用的虚拟目录映射
+			（1）在server.xml的<Host>标签下配置<Context path="虚拟路径" docBase="真实路径">如果path=""则这个web应用就被配置为了这个虚拟主机的默认web应用
+			（2）在tomcat/conf/引擎名/虚拟主机名 之下建立一个.xml文件，其中文件名用来指定虚拟路径，如果是多级的用#代替/表示，文件中配置<Context docBase="真实目录">，如果文件名起为ROOT.xml则此web应用为默认web应用
+			（3）直接将web应用放置到虚拟主机对应的目录下，如果目录名起为ROOT则此web应用为默认web应用
+						~如果三处都配置默认web应用则server.xml > config/.../xx.xml > webapps
+		5.4杂项
+			(1)打war包：方式一：jar -cvf news.war * 方式二：直接用压缩工具压缩为zip包，该后缀为.war
+			(2)通用context和通用web.xml，所有的<Context>都继承子conf/context.xml,所有的web.xml都继承自conf/web.xml
+			(3)reloadable让tomcat自动加载更新后的web应用，当java程序修改后不用重启，服务器自动从新加载，开发时设为true方便开发，发布时设为false，提高性能
+			(4)Tomcat管理平台，可以在conf/tomcat-users.xml下配置用户名密码及权限
+```
+
+
+
 # servlet
-    设计模式:单例模式 
-        servlet是单例的多线程 
-    servlet生命周期 
-        init -- 初始化 只会执行一次 第一个请求会执行一次,之后的请求不会在执行
-        service -- do,post 多线程执行多次这个方法 类是单例的但是方法里面的局部变量可以根据多线程不一样的
-        destory -- tomcat服务器被停止时,会执行次方法
-    servlet源码分析
-        servlet的执行流程
-            1.读取web.xml文件解析servlet
-            2.使用java的反射机制初始化servlet
-            3.HttpServlet父类service方法判断请求方法
-            4.具体实现子类方法  doGet doPost...
-        service和doGet的方法的区别?
-            service判断请求方式
-            service方法调用doGet方法
-    servlet是否线程安全
-        不安全，因为servlet是单例的
+
+```reStructuredText
+设计模式:单例模式 
+    servlet是单例的多线程 
+servlet生命周期 
+    init -- 初始化 只会执行一次 第一个请求会执行一次,之后的请求不会在执行
+    service -- do,post 多线程执行多次这个方法 类是单例的但是方法里面的局部变量可以根据多线程不一样的
+    destory -- tomcat服务器被停止时,会执行次方法
+servlet源码分析
+    servlet的执行流程
+        1.读取web.xml文件解析servlet
+        2.使用java的反射机制初始化servlet
+        3.HttpServlet父类service方法判断请求方法
+        4.具体实现子类方法  doGet doPost...
+    service和doGet的方法的区别?
+        service判断请求方式
+        service方法调用doGet方法
+servlet是否线程安全
+    不安全，因为servlet是单例的
+
+一、Servlet
+    1.sun提供的一种动态web资源开发技术.本质上就是一段java小程序.可以将Servlet加入到Servlet容器中运行.
+    *Servlet容器 -- 能够运行Servlet的环境就叫做Servlet容器. --- tomcat
+    *web容器 -- 能够运行web应用的环境就叫做web容器 --- tomcat
+    
+    2.
+  		写一个类实现sun公司定义的Servlet接口（此处直接继承了默认实现类GenericServlet）
+				package cn.itheima;
+				import java.io.*;
+				import javax.servlet.*;
+				
+				public class FirstServlet extends GenericServlet{
+					public void service(ServletRequest req, ServletResponse res) throws ServletException, java.io.IOException{
+							res.getOutputStream().write("My FirstServlet!".getBytes());
+					}
+				}
+        将写好的类配置到tomcat中的web应用的web.xml中,(配置对外访问路径)
+        	<servlet>
+	        <servlet-name>FirstServlet</servlet-name>
+	        <servlet-class>cn.itheima.FirstServlet</servlet-class>
+		    </servlet>
+		    <servlet-mapping>
+		        <servlet-name>FirstServlet</servlet-name>
+		        <url-pattern>/FirstServlet</url-pattern>
+		    </servlet-mapping>
+    
+    3.Servlet的调用过程/生命周期
+    
+         1执行Servlet的构造方法
+         2执行init初始化方法
+           1，2是第一次访问的时候创建servlet程序会调用
+         3执行service方法
+           3每次访问都会调用
+         4执行destroy销毁方法
+         
+         通常情况下，servlet第一次被访问的时候在内存中创建对象，在创建后立即调用init()方法进行初始化。对于每一次请求都掉用service(req,resp)方法处理请求，此时会用Request对象封装请求信息，并用Response对象（最初是空的）代表响应消息，传入到service方法里供使用。当service方法处理完成后，返回服务器服务器根据Response中的信息组织称响应消息返回给浏览器。响应结束后servlet并不销毁，一直驻留在内存中等待下一次请求。直到服务器关闭或web应用被移除出虚拟主机，servlet对象销毁并在销毁前调用destroy()方法做一些善后的事情
+         
+    4.Servlet的继承结构
+        Servlet接口 -- 定义了Servlet应该具有的基本方法
+            |
+            |--GenericServlet --通用基本Servlet实现,对于不常用的方法在这个实现类中进行了基本的实现,对于Service设计为了抽象方法,需要子类去实现
+                    |
+                    |--HttpServlet --在通用Servlet的基础上基于HTTP协议进行了进一步的强化:实现了GenericServlet中的Service方法,判断当前的请求方式,调用对应到doXXX方法,这样一来我们开发Servlet的过程中只需继承HttpServlet ,覆盖具体要处理的doXXX方法就可以根据不同的请求方式实现不同的处理.一般不要覆盖父类中的Service方法只要覆盖doGet/doPost就可以了
+    
+     5.Servlet的细节
+        (1)一个<servlet>可以对应多个<serlvet-mapping>,从而一个Servlet可以有多个路径来访问
+        (2)url-partten中的路径可以使用*匹配符号进行配置,但是要注意,只能是/开头/*结尾或*.后缀这两种方式
+            ~由于*的引入,有可能一个路径被多个urlpartten匹配,这是优先级判断条件如下:
+                哪个最像找哪个
+                *.后缀永远匹配级最低
+        (3)<serlvet>可以配置<load-on-startup>可以用来指定启动顺序
+        (4)缺省Servlet:如果有一个Servlet的url-partten被配置为了一根正斜杠,这个Servlet就变成了缺省Serlvet.其他Servlet 都不处理的请求,由缺省Servlet来处理.
+        其实对于静态资源的访问就是由缺省Servlet来执行
+        设置404页面500页面等提示页面也是由缺省Servlet来执行
+        通常我们不会自己去配置缺省Servlet
+        (5)线程安全问题
+            由于默认情况下Servlet在内存中只有一个对象,当多个浏览器并发访问Servlet时就有可能产生线程安全问题
+            解决方案:
+                加锁--效率降低
+                SingleThreadModel接口 -- 不能真的防止线程安全问题
+                最终解决方案:在Servlet中尽量少用类变量,如果一定要用类变量则用锁来防止线程安全问题,但是要注意锁住内容应该是造成线程安全问题的核心代码,尽量的少锁主内容,减少等待时间提高servlet的响应速度
+                
+二、ServletConfig -- 代表当前Servlet在web.xml中的配置信息
+	<servlet>
+	    <servlet-name>Demo5Servlet</servlet-name>
+	    <servlet-class>cn.itheima.Demo5Servlet</servlet-class>
+	    <init-param>
+	    	<param-name>data1</param-name>
+	    	<param-value>value1</param-value>
+	    </init-param>
+	 </servlet>
+	 
+     String getServletName()  -- 获取当前Servlet在web.xml中配置的名字
+     String getInitParameter(String name) -- 获取当前Servlet指定名称的初始化参数的值
+     Enumeration getInitParameterNames()  -- 获取当前Servlet所有初始化参数的名字组成的枚举
+     ServletContext getServletContext()  -- 获取代表当前web应用的ServletContext对象
+	
+	每个Servlet对应自己的ServletConfig,所以每个Servle是不一样的,ServletConfig也是不一样的，你自己的Servlet是不能获取到别人的Servlet
+	ServletConfig可以通过Servlet中的init的方法可以拿到它,但是重写init方法是一定要super.init()调用以下,否则this.getServletConfig()得不到ServletConfig
+	还可以this.getServletConfig()得到
+	
+三、ServletContext -- 代表当前web应用
+    1.做为域对象可以在整个web应用范围内共享数据，整个web只有一个ServletContext
+        域对象：在一个可以被看见的范围内共享数据用到对象,类似于Map
+        Map: 存数据(put) 取数据(get) 删除(remove)
+        域对象：存数据(setAttribute) 取数据(getAttribute) 删除(removeAttribute)，带Attribute的
+        
+        作用范围：整个web应用范围内共享数据
+        生命周期：当服务器启动web应用加载后创建出ServletContext对象后，域产生。当web应用被移除出容器或服务器关闭，随着web应用的销毁域销毁。
+      
+       void setAttribute(String,Object);
+       Object getAttribute(String);
+       void removeAttribute(String);
+       
+       通过ServletConfig获取ServletContext
+       直接getServletContext()获取ServletContext
+     
+     2.用来获取web应用的初始化参数
+     	获取web.xml中配置的上下文参数context-param
+     		<context-param>
+				<param-name>param1</param-name>
+				<param-value>pvalue1</param-value>
+			</context-param>
+            this.getServletContext().getInitParameter("param1")
+            this.getServletContext().getInitParameterNames()
+     	获取当前的工程路径,格式:/工程路径
+     		servletContext.getContextPath()
+     		如http://localhost:30000/servlet/hello4 获取的是/servlet
+     	获取工程部署后在服务器硬盘上的绝对路径
+     		servletContext.getRealPath("/") 
+     		获取的是/home/zler/桌面/intellij_idea/Base/out/artifacts/servlet_war_exploded/
+     		其映射到IDEA代码的web目录
+     	像Map一样存取数据
+     	
+     3.实现Servlet的转发
+        
+        重定向 : 302+Location
+        请求转发 : 服务器内不进行资源流转
+        
+        *请求转发是一次请求一次响应实现资源流转.请求重定向两次请求两次响应.
+        
+      4.加载资源文件
+            在Servlet中读取资源文件时:
+                如果写相对路径和绝对路径,由于路径将会相对于程序启动的目录--在web环境下,就是tomcat启动的目录即tomcat/bin--所有找不到资源
+                如果写硬盘路径,可以找到资源,但是只要一换发布环境,这个硬盘路径很可能是错误的,同样不行.
+                为了解决这样的问题ServletContext提供了getRealPath方法,在这个方法中传入一个路径,这个方法的底层会在传入的路径前拼接当前web应用的硬盘路径从而得到当前资源的硬盘路径,这种方式即使换了发布环境,方法的底层也能得到正确的web应用的路径从而永远都是正确的资源的路径
+                 this.getServletContext().getRealPath("config.properties")
+                 this.getServletContext().getResourceAsStream("/1.properties")，给一个资源的虚拟路径返回到该资源真实路径的流
+                
+          如果在非Servlet环境下要读取资源文件时可以采用类加载器加载文件的方式读取资源
+                    Service.class.getClassLoader().getResource("../../../config.properties").getPath()
+                    classLoader.getResourceAsStream("../../1.properties")，此方法利用类加载器直接将资源加载到内存中，有更新延迟的问题，以及如果文件太大，占用内存过大
+```
+
+ 
+
+# Http协议
 
 # cookie与session的底层执行过程
+
     Cookie的执行流程
         1.创建Cookie放到response响应头中,返回给客户端
         2.客户端获取服务器创建cookie信息,保存本地
@@ -53,67 +400,7 @@
     集群之后session共享问题
     session怎么解决发布失效问题
 
-# Http协议
-    http协议:对浏览器客户端和服务端之间数据传输的格式规范
-    B/S模式的同步是请求了会立马有响应
-    B/S模式的异步是请求了不立马有响应 放到消息中间件中 等消费完了再通知给调用者
-    ajax的同步是代码还是从上往下走。   
-    ajax的异步类似多线程一条新的执行路径。默认是异步的
 
-    Http组成部分
-        HttpServletRequest
-            请求行
-                Request URL: https://blog.csdn.net/itmyhome1990/article/details/48765703
-                Request Method: GET
-                Status Code: 200 
-                Remote Address: 127.0.0.1:1080
-                Referrer Policy: origin
-            请求头    
-            请求体
-        HttpServletResponse
-            响应头
-            响应体 --重定向与转发原理
-    抓包分析
-        抓包工具
-    请求重定向
-        response.setStatus(302);response.addHeader("Location","URL");
-        快捷方式：response.sendRedirect("URL");
-    请求转发
-        request.getRequestDispatcher().forward();
-    请求包含
-        request.getRequestDispatcher().include();
-        请求包含的机制可以理解成函数调用，相当于把第二个servlet 中的代码拷到这里来执行。
-    防盗链
-        通过referer信息防盗链
-        String ref = request.getHeader("Referer");
-        String serverName = req.getServerName()
-        //ref == null 浏览器直接访问资源 ref为null
-        //if (ref == null || ref == "" || !ref.startsWith("http://localhost")) {
-        if (ref == null || ref == "" || !ref.contains(serverName)) {
-            response.sendRedirect(request.getContextPath() + "/homePage.html");
-        } else {
-            this.getServletContext().getRequestDispatcher("/WEB-INF/fengjie.html").forward(request, response);
-        }
-    
-    时间戳js图片请求后面会加上一个时间戳,防止浏览器缓存
-        304是读取浏览器缓存内容
-        200是重新请求的
-    
-    http和https的区别
-        https ssl+证书传输--非对称加密,证书加密 缺点:效率低,安全非常高
-        http 不安全 抓包工具
-
-        抓包工具作用:通过宽带连接,都可以通过抓包分析请求
-        1.笔记本上创建一个wif
-        2.手机链接wif
-        3.fiddler抓包工具可以分析请求
-        4.不要轻易链接分析
-
-        post请求 浏览器看不到提交参数 抓包可以分析到这个参数
-        移动app接口注册密码都需要加密传输
-        电商架构 要求: https，微信开发,ios自带浏览器http没有任何证书,无法访问
-    软件模拟请求postman
-    java模拟请求httpclient
 
 # 长连接和短连接
     http1.0 属于短连接
@@ -167,7 +454,7 @@
         解决用预编译,??传参
     XSS攻击 脚本注入
     CSRF(模拟请求) 开多线程给一个系统注册,一下子你的网站就数据满了(机器模拟) token+验证码解决
-
+    
     XSS提交(Web前段提交) (注入跳转的js脚本 钓鱼网站)
         过滤请求
         向表单提交js代码 执行脚本 脚本注入
@@ -490,159 +777,160 @@
             注册在方法上,单一的设置条件注册bean
         @Import({Color.class, Red.class, CustomSelector.class, CustomImportBeanDefinitionRegistrar.class}) //导入组件,id默认是全类名 com.zler.domian.Color 场景就是需要导入第三方类的时候可以用 
 
-    
-        给容器中注册组件总结
-            1.包括扫描+组件注解(@Controller/@Service/@Repository/@Component)
-            2.@Bean[导入第三包里面的组件]
-            3.@Import[快速给容器导入一个组件]
-                1.@Import(要导入到容器的组件),容器就会自动注册这个组件,id默认是全类名
-                2.ImportSelector:返回导入的组件的全类名数组(批量导入) 需要写一个类实现ImportSelector
-                3.ImportBeanDefinitionRegistrar: 手动注册bean到容器 需要写一个类实现ImportBeanDefinitionRegistrar
-            4.使用Spring提供的FactoryBean(工厂Bean): 需要写一个类实现FactoryBean 这个和第三方框架整合时,经常用到
-                getBean("colorFactoryBean")获取的是工厂返回的对象bean
-                getBean("&colorFactoryBean")获取的就是是工厂本身对象bean
 
-    Bean的生命周期      
-        容器管理bean的生命周期
-            生命周期:bean创建--初始化---销毁的过程
-            我们可以自定义初始化和销毁方法,容器在bean进行到当前生命周期的时候来调用我们自定义的初始化和销毁方法
-        整个生命周期调用方法的流程
-            构造方法(对象创建)
-                单例:在容器启动的时候创建对象
-                多例:在每次获取的时候创建对象
-            BeanPostProcessor.postProcessBeforeInitialization
-            初始化方法:
-                对象创建完成,并赋值好,调用初始化方法
-            BeanPostProcessor.postProcessAfterInitialization
-            销毁方法
-                单例:在容器关闭的时候
-                多例:容器不会管理这个bean，容器不会调用销毁方法
-        整个生命周期调用方法的流程的操作
-            1.指定初始化和销毁方法
-                通过@Bean指定init-method="" destory-method=""
-            2.通过Bean实现InitializingBean接口(定义初始化逻辑) DisposableBean接口实现销毁逻辑
-            3.可以使用JSR250
-                @PostConstruct注解用于在bean创建完成并且属性赋值完成,来执行初始化方法（用在方法上）
-                @PreDestory注解用于容器销毁bean之前通知我们进行清理工作（用在方法上）
-            4.新建一个处理器实现 BeanPostProcessor,bean的后置处理器
-                在bean初始化前后进行一些处理工作
-                postProcessBeforeInitialization:在初始化之前工作
-                postProcessAfterInitialization:在初始化之后工作
-        BeanPostProcessor在Spring底层的使用
-            bean赋值,注入其他组件,@Autowired,生命周期注解功能,@Async,...等都是XxxBeanPostProcessor的使用
-            之后在学习的过程中只要对bean的一些注解,接口实现特殊功能，看看到底有没有对应的XxxBeanPostProcessor
-
-    属性赋值
-        @Value
-            基本的数值
-                @Value("战三")
-                private String name;
-            可以写SpEl表达式, #{}
-                @Value("#{20-2}")
-                private Integer age;
-            可以 ${} 取出配置文件【properties】中的值(在运行环境变量里面的值) 可用@PropertySource配合
-                @Value("${person.nickName}")
-                private String nickName;
-        @PropertySource读取外部配置文件的k/v保存到运行的环境变量中;加载完外部的配置文件以后使用${}取出配置文件的值
-            spring容器有一个保存环境的组件,可取出来配置文件的配置信息
-        自动装配
-            自动装配：Spring利用依赖注入(DI)，完成对IOC容器中各组件的依赖关系赋值
-            1.@Autowired【是Spring定义的】
-                @Autowired 
-                    1.默认按照类型去容器找对应的组件:applicationContext.getBean(UserDao.class)
-                    2.如果找到多个相同类型的组件,再将属性的名称作为组件的id去容器中找
-                    3.使用@Qualifier指定需要装配的在组件id，而不使用属性名
-                    4.自动装配默认一定要将属性赋值好,没有就报错；
-                        可以使用@Autowired(required=false)；不是必须要装配的
-                    5.@Primary:让Spring进行自动装配的时候,默认使用首选的bean；
-                        也可以继续使用@Qualifier指定需要装配的bean的名字
-                @Qualifier 
-                    @Autowired(required=false)默认是true
-                    @Qualifier("personDao")
-                    private UserDao dao
-                @Primary
-                    @Primary
-                    @Bean("BookDao2")
-            2.Spring还支持使用@Resource(JSR250)和@Inject(JSR330)【是java规范的注解】
-                @Resource:默认是按照组件名称进行装配的；
-                    没有支持@Primary功能和@Autowired(required=false)功能
-                @Inject:
-                    需要导入javax.inject包和@Autowired的功能一样,但是required=false
-            3.@Autowired：构造器,参数,方法,属性;都是从容器中获取参数组件的值
-                可以标记在方法位置上；
-                    比如bean的setter方法上
-                    @Bean+方法参数；参数从容器中获取；默认不写@Autowired效果都是一样的,都能自动装配
-                可以标记在有参构造方法上,如果组件只有一个有参构造器,
-                    这个有参构造器的@Autowired可以省略,参数位置的组件还是可以自动从容器中获取
-                可以标记在方法的参数上
-            4.自定义组件想要使用Spring容器底层的一些组件(ApplicationContext, BeanFactory,xxx...等)
-                自定义组件实现XxxAware,在创建对象的时候,会自动调用接口规定的方法注入相关组件;
-                把Spring底层一些组件注入到自定义的Bean中
-                XxxAware:功能使用XxxProcessor后置处理器来实现的；
-                    ApplicationContextAware==>ApplicationContextAwareProcessor
-                还有 BeanNameAware，EmbeddedValueResolveWare,等等
-            5.@Profile: 指定组件在哪个环境下才能被注册到容器中,不指定,任何环境下都能注册这个组件
-                1.加了环境标识的bean，只有这个环境激活的时候才能注册到容器中。默认有一个default环境
-                2.写在配置类上只有是指定的环境的时候,整个配置类里面的所有配置才能开始生效、
-                3.没有标注环境标识的bean在,任何环境下都是加载的
-                激活方式    
-                    1.使用命令行动态参数激活 -Dspring-profiles.active=test
-                    2.代码方式
-                    //1.创建一个applicationContext
-                    AnnotationConfigApplicationContext app = new AnnotationConfigApplicationContext();
-                    //2.设置需要激活的环境
-                    app.getEnvironment().setActiveProfiles("test", "dev");
-                    //3.注册主配置类
-                    app.register(CustomConfigProp.class);
-                    //4.启动刷新容器
-                    app.refresh();
-                Spring为我们提供的可以根据当前环境,动态的激活和切换一系列组件的功能
-                开发环境,测试环境,生存环境
-                数据源:(/A)(/B)(/C)
-                @Profile("test")
-    AOP
-        1.需要导入spring-aspects包
-        2.将业务逻辑组件和切面类都加入容器,告诉Spring哪个是切面类@Aspect
-        3.在切面类上的每一个通知方法上标注通知注解,告诉Spring何时何地的运行(切入点表达式)
-        4.开启基于注解的aop模式 @EnableAspectJAutoProxy(配置类中加)，一般@Enable...都是开启什么配置的
-            前置通知(@Before)
-            后置通知(@AfterReturning)
-            异常通知(@AfterThrowing)
-            最终通知(@After)
-            绕通知(@Around)
-        例子:
-            @Aspect //告诉spring这是一个切面类
-            public class LogAspects {
-
+​    
+​        给容器中注册组件总结
+​            1.包括扫描+组件注解(@Controller/@Service/@Repository/@Component)
+​            2.@Bean[导入第三包里面的组件]
+​            3.@Import[快速给容器导入一个组件]
+​                1.@Import(要导入到容器的组件),容器就会自动注册这个组件,id默认是全类名
+​                2.ImportSelector:返回导入的组件的全类名数组(批量导入) 需要写一个类实现ImportSelector
+​                3.ImportBeanDefinitionRegistrar: 手动注册bean到容器 需要写一个类实现ImportBeanDefinitionRegistrar
+​            4.使用Spring提供的FactoryBean(工厂Bean): 需要写一个类实现FactoryBean 这个和第三方框架整合时,经常用到
+​                getBean("colorFactoryBean")获取的是工厂返回的对象bean
+​                getBean("&colorFactoryBean")获取的就是是工厂本身对象bean
+​    
+​    Bean的生命周期      
+​        容器管理bean的生命周期
+​            生命周期:bean创建--初始化---销毁的过程
+​            我们可以自定义初始化和销毁方法,容器在bean进行到当前生命周期的时候来调用我们自定义的初始化和销毁方法
+​        整个生命周期调用方法的流程
+​            构造方法(对象创建)
+​                单例:在容器启动的时候创建对象
+​                多例:在每次获取的时候创建对象
+​            BeanPostProcessor.postProcessBeforeInitialization
+​            初始化方法:
+​                对象创建完成,并赋值好,调用初始化方法
+​            BeanPostProcessor.postProcessAfterInitialization
+​            销毁方法
+​                单例:在容器关闭的时候
+​                多例:容器不会管理这个bean，容器不会调用销毁方法
+​        整个生命周期调用方法的流程的操作
+​            1.指定初始化和销毁方法
+​                通过@Bean指定init-method="" destory-method=""
+​            2.通过Bean实现InitializingBean接口(定义初始化逻辑) DisposableBean接口实现销毁逻辑
+​            3.可以使用JSR250
+​                @PostConstruct注解用于在bean创建完成并且属性赋值完成,来执行初始化方法（用在方法上）
+​                @PreDestory注解用于容器销毁bean之前通知我们进行清理工作（用在方法上）
+​            4.新建一个处理器实现 BeanPostProcessor,bean的后置处理器
+​                在bean初始化前后进行一些处理工作
+​                postProcessBeforeInitialization:在初始化之前工作
+​                postProcessAfterInitialization:在初始化之后工作
+​        BeanPostProcessor在Spring底层的使用
+​            bean赋值,注入其他组件,@Autowired,生命周期注解功能,@Async,...等都是XxxBeanPostProcessor的使用
+​            之后在学习的过程中只要对bean的一些注解,接口实现特殊功能，看看到底有没有对应的XxxBeanPostProcessor
+​    
+​    属性赋值
+​        @Value
+​            基本的数值
+​                @Value("战三")
+​                private String name;
+​            可以写SpEl表达式, #{}
+​                @Value("#{20-2}")
+​                private Integer age;
+​            可以 ${} 取出配置文件【properties】中的值(在运行环境变量里面的值) 可用@PropertySource配合
+​                @Value("${person.nickName}")
+​                private String nickName;
+​        @PropertySource读取外部配置文件的k/v保存到运行的环境变量中;加载完外部的配置文件以后使用${}取出配置文件的值
+​            spring容器有一个保存环境的组件,可取出来配置文件的配置信息
+​        自动装配
+​            自动装配：Spring利用依赖注入(DI)，完成对IOC容器中各组件的依赖关系赋值
+​            1.@Autowired【是Spring定义的】
+​                @Autowired 
+​                    1.默认按照类型去容器找对应的组件:applicationContext.getBean(UserDao.class)
+​                    2.如果找到多个相同类型的组件,再将属性的名称作为组件的id去容器中找
+​                    3.使用@Qualifier指定需要装配的在组件id，而不使用属性名
+​                    4.自动装配默认一定要将属性赋值好,没有就报错；
+​                        可以使用@Autowired(required=false)；不是必须要装配的
+​                    5.@Primary:让Spring进行自动装配的时候,默认使用首选的bean；
+​                        也可以继续使用@Qualifier指定需要装配的bean的名字
+​                @Qualifier 
+​                    @Autowired(required=false)默认是true
+​                    @Qualifier("personDao")
+​                    private UserDao dao
+​                @Primary
+​                    @Primary
+​                    @Bean("BookDao2")
+​            2.Spring还支持使用@Resource(JSR250)和@Inject(JSR330)【是java规范的注解】
+​                @Resource:默认是按照组件名称进行装配的；
+​                    没有支持@Primary功能和@Autowired(required=false)功能
+​                @Inject:
+​                    需要导入javax.inject包和@Autowired的功能一样,但是required=false
+​            3.@Autowired：构造器,参数,方法,属性;都是从容器中获取参数组件的值
+​                可以标记在方法位置上；
+​                    比如bean的setter方法上
+​                    @Bean+方法参数；参数从容器中获取；默认不写@Autowired效果都是一样的,都能自动装配
+​                可以标记在有参构造方法上,如果组件只有一个有参构造器,
+​                    这个有参构造器的@Autowired可以省略,参数位置的组件还是可以自动从容器中获取
+​                可以标记在方法的参数上
+​            4.自定义组件想要使用Spring容器底层的一些组件(ApplicationContext, BeanFactory,xxx...等)
+​                自定义组件实现XxxAware,在创建对象的时候,会自动调用接口规定的方法注入相关组件;
+​                把Spring底层一些组件注入到自定义的Bean中
+​                XxxAware:功能使用XxxProcessor后置处理器来实现的；
+​                    ApplicationContextAware==>ApplicationContextAwareProcessor
+​                还有 BeanNameAware，EmbeddedValueResolveWare,等等
+​            5.@Profile: 指定组件在哪个环境下才能被注册到容器中,不指定,任何环境下都能注册这个组件
+​                1.加了环境标识的bean，只有这个环境激活的时候才能注册到容器中。默认有一个default环境
+​                2.写在配置类上只有是指定的环境的时候,整个配置类里面的所有配置才能开始生效、
+​                3.没有标注环境标识的bean在,任何环境下都是加载的
+​                激活方式    
+​                    1.使用命令行动态参数激活 -Dspring-profiles.active=test
+​                    2.代码方式
+​                    //1.创建一个applicationContext
+​                    AnnotationConfigApplicationContext app = new AnnotationConfigApplicationContext();
+​                    //2.设置需要激活的环境
+​                    app.getEnvironment().setActiveProfiles("test", "dev");
+​                    //3.注册主配置类
+​                    app.register(CustomConfigProp.class);
+​                    //4.启动刷新容器
+​                    app.refresh();
+​                Spring为我们提供的可以根据当前环境,动态的激活和切换一系列组件的功能
+​                开发环境,测试环境,生存环境
+​                数据源:(/A)(/B)(/C)
+​                @Profile("test")
+​    AOP
+​        1.需要导入spring-aspects包
+​        2.将业务逻辑组件和切面类都加入容器,告诉Spring哪个是切面类@Aspect
+​        3.在切面类上的每一个通知方法上标注通知注解,告诉Spring何时何地的运行(切入点表达式)
+​        4.开启基于注解的aop模式 @EnableAspectJAutoProxy(配置类中加)，一般@Enable...都是开启什么配置的
+​            前置通知(@Before)
+​            后置通知(@AfterReturning)
+​            异常通知(@AfterThrowing)
+​            最终通知(@After)
+​            绕通知(@Around)
+​        例子:
+​            @Aspect //告诉spring这是一个切面类
+​            public class LogAspects {
+​    
                 //抽取公共的切点表达式
                 //1.本类引用
                 //2.其他的切面引用
                 @Pointcut("execution(  public int com.zler.aop.MathCalculator.*(..))")
                 public void pointCut(){}
-
+    
                 @Before("pointCut()")
                 public void logStart(JoinPoint joinPoint){
                     Object[] args = joinPoint.getArgs();
                     String name = joinPoint.getSignature().getName();
                     System.out.println(""+name+"运行...参数列表是:{"+ Arrays.asList(args)+"}");
                 }
-
+    
                 @After("com.zler.aop.LogAspects.pointCut()")
                 public void logEnd(JoinPoint joinPoint){
                     System.out.println(""+joinPoint.getSignature().getName()+"结束");
                 }
-
+    
                 //JoinPoint joinPoint一定出现在参数表的第一位
                 @AfterReturning(value = "pointCut()", returning = "result")
                 public void logReturn(JoinPoint joinPoint, Object result){
                     System.out.println(""+joinPoint.getSignature().getName()+"正常返回...运行结果:{"+result+"}");
                 }
-
+    
                 @AfterThrowing(value = "pointCut()", throwing = "exception")
                 public void logException(JoinPoint joinPoint, Exception exception){
                     System.out.println(""+joinPoint.getSignature().getName()+"异常...异常信息:{"+exception+"}");
                 }
-
+    
             }
         Aop原理
             看给容器中注册了什么组件,这个组件什么时候工作,这个组件的功能是什么
@@ -706,7 +994,7 @@
             原理
                 spring可以自定义监听器也可以自定义设置派发器
                 比如之后的同步派发器和异步派法器
-
+    
     web
         1.servlet3.0之后可以使用注解来配置servlet filter listener三大组件
             需要tomcat7.0以上版本
@@ -720,11 +1008,11 @@
             2、提供ServletContainerInitializer的实现类；
                 必须绑定在，META-INF/services/javax.servlet.ServletContainerInitializer
                 文件的内容就是ServletContainerInitializer实现类的全类名；
-
+    
             总结：容器在启动应用的时候，会扫描当前应用每一个jar包里面
             META-INF/services/javax.servlet.ServletContainerInitializer
             指定的实现类，启动并运行这个实现类的方法；传入感兴趣的类型；
-
+    
             ServletContainerInitializer；
             @HandlesTypes；
 
@@ -796,7 +1084,7 @@
     项目重构
         Jvm调优，垃圾回收机制，老年代，新生代(回收新生代),配置jvm参数配置
         采用微服务架构和分布式架构
-    
+
 # 消息中间件
     activemq
     生产者(web服务)-》队列(消息中间件)-》消费者

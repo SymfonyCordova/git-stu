@@ -6104,46 +6104,840 @@ Harbor私有仓库
 Router
 
 ```reStructuredText
-设置系统主机名及host文件
+1.设置系统主机名及host文件
 	hostnamectl  set-home  k8s-master01
 	hostnamectl  set-home  k8s-node01
 	hostnamectl  set-home  k8s-node02
-安装依赖包
+2.安装依赖包
 	yum install -y contrack ntpdate  ntp ipvsadm  ipset  jq  iptables curl sysstat libseccomp wget  vim net-tools git
-设置防火墙为iptables并设置空规则
+3.设置防火墙为iptables并设置空规则
 	systemctl stop firewalld  && systemctl disable  firewalld
 	yum -y install iptables-services && systemctl start iptables && systemctl enable iptables && iptables -F 
 	&& service iptables save
-关闭selinux
+4.关闭selinux
 	swapoff  -a  && sed -i '/ swp  /  s/^\(.*\)$/#\1/g' /etc/fstab
 	setenforce 0 && sed -i 's/^SELINUX=.*/SELINUX=disabled' /etc/selinux/config
+5.调整内核参数,对于K8s
+	cat > kubernetes.conf << EOF
+	net.bridge.bridge-nf-call-iptables-l
+	net.bridge.bridge-nf-call-iptables-l
+	net.ipv4.ip_forward=1
+	net.ipv4.tcp_tw_recycle=0
+	vm.swappiness=0 #禁止使用swap空间,只有当系统OCM时才允许使用它
+	vm.overcommit_memory=1 #不检查物理内存是否够用
+	vm.panic_on_ocm+0 #开启OCM
+	fs.imotify.max_user_instances=8192
+	fs.imotify.max_user_watches=1048576
+	fs.file-max=52706963
+	fs.nr_open=52706963
+	net.ipv6.conf.all.disable_ipv6=1
+	net.netfilter.nf_conntrack_max=2310720
+	EOF
+	
+	cp kubernetes.conf /etc/sysctl.d/kubernetes.conf
+	sysctl -p /etc/sysctl.d/kubernetes.conf
+6.调整系统时区
+	#设置系统时区为中国/上海
+	timedatectl set-timezone Asia/Shanghai
+	#将当前的UTC时间写入硬件时钟
+	timedatectl set-local-rtc 0
+	#重启依赖于系统时间的服务
+	systemctl restart rsyslog
+	systemctl restart crond
+7.关闭系统不需要的服务
+	systemctl stop postfix && systemctl disable postfix
+8.设置rsyslogd和systemd journald
+	mkdir /var/log/journal #持久性保存日志
+	mkdir /etc/systemd/journald.conf.d
+	cat /etc/sysytemd/journald.conf.d/99-proghet.conf << EOF
+	[Journal]
+	#持久化保存到磁盘
+	Storage=persistent
+	
+	#压缩历史日志
+	Compress=yes
+	
+	SyscIntervalSec=5m
+	RateLimitInterval=30s
+	RateLimitBurst=1000
+	
+	#最大占用空间10G
+	SystemMaxUse=10G
+	
+	#单日志文件最大 200M
+	SystemMaxFileSize=200M
+	
+	#日志保存时间2周
+	MaxRetentionSec=2week
+	
+	#不将日志转发到syslog
+	ForwardToSyslog=no
+	EOF
+
+	systemctl restart systemd-journald	
+	
+9.升级内核为4.44
+	rpm -Uvh http://www.elrepo.org/elrepo-release-7.0.3.el7.elrepo.noarch.rpm
+	# 安装完成后检查 /boot/grub2/grub.cfg中对应内核mecuetry中是否包含initrdi6配置,如果没有，在安装一次！
+	#设置开机从新内核启动
+	grub2-set-default "Centos Linux (4.4.102-1.el7.elrepo.x86_64)7(croe)"
+
+10.kube-proxy开启ipvs的前置条件
+	modprobe br_netfilter
+	
+	cat /etc/sysconfig/modules/ipvs.modules << EOF
+	#!/bin/bash
+	modprobe -- ip_vs
+	modprobe -- ip_vs_rr
+	modprobe -- ip_vs_wrr
+	modprobe -- ip_vs_sh
+	modprobe -- nf_conntrack_ipv4
+    EOF
+    
+    chmod 755 /etc/sysconfig/modules/ipvs.modules && bash /etc/sysconfig/modules/ipvs.modules && lsmod | grep -e ip_vs -e nf_conntrack_ipv4
+    
+11.安装docker
+	yum install -y yum-utils device-mapper-persistent-data lvm2
+	
+	yum-config-manager \
+		--add-repo \
+		http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+	
+	yum update -y && yum install -y docker-ce
+	
+	mkdir /etc/docker
+	
+	cat > /etc/docker/daemon << EOF
+	{
+		"exec-opts": ["native.cgroupdriver-sysytemd"],
+		"log-driver": "json-file",
+		"log-opts": {
+			"max-size":"100m"
+		}
+	}
+	EOF
+	mkdir -p /etc/systemd/system/docker.service.d
+	
+	systemctl daemon-reload && systemctl restart docker && systemctl enable docker
+
+12.安装Kubeadom(主从配置)
+	cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+	[kubernetes]
+	name=kubernetes
+	baseurl=http://mirrors.aliyun.com/kubernetes/yum/repos/kuberbetes-el7-x86_64
+	enable=1
+	gpgcheck=0
+	repo_gpgcheck=0
+	gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
+	http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+	EOF
+	
+	yum -y install kubeadm-1.15.1 kubectl-1.15.1 kubelet-1.15-1
+	sysctemctl enable kubelet_service
+    
+   	12.1初始化主节点
+   		kubeadm config print init-defaults > kubeadm-config.yaml
+   			localAPIEndpoint:
+   				advertiseAddress: 192.168.66.10
+   			kubernetsVersion：v1.15.1
+   			networking: "10.244.0.0/16"
+   			serviceSubnet: 10.96.0.0/12
+   			---
+   			apiVersion:kubeProxyConfiguration
+   			featureGates:
+   				SupportIPVSProxyMode: true
+   			mode: ipvs
+   		
+   		kubeadm init --config-kubeadm-config.yaml --experimental-upload-certs | tee kubeadm-init.log #这个使用证书高可用集群用到
+   	
+   	12.2加入主节点以及其余工作节点
+   		执行安装日志中的加入命令即可
+   		kubeadm jojin .....
+   		mkdir-p $HOME/.kube
+   		sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+   		sudo chown $(id -u):$(id -g) $HOME/.kube/config
+   		
+   		kubectl get node
+   	12.3部署网络
+   		kubectl apply -f
+   		http://raw.githubusercontent.com/cores/flannel/master/Documentation/kube-flannel.yml
+   		或
+   		wget http://raw.githubusercontent.com/cores/flannel/master/Documentation/kube-flannel.yml
+   		kubectl create -f kube-flannel.yml
+   		
+   		安装完成后 kubectl get pod -n kube-system
+   				kubectl get node
+   		将其他的节点加入进来之后
+   			kubectl get pod -n kube-system -o wide
+```
+
+### 资源清单
+
+​	1.YAML 格式
+
+```reStructuredText
+
+	缩进时不允许使用Tab键,只允许使用空格
+	缩进的空格数目不重要，只要相同层级的元素左侧对齐即可
+	#标识注释,从这个字符一直到行尾,都会被解释器忽略
+	
+	对象:键值对的集合,又称为映射/哈希/字典
+	数组:一组按次序排列的值,又称为序列(sequence)/列表(list)
+	纯量:单个的,不可再分的值
+	
+	对象类型:对象的一组键值对,使用冒号结构表示
+            name:Steve
+            age:18
+		也可以写成一个行内对象
+			hash: { name:Steve, age:18 }
+	
+	数组类型:一组连词线开头的行,构成一个数组
+            animal:
+            - Cat
+            - Dog
+		数组也可以采用行内表示法
+			animal: [cat, Dog]
+    
+    复合结构:对象和数组可以结合使用,形成复合结构
+    	languages:
+    	- Ruby
+    	- Perl
+    	- Python
+    	websites:
+    	YAML: yaml.org
+    	Ruby: ruby-lang.org
+    	Python: python.org
+    	Perl: use.perl.org
+    
+    纯量:纯量是最基本的、不可分割的值
+    	字符串 布尔值 整数 浮点数 Null
+    	时间 日期
+    	
+    	数值直接以字面量形式表示
+    		number：12.30
+    	
+    	布尔值用true和false表示
+			isSet: true
+    	
+    	null用~表示,不写也是null
+    		parent: ~
+    		parent:
+    		
+    	时间采用ISO8601格式
+    		iso8601: 2001-12-14t21:59:43.10-05:00
+    	
+    	日期采用复合iso8601格式的年、月、日、表示
+    		date: 1976-07-31
+    	
+    	Yaml允许使用两个感叹号,强制转换数据类型
+    		e: !!str 123
+    		f: !!str true
+    
+    字符串
+    	默认不需要引号
+    		str: aa
+    	如果字符串包含空格或特殊字符,需要放在引号之中
+    		str: 'aa bbbcccdd'
+    	单引号和双引号都可以使用,双引号不会对特殊字符转义
+    		s1: '内容\n字符串'
+    		s2: '内容\n字符串'
+    	单引号之中如果还有单引号,必须连续使用两个单引号转义
+    		str: 'larbor''s day'
+    	字符串可以写成多行,从第二行开始,必须有一个单空格缩进。换行符会转为空格
+    		str: 这是一段
+    		  多行
+    		  字符串
+    	多行字符串可以使用|保留换行符,也可以使用>折叠换行
+    		this: |
+    		Foo
+    		Bar
+    		
+    		that: >
+    		Foo
+    		Bar
+    	+表示保留文字块末尾的换行, -表示删除字符串末尾的换行
+    		s1: |
+    		  Foo
+    		 
+    		s2: |+
+    		  Foo
+    		
+    		
+    		s3: |-
+    		  Foo
+```
+
+
+
+2.常用字段说明
+
+​	必须存在的属性
+
+| 参数名                  | 字段类型 | 说明                                                         |
+| ----------------------- | -------- | ------------------------------------------------------------ |
+| version                 | String   | 这里是指k8s API的版本,目前基本上是v1，可以使用kubectl api-version命令查询 |
+| kind                    | String   | 这里指的是yaml文件定义的资源类型和角色,比如:Pod              |
+| metadata                | Object   | 元数据对象,固定值就写metadata                                |
+| metadata.name           | String   | 元数据对象的名字,这里由我们自己编写,比如命名Pod的名字        |
+| metadata.namespace      | String   | 元数据对象的命名空间,由我们自身定义                          |
+| Spec                    | Object   | 详细定义对象,固定值基于写Spec                                |
+| spec.containers[]       | List     | 这里是Spec对象的容器列表定义,是个列表                        |
+| spec.containers[].name  | String   | 这里定义容器的名字                                           |
+| spec.containers[].image | String   | 这里定义要用到的镜像名称                                     |
+
+​	主要对象
+
+| 参数名                                           | 字段类型 | 说明                                                         |
+| ------------------------------------------------ | -------- | ------------------------------------------------------------ |
+| spec.containers[].imagePullPolicy                | String   | 定义镜像拉取策略，有Always, Never, IfNotPresent三个值 (1)Always: 意思是每次都尝试重新拉曲镜像(2)Never:表示仅是使用本地镜像(3)IfNotPresent:如果本地有镜像就使用本地镜像,没有就拉取在线镜像。以上参个值都没设置三个值没设置的话,默认是Always |
+| spec.containers[].commad[]                       | List     | 指定容器启动命令,因为是数组可以指定多个,不指定则使用镜像打包时使用启动命令 |
+| spec.containers[].args[]                         | List     | 指定容器启动命令参数,因为是数组可以指定多个                  |
+| spec.containers[].workingDir                     | String   | 指定容器的工作目录                                           |
+| spec.containers[].volumeMounts[]                 | List     | 指定容器内部的存储卷配置                                     |
+| spec.containers[].volumeMounts[].name            | String   | 指定可以被容器挂载的存储卷的名称                             |
+| spec.containers[].volumeMounts[].mountPath       | String   | 指定可以被容器挂载的存储卷的路径                             |
+| spec.containers[].volumeMounts[].readOnly        | String   | 设置存储卷路径的读写模式,true或者false                       |
+| spec.containers[].ports[]                        | List     | 指定容器需要用到的端口列表                                   |
+| spec.containers[].ports[].name                   | String   | 指定端口名称                                                 |
+| spec.containers[].ports[].containerPort          | String   | 指定容器需要监听的端口号                                     |
+| spec.containers[].ports[].hostPort               | String   | 指定容器所在主机需要监听的端口号,默认跟上面containerPort相同,注意设置了hostPort，同一台主机无法启动该容器的相同副本(因为主机的端口号不能相同,这样会冲突) |
+| spec.containers[].ports[].protocol               | String   | 指定端口协议,支持TCP和UDP,默认值为TCP                        |
+| spec.containers[].env[]                          | List     | 指定容器运行前需设置的环境变量列表                           |
+| spec.containers[].env[].name                     | String   | 指定环境变量名称                                             |
+| spec.containers[].env[].value                    | String   | 指定环境变量值                                               |
+| spec.containers[].env[].resources                | Object   | 指定资源限制和资源请求的值(这里开始就是设置容器资源上限)     |
+| spec.containers[].env[].resources.limits         | Object   | 指定设置容器运行时资源的运行上限                             |
+| spec.containers[].env[].resources.limits.cpu     | String   | 指定CPU的限制,单位为core数,将用于docker run --cpu-shares参数(这里前面文章Pod资源限制有讲过) |
+| spec.containers[].env[].resources.limits.memory  | String   | 指定MEM内存的限制,单位为MB,、GiB                             |
+| spec.containers[].env[].resources.request        | Object   | 指定容器启动和调度时的限制设置                               |
+| spec.containers[].env[].resources.request.cpu    | String   | cpu请求,单位为core数,容器启动时初始化可用的数量              |
+| spec.containers[].env[].resources.request.memory | String   | 内存请求,单位为MIB、GiB,容器启动的初始化可用数量             |
+
+额外的参数项
+
+| 参数名                | 字段类型 | 说明                                                         |
+| --------------------- | -------- | ------------------------------------------------------------ |
+| spec.restartPolicy    | String   | 定义Pod的重启策略,可选值为Always、OnFailure，默认值为Always. 1.Always: Pod一旦终止运行,则无论容器是如何终止的,kubelet服务都将重启它。2.OnFailure: 只有Pod以非零退出码终止时,kubelet才会重启容器。如果容器正常结束(退出码为0), 则kubelet将不会重启它。3.Never: Pod终止后,kubelet将退出码报告给Master,不会重启该Pod |
+| spec.nodeSelector     | Object   | 定义Node的Label过滤标签,以key:value格式指定                  |
+| spec.imagePullSecrets | Object   | 定义pull镜像时使用secret名称,以name:secretkey格式指定        |
+| spec.hostNetwork      | Boolean  | 定义是否使用主机网络模式,默认值为false。设置true表示使用宿主机网络,不是用docker网桥,同时设置了true将无法在同一台宿主机上启动第二个副本 |
+
+kubectl explain pod
+
+kubectl explain pod.apiVersion
+
+Pod模板例子:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+    name: myapp-pod
+    labels:
+        app: myapp
+        version: v1
+spec:
+    containers:
+    - name: app
+      image: hub.zler.com/library/myapp:v1
+    - name: test
+      image: hub.zler.com/library/myapp:v1
+status:
+```
+
+kubectl create -f pod.yaml (创建pod)
+
+kubectl get pod -o wide (以详细方式获取pod)
+
+kubectl describe pod myapp-pod (以详细方式获取某个pod)
+
+kubectl  log myapp-pod -c test (查看某个pod的日志)
+
+kubectl delete pod myapp-pod (删除某个pod)
+
+kubectl delete deployment --all   (删除所有的pod)
+
+kubectl delete pod --all  (删除所有的pod)
+
+kubectl get svc (获取service，service是k8s内部DNS的域名解析)
+
+kubectl delete svc nginx-deployment
+
+### pod生命周期
+
+![49](../img/49.jpg)
+
+
+
+```reStructuredText
+pod是running状态,但是容器不一定是正常启动了
+
+容器环境初始化-》pause(启动基础容器)-》n个init C的初始化-》进入Main C (刚运行开始的时候可以执行一个命令或脚本)-》Main C 结束的时候可以执行一个命令或脚本
+
+Main C从开始到结束过程中,可以readiness，liveness进行探测，readiness和liveness在检测成功之前,pod是不可能出去read状态或running状态,只有readiness,liveness探测成功之后,pod才可以是read或running
+```
+
+
+
+init 容器模板
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+    name: myapp-pod
+    labels:
+        app: myapp
+        version: v1
+spec:
+    containers:
+    - name: myapp-container
+      image: busybox
+      command: ['sh', '-c', 'echo The app is running! && sleep 3600']
+    initContainers:
+    - name: init-myservice
+      image: busybox
+      command: ['sh', '-c', 'until nslookup myservice; do echo waitting for myservice; sleep 2; done;']
+    - name: init-mydb
+      image: busybox
+      command: ['sh', '-c', 'until nslookup mydb; do echo waitting for mydb; sleep 2; done;']
+```
+
+创建内部的dns解析service
+
+```yaml
+kind: Service
+apiVersion: v1
+metedata:
+    name: myservice
+spec:
+    ports:
+        - protocol: TCP
+        port: 80
+        targetPort: 9376
+---
+kind: Service
+apiVersion: v1
+metadata:
+    name: mydb
+spec:
+    ports:
+        - protocol: TCP
+        port: 80
+        targetPort: 9377
 ```
 
 
 
 ## k8s2
 
-1. 创建配置文件 sudo touch /etc/apt/sources.list.d/kubernetes.list
+1. 创建配置文件 
+
+   ```shell
+   sudo touch /etc/apt/sources.list.d/kubernetes.list
+   ```
+
+   
 
 2. 添加写权限
 
+   ```shell
    sudo chmod 666 /etc/apt/sources.list.d/kubernetes.list
-
+   
    再添加内容如下:
+   
+   deb http://mirrors.ustc.edu.cn/kubernetes/apt kubernetes-xenial main
+   ```
 
-   u
+   
 
 3. 更新源
 
-   sudo apt update
+   ```shell
+   sudo apt update 可能报错需要签证
+   ```
 
 4. 添加证书
 
-   sudo gpg --keyserver keyserver.ubuntu.com  --recv-keys BA07F4FB
-
+   ```shell
+   sudo gpg --keyserver keyserver.ubuntu.com  --recv-keys BA07F4FB(这个看报错的信息的后8位)
+   
    sudo gpg --export --armor BA07F4FB | sudo apt-key add - 
+   
+   再重新sudo apt update
+   ```
 
-5. 
+   
+
+5. 禁止基础设施
+
+   ```shell
+   1.禁止防火墙
+   	sudo ufw disable
+   2.关闭swap
+       sudo swapoff -a
+       sudo sed -i 's/.*swap.*/#&/' /etc/fstab
+   3.禁止selinux
+   	sudo apt install -y selinux-utils
+   	setenforce 0
+   	shutdown -r now
+   	sudo getenforce
+   ```
+
+6. 配置内核参数,将桥接的IPv4流量传递到iptables的链
+
+   创建 sudo vim /etc/sysctl.d/k8s.conf文件
+
+   添加内容如下:
+
+   ```shell
+   net.bridge.bridge-nf-call-ip6tables = 1
+   net.bridge.bridge-nf-call-iptables = 1
+   vm.swappiness = 0
+   ```
+
+   执行命令使修改生效
+
+   ```shell
+   sudo modprobe br_netfilter
+   sudo sysctl -p /etc/sysctl.d/k8s.conf
+   ```
+
+   
+
+7. 安装k8s 
+
+   注意切换到root用户 su -
+
+   ```shell
+   1.安装kubernetes目前版本v1.13.1
+       apt update && apt-get install -y kubelet=1.13.1-00 kubernetes-cni=0.6.0-00 kubeadm=1.13.1-00 kubectl=1.13.1-00
+   
+   2.设置开机年重启
+   	sudo systemctl enable kubelet && systemctl start kubelet
+   	sudo shutdown -r now
+   
+   kubelet 后端服务
+   
+   kubectl 客户端(用户使用的)
+   
+   kubeadm 客户端(权限 管理员)
+   ```
+
+8. 搭建集群
+
+   master
+
+   ```shell
+   1.修改hostname 
+   	vim /etc/hostname
+   		加入master
+   2.配置IP地址
+   	vim /etc/netplan/50-cloud-init.yaml
+   		network:
+   			ethernets:
+   				ens33:
+   					addresses: [192.168.236.177/24]
+   					dhcp4: false
+   					gateway4: 192.168.236.2
+   					nameservers:
+   						addresses: [192.168.236.2]
+   					optional: true
+   			version: 2
+   	重启ip配置
+   		netplan apply
+   3.修改hosts文件
+   	vim /etc/hosts
+   		192.168.236.177 master
+   		192.168.236.178 node1
+   		192.168.236.179 node2
+   	重启机器: shutdown -r now
+   4.配置master节点
+   	创建工作目录
+           mkdir /home/zler/working
+           cd /home/zler/working
+   	创建kubeadm.conf配置文件
+   		kubeadm config print init-defaults ClusterConfiguration > kubeadm.conf
+   	修改kubeadm.conf中的如下两项
+   		vim kubeadm.conf
+   			imageRepository: registry.cn-beijing.aliyuncs.com/imcto
+   			kubernetesVersion: v1.13.1
+   			localAPIEndpoint:
+   				advertiseAddress: 192.168.236.177
+   				bindPort: 6443
+   			networking:
+   				dnsDomain: cluster.local
+   				podSubnet: 10.244.0.0/16
+   				serviceSubnet: 10.96.0.0/12
+   	拉取k8s必备的模块镜像
+   		查看一下都需要哪些镜像文件需要拉取
+   			kubeadm config images list --config kubeadm.conf
+   		下载全部当前版本的k8s所关联的镜像
+   			kubeadm config images pull --config ./kubeadm.conf
+   	初始化kubernetes环境
+   		sudo kubeadm init --config ./kubeadm.conf
+   		初始化完成后会有如下提示:
+               mkdir -p $HOME/.kube
+               sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+               sudo chown $(id -u):$(id -g)$HOME/.kube/config
+               如果node想要加入master集群,需要执行一下命令:
+                   kubeadm jojin 192.168.236.177:6443 --token ........
+            如果报端口错误重启kubeadm reset     
+            
+      	执行如下命令
+      		mkdir -p $HOME/.kube
+      		sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      		sudo chown $(id -u):$(id -g)$HOME/.kube/config
+      	创建系统服务并自动启动
+      		sudo systemctl enable kubelet
+      		sudo systemctl start kubelet
+      	验证kubernetes启动结果
+      		kubectl get nodes
+      	部署集群内部通信flannel网络
+      		cd $HOME/working
+      		wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+      		打开这个文件找到并修改
+      			net-conf.json: 
+      				{
+      					"Network": "10.244.0.0/16", #保证kubeadm.conf的podSubnet一致
+      					"Backend": {
+      						"Type": "vxlan"
+      					}
+      				}
+      		kubectl apply -f kube-flannel.yml
+      		kubectl get nodes
+   ```
+```
+   
+node1
+   
+   ```shell
+   1.修改hostname
+   	vim /etc/hostname
+   		加入node1
+   2.配置IP地址
+   	vim /etc/netplan/50-cloud-init.yaml
+   		network:
+   			ethernets:
+   				ens33:
+   					addresses: [192.168.236.178/24]
+   					dhcp4: false
+   					gateway4: 192.168.236.2
+   					nameservers:
+   						addresses: [192.168.236.2]
+   					optional: true
+   			version: 2
+   	重启ip配置
+   		netplan apply
+   3.修改hosts文件
+   	vim /etc/hosts
+   		192.168.236.177 master
+   		192.168.236.178 node1
+   		192.168.236.179 node2
+   	重启机器: shutdown -r now
+   4.配置node1节点
+   	启动k8s服务
+           sudo systemctl enable kubelet
+           sudo systemctl start kubelet
+       将master机器的/etc/kubernetes/admin.conf传到node节点
+       	登陆master终端
+       	sudo scp /etc/kubernetes/admin.conf zler@192.168.236.178:/home/zler/
+       	sudo scp /etc/kubernetes/admin.conf zler@192.168.236.179:/home/zler/
+       登陆node1终端创建kube配置文件环境
+       	mkdir -p $HOME/.kube
+           sudo cp -i ./admin.conf $HOME/.kube/config
+           sudo chown $(id -u):$(id -g) $HOME/.kube/config
+       将node1加入master集群
+       	sudo kubeadm jojin 192.168.236.177:6443 --token ........
+       应用两个node主机分别应用flannel网络
+       	sudo scp $HOME/working/kube-flannel.yml zler@192.168.236.178:/home/zler/
+       	sudo scp $HOME/working/kube-flannel.yml zler@192.168.236.179:/home/zler/
+       	kubectl apply -f kube-flannel.yml
+```
+
+node2
+
+   ```shell
+   1.修改hostname 
+   	vim /etc/hostname
+   		加入node2
+   2.配置IP地址
+   	vim /etc/netplan/50-cloud-init.yaml
+   		network:
+   			ethernets:
+   				ens33:
+   					addresses: [192.168.236.179/24]
+   					dhcp4: false
+   					gateway4: 192.168.236.2
+   					nameservers:
+   						addresses: [192.168.236.2]
+   					optional: true
+   			version: 2
+   	重启ip配置
+   		netplan apply
+   3.修改hosts文件
+   	vim /etc/hosts
+   		192.168.236.177 master
+   		192.168.236.178 node1
+   		192.168.236.179 node2
+   	重启机器: shutdown -r now
+   4.配置node2节点
+   	启动k8s服务
+           sudo systemctl enable kubelet
+           sudo systemctl start kubelet
+       将master机器的/etc/kubernetes/admin.conf传到node节点
+       	登陆master终端
+       	sudo scp /etc/kubernetes/admin.conf zler@192.168.236.178:/home/zler/
+       	sudo scp /etc/kubernetes/admin.conf zler@192.168.236.179:/home/zler/
+       登陆node2终端创建kube配置文件环境
+       	mkdir -p $HOME/.kube
+           sudo cp -i ./admin.conf $HOME/.kube/config
+           sudo chown $(id -u):$(id -g) $HOME/.kube/config
+       将node2加入master集群
+       	sudo kubeadm jojin 192.168.236.177:6443 --token ........
+       应用两个node主机分别应用flannel网络
+           sudo scp $HOME/working/kube-flannel.yml zler@192.168.236.178:/home/zler/
+           sudo scp $HOME/working/kube-flannel.yml zler@192.168.236.179:/home/zler/
+           kubectl apply -f kube-flannel.yml
+       查看node是否已经加入到了k8s集群中
+   		kubectl get nodes	
+   ```
+
+
+
+
+
+```reStructuredText
+Your Kubernetes master has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+You can now join any number of machines by running the following on each node
+as root:
+
+  kubeadm join 172.16.248.129:6443 --token abcdef.0123456789abcdef --discovery-token-ca-cert-hash sha256:6f52f10d33affc7a4bfc3cf3dba8c0c29785b80dae5f6e37f046811d54575cec
+```
+
+
+
+应用实例
+
+1. 创建mysql实例
+   
+   创建mysql-rc.yaml
+   
+      ```yaml
+      apiVersion: v1
+      kind: ReplicationController	#副本控制器RC
+      medata:
+      	name: mysql		#RC的名称，全局唯一
+      spec:
+      	replicas: 1		#Pod副本的期待数量
+      	selector:
+      		app: mysql	#符合目标的Pod拥有此标签
+      	template:		#根据此模板创建Pod的副本(实例)
+      		metadata:
+      		    labels:
+      			  app: mysql	#Pod副本拥有的标签，对应RC的Selector
+      		spec:
+      			containers:		#Pod内容器的定义部分
+      			- name: mysql	#容器的名称
+      			  image: hub.c.163.com/library/mysql 	#容器对应的Docker image
+      			  ports:
+      			  - containerPort: 3306	#容器应用监听的端口号
+      			  env:					#注入容器的环境变量
+      			  - name: MYSQL_ROOT_PASSWORD
+      				value: "123456"
+      ```
+   
+   加载到k8s集群中
+   
+      ```shell
+      kubectl create -f mysql-rc.yaml
+      ```
+   
+   查看
+   
+      ```shell
+      kubectl get pods
+      kubectl describe pod mysql
+      ```
+   
+2. 创建tomcat集群
+   
+   创建tomcat-rc.yaml
+   
+      ```yaml
+   apiVersion: v1
+   kind: ReplicationController  #副本控制器RC
+   metadata:
+     name: myweb  #RC的名称，全局唯一
+   spec:
+     replicas: 5  #Pod副本的期待数量
+     selector:
+       app: myweb  #符合目标的Pod拥有此标签
+     template:  #根据此模板创建Pod的副本(实例)
+       metadata:
+         labels:
+           app: myweb  #Pod副本拥有的标签，对应RC的Selector
+       spec:
+         containers:  #Pod内容器的定义部分
+           - name: myweb  #容器的名称
+             image: kubeguide/tomcat-app:v1  #容器对应的Docker image
+             ports: 
+             - containerPort: 8080  #容器应用监听的端口号
+             env:  #注入容器的环境变量
+             - name: MYSQL_SERVICE_HOST
+               value: "mysql"
+             - name: MYSQL_SERVICE_PORT
+               value: "3306"
+      ```
+   
+   加载到k8s集群中
+   
+      ```shell
+      kubectl create -f tomcat-rc.yaml
+      
+      # 报错误ImagePullBackOff 可以删除 sudo kubectl delete -f tomcat-rc.yaml
+      ```
+   
+   查看
+   
+      ```shell
+      kubectl get pods
+      kubectl describe pod myweb
+      ```
+   
+      集群创建好了需要创建对外访问接口
+   
+      ​	myweb-svc.yaml
+   
+      ```yaml
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: myweb
+   spec:
+     type: NodePort
+     ports:
+       - port: 8080
+         name: myweb-svc
+         nodePort: 30001
+     selector:
+       app: myweb
+      ```
+   
+      ​	kubectl create -f myweb-svc.yaml
+   
+      ​	kubectl get service
 
 # 登陆终端
 
