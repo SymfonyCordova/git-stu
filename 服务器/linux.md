@@ -6527,6 +6527,17 @@ spec:
         targetPort: 9377
 ```
 
+探针
+
+```reStructuredText
+虽然init容器能够检测但是不能检测main容器内部的状态,所以使用k8s的探针定期诊断，kubelet调用容器实现handler有三种类型处理程序
+	ExecAction: 在容器内执行指定命令。如果命令退出时返回码为0则认为诊断成功
+	TcpSocketAction: 对指定端口上的容器的IP地址进行TCP检测。如果端口打开,则诊断被认为是成功的
+	HTTPGetAction: 对指定的端口和路径上的容器的IP地址
+```
+
+
+
 
 
 ## k8s2

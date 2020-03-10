@@ -367,6 +367,221 @@ servlet是否线程安全
 
 # Http协议
 
+```reStructuredText
+HTTP请求
+	请求行
+		GET /books/java.html HTTP/1.1
+		请求方式 请求的资源名 所遵循的协议
+		请求方式：GET、POST，
+			其中GET方式在请求资源的URL后跟“？参数名=参数值&参数名=。。。”方式传递参数，传输的数据内容最大为1K
+			其中POST方式在请求实体中传输数据
+			除了用Form表单明确用method指定用post方式提交数据以外，其他的方式都是GET提交方式
+
+	请求头
+		Accept: text/html,image/*    客户端可以接受的数据类型
+		Accept-Charset: ISO-8859-1	客户端接受数据需要使用的字符集编码
+		Accept-Encoding: gzip,compress 客户端可以接受的数据压缩格式
+		Accept-Language: en-us,zh-cn  可接受的语言环境
+		Host: www.it315.org:80 想要访问的虚拟主机名
+		If-Modified-Since: Tue, 11 Jul 2000 18:23:51 GMT 这是和缓存相关的一个头，带着缓存资源的最后获取时间
+		Referer: http://www.it315.org/index.jsp 这个头表示当前的请求来自哪个链接，这个头和防盗链的功能相关
+		User-Agent: Mozilla/4.0 (compatible; MSIE 5.5; Windows NT 5.0) 客户端的一些基本信息
+		Cookie 会在后面讲会话技术的时候单讲
+		Connection: close/Keep-Alive 指定是否继续保持连接
+		Date: Tue, 11 Jul 2000 18:23:51 GMT 当前时间
+
+	实体内容
+	
+	
+HTTP响应
+	状态行
+		HTTP/1.1 200 OK
+		格式： HTTP版本号　状态码　原因叙述<CRLF>
+		状态码：
+			200：请求处理成功
+			302：请求重定向
+			304、307：服务器通知浏览器使用缓存
+			404：资源未找到
+			500：服务器端错误
+
+	若干响应头
+		Location: http://www.it315.org/index.jsp  配合302实现请求重定向
+		Server:apache tomcat 服务器的基本信息
+		Content-Encoding: gzip 服务器发送数据时使用的压缩格式
+		Content-Length: 80 发送数据的大小
+		Content-Language: zh-cn 发送的数据使用的语言环境
+		Content-Type: text/html; charset=GB2312 当前所发送的数据的基本信息，（数据的类型，所使用的编码）
+		Last-Modified: Tue, 11 Jul 2000 18:23:51 GMT 缓存相关的头
+		Refresh: 1;url=http://www.it315.org 通知浏览器进行定时刷新，此值可以是一个数字指定多长时间以后刷新当前页面，这个数字之后也可以接一个分号后跟一个URL地址指定多长时间后刷新到哪个URL
+		Content-Disposition: attachment;filename=aaa.zip 与下载相关的头
+		Transfer-Encoding: chunked 传输类型，如果是此值是一个chunked说明当前的数据是一块一块传输的
+		Set-Cookie:SS=Q0=5Lb_nQ; path=/search 和cookie相关的头，后面课程单讲
+		ETag: W/"83794-1208174400000" 和缓存机制相关的头
+		Expires: -1 指定资源缓存的时间，如果取值为0或-1浏览就不缓存资源
+		Cache-Control: no-cache  缓存相关的头，如果为no-cache则通知浏览器不缓存
+		Pragma: no-cache   缓存相关的头，如果为no-cache则不缓存
+		以上三个头都是用来控制缓存的，是因为历史原因造成的，不同的浏览器认识不同的头，我们通常三个一起使用保证通用性。
+		Connection: close/Keep-Alive   是否保持连接
+		Date: Tue, 11 Jul 2000 18:23:51 GMT 当前时间
+	
+	实体内容
+
+MIME类型说明
+	MIME是HTTP协议中数据类型
+	常见的MIME类型:
+		超文本标记语言		.html,.html  text/html
+		普通文本		  .txt         text/plain
+		RTF文本		    .rtf		application/rtf
+		GIF图片		    .gif		image/gif
+		JPEG图片    	   .jpeg,.jpg   image/jpeg
+		au声音文件        .au          audio/basic
+		MIDI音乐文件      mid,.mid     audio/midi,audio/x-midi
+		RealAudio音乐文件 .ra,ram	   audio/x-pn-realaudio
+		MPEG文件         .mpg,.mpeg   video/mpeg
+		AVI文件    	   .avi			video/x-msvideo
+		GZIP文件         .gz          application/x-gzip
+		TAR文件          .tar         application/x-tar
+```
+
+# Request和Response
+
+```reStructuredText
+Request
+	Request代表请求对象，其中封装了对请求中具有请求行、请求头、实体内容的操作的方法
+	1.获取客户机信息
+		getRequestURL方法返回客户端发出请求完整URL
+		getRequestURI方法返回请求行中的资源名部分,在权限控制中常用
+		getQueryString 方法返回请求行中的参数部分
+		getRemoteHost 获取客户端的IP地址
+		getRemoteAddr方法返回发出请求的客户机的IP地址
+		getMethod得到客户机请求方式
+		getContextPath 获得当前web应用虚拟目录名称，特别重要！！！，工程中所有的路径请不要写死，其中的web应用名要以此方法去获得。
+
+	2.获取请求头信息
+		getHeader(name)方法 --- String ，获取指定名称的请求头的值
+		getHeaders(String name)方法 --- Enumeration<String> ，获取指定名称的请求头的值的集合，因为可能出现多个重名的请求头
+		getHeaderNames方法 --- Enumeration<String> ，获取所有请求头名称组成的集合
+		getIntHeader(name)方法  --- int ，获取int类型的请求头的值
+		getDateHeader(name)方法 --- long(日期对应毫秒) ，获取一个日期型的请求头的值，返回的是一个long值，从1970年1月1日0时开始的毫秒值
+		
+		*实验：通过referer信息防盗链
+			String ref = request.getHeader("Referer");
+			if (ref == null || ref == "" || !ref.startsWith("http://localhost")) {
+				response.sendRedirect(request.getContextPath() + "/homePage.html");
+			} else {
+				this.getServletContext().getRequestDispatcher("/WEB-INF/fengjie.html").forward(request, response);
+			}
+	3.获取请求参数
+		getParameter(name) --- String 通过name获得值
+		getParameterValues（name）  --- String[ ] 通过name获得多值 checkbox
+		getParameterNames  --- Enumeration<String> 获得所有请求参数名称组成的枚举
+		getParameterMap  --- Map<String,String[ ]> 获取所有请求参数的组成的Map集合，注意，其中的键为String，值为String[]
+		
+		获取请求参数时乱码问题：
+			浏览器发送的请求参数使用什么编码呢？当初浏览器打开网页时使用什么编码，发送就用什么编码。
+			服务器端获取到发过来的请求参数默认使用ISO8859-1进行解码操作，中文一定有乱码问题
+			对于Post方式提交的数据，可以设置request.setCharacterEncoding("UTF-8");来明确指定获取请求参数时使用编码。但是此种方式只对Post方式提交有效。而且必须要放在在doPost里面最开始的地方才生效
+			对于Get方式提交的数据，就只能手动解决乱码：String newName = new String(name.getBytes("ISO8859-1"),"gb2312");此种方法对Post方式同样有效。
+			在tomcat的server.xml中可以配置http连接器的URIEncoding可以指定服务器在获取请求参数时默认使用的编码，从而一劳永逸的决绝获取请求参数时的乱码问题。也可以指定useBodyEncodingForURI参数，令request.setCharacterEncoding也对GET方式的请求起作用，但是这俩属性都不推荐使用，因为发布环境往往不允许修改此属性。	
+			
+	4.利用请求域传递对象
+		生命周期：在service方法调用之前由服务器创建，传入service方法。整个请求结束，request生命结束。
+		作用范围：整个请求链。
+		作用：在整个请求链中共享数据，最常用的：在Servlet中处理好的数据要交给Jsp显示，此时参数就可以放置在Request域中带过去。
+		
+	5.request实现请求转发
+		request.getRequestDispatcher("/servlet/Demo17Servlet").forward(request, response)
+		
+		ServletContext可以实现请求转发，request也可以。
+		在forward之前输入到response缓冲区中的数据，如果已经被发送到了客户端，forward将失败，抛出异常
+		在forward之前输入到response缓冲区中的数据，但是还没有发送到客户端，forward可以执行，但是缓冲区将被清空，之前的数据丢失。注意丢失的只是请求体中的内容，头内容仍然有效。
+		在一个Servlet中进行多次forward也是不行的，因为第一次forward结束，response已经被提交了，没有机会再forward了
+		总之，一条原则,一次请求只能有一次响应，响应提交走后，就再没有机会输出数据给浏览器了。
+		
+	6.RequestDispatcher进行include操作
+		forward没有办法将多个servlet的输出组成一个输出，因此RequestDispatcher提供了include方法，可以将多个Servlet的输出组成一个输出返回个浏览器
+			request.getRequestDispatcher("/servlet/Demo17Servlet").include(request, response);
+			response.getWriter().write("from Demo16");
+			request.getRequestDispatcher("/servlet/Demo18Servlet").include(request, response);
+		常用在页面的固定部分单独写入一个文件，在多个页面中include进来简化代码量。
+	
+	7.请求转发的特点:
+		浏览器地址栏没有变化
+		他们是一次请求
+		他们共享Request域中的数据
+		可以转发到WEB-INF目录下
+			比如: request.getRequestDispatcher("/WEB-INF/aa.html").forward(request, response)
+		是否可以访问工程以外的资源
+			不能:比如request.getRequestDispatcher("www.baidu.com").forward(request, response)只能在转发到本地本机本项目的web服务
+			
+			
+Base标签
+	设置页面相对路径工作时参照的地址
+	<base href="http://localhost:8080/aa/bb/" />
+
+Response
+	1.Resonse的继承结构：
+			ServletResponse--HttpServletResponse
+	2.Response代表响应，于是响应消息中的 状态码、响应头、实体内容都可以由它进行操作,由此引伸出如下实验：
+	3.利用Response输出数据到客户端
+		response.getOutputStream（）.write("中文".getBytes())输出数据，这是一个字节流，是什么字节输出什么字节，而浏览器默认用平台字节码打开服务器发送的数据，如果服务器端使用了非平台码去输出字符的字节数据就需要明确的指定浏览器编码时所用的码表，以防止乱码问题。response.addHeader("Content-type","text/html;charset=gb2312")
+		response.getWriter().write(“中文”);输出数据，这是一个字符流，response会将此字符进行转码操作后输出到浏览器，这个过程默认使用ISO8859-1码表，而ISO8859-1中没有中文，于是转码过程中用?代替了中文，导致乱码问题。可以指定response在转码过程中使用的目标码表，防止乱码。response.setCharcterEncoding("gb2312");
+		其实response还提供了setContentType("text/html;charset=gb2312")方法，此方法会设置content-type响应头，通知浏览器打开的码表，同时设置response的转码用码表，从而一行代码解决乱码。
+	4.利用Response 设置 content-disposition头实现文件下载
+			设置响应头content-disposition为“attachment;filename=xxx.xxx”
+			利用流将文件读取进来，再利用Response获取响应流输出
+			如果文件名为中，一定要进行URL编码，编码所用的码表一定要是utf-8
+	5.refresh头控制定时刷新
+		设置响应头Refresh为一个数值，指定多少秒后刷新当前页面
+		设置响应头Refresh为 3;url=/Day05/index.jsp,指定多少秒后刷新到哪个页面
+		可以用来实现注册后“注册成功，3秒后跳转到主页”的功能
+		在HTML可以利用<meta http-equiv= "" content="">标签模拟响应头的功能。
+	6.利用response设置expires、Cache-Control、Pragma实现浏览器是否缓存资源，这三个头都可以实现，但是由于历史原因，不同浏览器实现不同，所以一般配合这三个头使用
+		6.1控制浏览器不要缓存（验证码图片不缓存）设置expires为0或-1设置Cache-Control为no-cache、Pragma为no-cache
+		6.2控制浏览器缓存资源。即使不明确指定浏览器也会缓存资源，这种缓存没有截至日期。当在地址栏重新输入地址时会用缓存，但是当刷新或重新开浏览器访问时会重新获得资源。
+			如果明确指定缓存时间，浏览器缓存是，会有一个截至日期，在截至日期到期之前，当在地址栏重新输入地址或重新开浏览器访问时都会用缓存，而当刷新时会重新获得资源。
+	7.Response实现请求重定向
+		7.1古老方法：response.setStatus(302);response.addHeader("Location","URL");
+		7.2快捷方式：response.sendRedirect("URL");
+	*8.输出验证码图片
+	
+	9.Response注意的内容：
+		9.1对于一次请求，Response的getOutputStream方法和getWriter方法是互斥，只能调用其一，特别注意forward后也不要违反这一规则。
+		9.2利用Response输出数据的时候，并不是直接将数据写给浏览器，而是写到了Response的缓冲区中，等到整个service方法返回后，由服务器拿出response中的信息组成HTTP响应消息返回给浏览器。
+		9.3service方法返回后，服务器会自己检查Response获取的OutputStream或者Writer是否关闭，如果没有关闭，服务器自动帮你关闭，一般情况下不要自己关闭这两个流。
+		
+
+
+URL编码
+	1.由于HTTP协议规定URL路径中只能存在ASCII码中的字符，所以如果URL中存在中文或特殊字符需要进行URL编码。
+	2.编码原理：
+		将空格转换为加号（+） 
+		对0-9,a-z,A-Z之间的字符保持不变 
+		对于所有其他的字符，用这个字符的当前字符集编码在内存中的十六进制格式表示，并在每个字节前加上一个百分号（%）。如字符“+”用%2B表示，字符“=”用%3D表示，字符“&”用%26表示，每个中文字符在内存中占两个字节，字符“中”用%D6%D0表示，字符“国”用%B9%FA表示调对于空格也可以直接使用其十六进制编码方式，即用%20表示，而不是将它转换成加号（+） 
+		说明：
+		如果确信URL串的特殊字符没有引起使用上的岐义或冲突你也可以对这些字符不进行编码，而是直接传递给服务器。例如，http://www.it315.org/dealregister.html?name=中国&password=123 
+		如果URL串中的特殊字符可能会产生岐义或冲突，则必须对这些特殊字符进行URL编码。例如，服务器会将不编码的“中+国”当作“中国”处理。还例如，当name参数值为“中&国”时，如果不对其中的“&”编码，URL字符串将有如下形式：http://www.it315.org/dealregister.html?name=中&国&password=123，应编码为：http://www.it315.org/dealregister.html?name=中%26国&password=123 
+		http://www.it315.org/example/index.html#section2可改写成http://www.it315.org/example%2Findex.html%23section2 
+	3.在java中进行URL编码和解码
+		URLencoder.encode("xxxx","utf-8");
+		URLDecoder.decode(str,"utf-8");
+
+
+请求重定向和请求转发的区别 
+	1.区别
+			RequestDispatcher.forward方法只能将请求转发给同一个WEB应用中的组件；而HttpServletResponse.sendRedirect 方法还可以重定向到同一个站点上的其他应用程序中的资源，甚至是使用绝对URL重定向到其他站点的资源。 
+			如果传递给HttpServletResponse.sendRedirect 方法的相对URL以“/”开头，它是相对于服务器的根目录；如果创建RequestDispatcher对象时指定的相对URL以“/”开头，它是相对于当前WEB应用程序的根目录。 
+			调用HttpServletResponse.sendRedirect方法重定向的访问过程结束后，浏览器地址栏中显示的URL会发生改变，由初始的URL地址变成重定向的目标URL；调用RequestDispatcher.forward 方法的请求转发过程结束后，浏览器地址栏保持初始的URL地址不变。
+			HttpServletResponse.sendRedirect方法对浏览器的请求直接作出响应，响应的结果就是告诉浏览器去重新发出对另外一个URL的访问请求；RequestDispatcher.forward方法在服务器端内部将请求转发给另外一个资源，浏览器只知道发出了请求并得到了响应结果，并不知道在服务器程序内部发生了转发行为。 
+			RequestDispatcher.forward方法的调用者与被调用者之间共享相同的request对象和response对象，它们属于同一个访问请求和响应过程；而HttpServletResponse.sendRedirect方法调用者与被调用者使用各自的request对象和response对象，它们属于两个独立的访问请求和响应过程。 
+	2.应用场景（参照图想）
+		通常情况下都用请求转发，减少服务器压力
+		当需要更新地址栏时用请求重定向，如注册成功后跳转到主页。
+		当需要刷新更新操作时用请求重定向，如购物车付款的操作。
+```
+
+
+
 # cookie与session的底层执行过程
 
     Cookie的执行流程
@@ -902,24 +1117,24 @@ servlet是否线程安全
 ​            @Aspect //告诉spring这是一个切面类
 ​            public class LogAspects {
 ​    
-                //抽取公共的切点表达式
-                //1.本类引用
-                //2.其他的切面引用
-                @Pointcut("execution(  public int com.zler.aop.MathCalculator.*(..))")
-                public void pointCut(){}
-    
-                @Before("pointCut()")
-                public void logStart(JoinPoint joinPoint){
-                    Object[] args = joinPoint.getArgs();
-                    String name = joinPoint.getSignature().getName();
-                    System.out.println(""+name+"运行...参数列表是:{"+ Arrays.asList(args)+"}");
-                }
-    
-                @After("com.zler.aop.LogAspects.pointCut()")
-                public void logEnd(JoinPoint joinPoint){
-                    System.out.println(""+joinPoint.getSignature().getName()+"结束");
-                }
-    
+​                //抽取公共的切点表达式
+​                //1.本类引用
+​                //2.其他的切面引用
+​                @Pointcut("execution(  public int com.zler.aop.MathCalculator.*(..))")
+​                public void pointCut(){}
+​    
+​                @Before("pointCut()")
+​                public void logStart(JoinPoint joinPoint){
+​                    Object[] args = joinPoint.getArgs();
+​                    String name = joinPoint.getSignature().getName();
+​                    System.out.println(""+name+"运行...参数列表是:{"+ Arrays.asList(args)+"}");
+​                }
+​    
+​                @After("com.zler.aop.LogAspects.pointCut()")
+​                public void logEnd(JoinPoint joinPoint){
+​                    System.out.println(""+joinPoint.getSignature().getName()+"结束");
+​                }
+​    
                 //JoinPoint joinPoint一定出现在参数表的第一位
                 @AfterReturning(value = "pointCut()", returning = "result")
                 public void logReturn(JoinPoint joinPoint, Object result){
