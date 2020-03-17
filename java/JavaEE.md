@@ -514,19 +514,30 @@ Request
 		是否可以访问工程以外的资源
 			不能:比如request.getRequestDispatcher("www.baidu.com").forward(request, response)只能在转发到本地本机本项目的web服务
 			
-			
+
+
 Base标签
 	设置页面相对路径工作时参照的地址
 	<base href="http://localhost:8080/aa/bb/" />
+
+
 
 Response
 	1.Resonse的继承结构：
 			ServletResponse--HttpServletResponse
 	2.Response代表响应，于是响应消息中的 状态码、响应头、实体内容都可以由它进行操作,由此引伸出如下实验：
 	3.利用Response输出数据到客户端
+		字节流 getOutputStream() 常用于下载(传递二进制数据)
+		字符流 geyWriter() 常用于回传字符串(常用)
+		两个流同时只能使用一个,否则会报错
+		
 		response.getOutputStream（）.write("中文".getBytes())输出数据，这是一个字节流，是什么字节输出什么字节，而浏览器默认用平台字节码打开服务器发送的数据，如果服务器端使用了非平台码去输出字符的字节数据就需要明确的指定浏览器编码时所用的码表，以防止乱码问题。response.addHeader("Content-type","text/html;charset=gb2312")
-		response.getWriter().write(“中文”);输出数据，这是一个字符流，response会将此字符进行转码操作后输出到浏览器，这个过程默认使用ISO8859-1码表，而ISO8859-1中没有中文，于是转码过程中用?代替了中文，导致乱码问题。可以指定response在转码过程中使用的目标码表，防止乱码。response.setCharcterEncoding("gb2312");
+		response.getWriter().write(“中文”);输出数据，这是一个字符流，response会将此字符进行转码操作后输出到浏览器，这个过程默认使用ISO8859-1码表，而ISO8859-1中没有中文，于是转码过程中用?代替了中文，导致乱码问题。可以指定response在转码过程中使用的目标码表，防止乱码。		    	 response.setCharcterEncoding("gb2312");
 		其实response还提供了setContentType("text/html;charset=gb2312")方法，此方法会设置content-type响应头，通知浏览器打开的码表，同时设置response的转码用码表，从而一行代码解决乱码。
+		
+		先设置服务器的编码response.setCharcterEncoding("UTF-8");
+		在设置响应的编码setHeader("ContentType", "text/html;charset=utf-8")
+		还可以一次性设置服务器编码和头response.setCharcterEncoding("UTF-8");
 	4.利用Response 设置 content-disposition头实现文件下载
 			设置响应头content-disposition为“attachment;filename=xxx.xxx”
 			利用流将文件读取进来，再利用Response获取响应流输出
@@ -546,9 +557,9 @@ Response
 	*8.输出验证码图片
 	
 	9.Response注意的内容：
-		9.1对于一次请求，Response的getOutputStream方法和getWriter方法是互斥，只能调用其一，特别注意forward后也不要违反这一规则。
-		9.2利用Response输出数据的时候，并不是直接将数据写给浏览器，而是写到了Response的缓冲区中，等到整个service方法返回后，由服务器拿出response中的信息组成HTTP响应消息返回给浏览器。
-		9.3service方法返回后，服务器会自己检查Response获取的OutputStream或者Writer是否关闭，如果没有关闭，服务器自动帮你关闭，一般情况下不要自己关闭这两个流。
+		9.1 对于一次请求，Response的getOutputStream方法和getWriter方法是互斥，只能调用其一，特别注意forward后也不要违反这一规则。
+		9.2 利用Response输出数据的时候，并不是直接将数据写给浏览器，而是写到了Response的缓冲区中，等到整个service方法返回后，由服务器拿出response中的信息组成HTTP响应消息返回给浏览器。
+		9.3 service方法返回后，服务器会自己检查Response获取的OutputStream或者Writer是否关闭，如果没有关闭，服务器自动帮你关闭，一般情况下不要自己关闭这两个流。
 		
 
 
@@ -578,6 +589,723 @@ URL编码
 		通常情况下都用请求转发，减少服务器压力
 		当需要更新地址栏时用请求重定向，如注册成功后跳转到主页。
 		当需要刷新更新操作时用请求重定向，如购物车付款的操作。
+```
+
+# JavaEE经典三层架构
+
+![50](/home/zler/桌面/doc/img/50.jpg)
+
+```reStructuredText
+web层
+	com.zler.web.servlet/controller
+service层
+	com.zler.service
+	com.zler.service.impl
+dao层
+	com.zler.dao
+	com.zler.dao.impl
+实体Bean对象
+	com.zler.pojo/entity/domain/bean
+测试包
+	com.zle.test/junit
+工具包
+	com.zler.utils
+异常包
+	com.zler.exception
+工厂包
+	com.zler.factory
+
+javaBean+Servlet+jsp+dom4j(XPATH)
+	*junit
+	dom4j
+	*jstl
+	beanutils
+	*debug调试模式
+	users.xml -- 模拟数据库
+	config.properties -- 主配置文件
+	
+WEB层:
+	获取请求参数,封装成为Bean对象
+	调用Service层处理业务
+	响应数据给客户端
+		请求转发
+		重定向
+Service层:
+	处理业务逻辑
+	调用Dao持久层保存数据到数据库
+Dao层:
+	Dao持久层只负责跟数据库交互
+	CRUD操作:Create Read Update Delete
+
+一、为什么：要分层
+	使软件具有结构性，便于开发、维护和管理。
+	将不同功能模块独立，在需要替换某一模块时不需要改动其他模块，方便代码的复用、替换
+二、层与层耦合的概念，利用工厂类解耦
+	在分层结构中，我们希望将各个功能
+	约束在各自的模块（层）当中的，而当属于某一层的对象、方法“入侵”到了其他层，如将web层的ServletContext对象传入service层，或service层调用XMLDao独有的方法，就会导致层与层之间的关系过于“紧密”，当需要修改某一层时不可避免的要修改其他关联的层，这和我们软件分层最初的设想-----层与层分离，一个层尽量不依赖其他层存在，当修改一层时无需修改另一层的设想是违背的。这种“入侵”造成的“紧密”关系就早做层与层之间发生的“耦合”，而去掉这种耦合性的过程就叫做层与层之间“解耦”
+	利用工厂类可以实现解耦的功能
+三、如何判断一项功能到底属于哪一层
+	某一项功能属于哪一层，往往是不能明确确定出来的，这时可以参考如下标准进行判断：
+		此项功能在业务逻辑上更贴近与哪一层,放在哪一层更能较少耦合
+		此项功能是否必须使用某一层特有的对象
+		如果放在哪一层都可以，那么放在哪一层更方便技术上的实现，及方便代码的编写和维护
+	
+四、异常的处理
+	如果一个异常抛给上一层会增加程序的耦合性，请当场解决:如将xml解析错误抛给service层，那么当换成mysqldao时，还需要修改service去掉xml解析异常的处理
+	如果上一层明确需要此异常进行代码的流转，请抛出：如当查找一个用户信息而用户找不到时，可以抛出一个用户找不到异常，明确要求上一层处理
+	如果这一层和上一层都能解决尽量在这一层解决掉
+	如果这一层不能解决，而上一层能解决抛给上一层
+	如果所有层都不能解决，则应抛出给虚拟机使线程停止，但是如果直接抛出这个异常，则还需要调用者一级一级继续往上抛出最后才能抛给虚拟机，所以还不如在出现异常的位置直接trycatch住后转换为RuntimeException抛出。：如读取配置文件出错，任何层都不能解决，转为RuntimeException抛出，停止线程。
+	
+	
+建表
+    Create Table: CREATE TABLE `t_user` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `username` varchar(20) NOT NULL,
+      `password` varchar(32) NOT NULL,
+      `email` varchar(200) DEFAULT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `username` (`username`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='user'
+新建JavaBean
+	package com.zler.bean;
+
+    public class User {
+        private Integer id;
+        private String username;
+        private String password;
+        private String email;
+
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        @Override
+        public String toString() {
+            return "User{" +
+                    "id=" + id +
+                    ", username='" + username + '\'' +
+                    ", password='" + password + '\'' +
+                    ", email='" + email + '\'' +
+                    '}';
+        }
+
+        public User() {
+        }
+
+        public User(Integer id, String username, String password, String email) {
+            this.id = id;
+            this.username = username;
+            this.password = password;
+            this.email = email;
+        }
+    }
+
+编写Dao
+	1.编写JdbcUtils
+	IDEA-》File-》Project Structure-》Libraries-》+-》Java添加一个lib
+	IDEA-》File-》Project Structure-》Moudules-》Dependencies-》+ Libraries
+	IDEA-》File-》Project Structure-》Artifacts-》选择一个-》点击Fix
+编写JdbcUtils
+	package com.zler.utils;
+
+    import com.alibaba.druid.pool.DruidDataSource;
+    import com.alibaba.druid.pool.DruidDataSourceFactory;
+
+    import java.io.InputStream;
+    import java.sql.Connection;
+    import java.util.Properties;
+
+    /**
+     * @author zler
+     * @date 2020-03-11-下午5:00
+     */
+    public class JdbcUtils {
+        private static DruidDataSource dataSource;
+
+        static {
+            try {
+                Properties properties = new Properties();
+                InputStream inputStream = JdbcUtils.class.getClassLoader().getResourceAsStream("jdbc.properties");
+                properties.load(inputStream);
+                dataSource = (DruidDataSource) DruidDataSourceFactory.createDataSource(properties);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        /**
+         *  获取数据库连接池中的连接
+         * @return 如果返回null,说明获取失败,有值就是获取失败
+         */
+        public static Connection getConnection(){
+            Connection conn = null;
+            try {
+                conn = dataSource.getConnection();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return conn;
+        }
+
+        /**
+         * 关闭连接,返回数据库连接池
+         * @param conn
+         */
+        public static void close(Connection conn){
+            if(conn != null){
+                try {
+                    conn.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    
+JdbcUtils测试
+    @Test
+    public void testJdbcUtils(){
+        for (int i = 0; i < 100; i++) {
+            Connection connection = JdbcUtils.getConnection();
+            System.out.println(connection);
+            JdbcUtils.close(connection);
+        }
+    }
+
+编写BaseDao
+	package com.zler.dao.impl;
+
+    import com.zler.utils.JdbcUtils;
+    import org.apache.commons.dbutils.QueryRunner;
+    import org.apache.commons.dbutils.handlers.BeanHandler;
+    import org.apache.commons.dbutils.handlers.BeanListHandler;
+    import org.apache.commons.dbutils.handlers.ScalarHandler;
+
+    import java.sql.Connection;
+    import java.util.List;
+
+    /**
+     * @author zler
+     * @date 2020-03-13-上午9:02
+     */
+    public abstract class BaseDao {
+        //使用DBUtils操作数据库
+        private QueryRunner queryRunner = new QueryRunner();
+
+        /**
+         * update()方法用来执行： INSERT UPDATE DELETE语句
+         * @return 如果返回-1,说明执行失败<br/>返回其他表示影响的行数
+         */
+        private int update(String sql, Object... args){
+            Connection connection = JdbcUtils.getConnection();
+            try {
+                queryRunner.update(connection, sql, args);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                JdbcUtils.close(connection);
+            }
+            return -1;
+        }
+
+        /**
+         * 查询返回一个javaBean的sql语句
+         * @param type 返回的对象类型
+         * @param sql 执行的sql语句
+         * @param args sql对应执行的参数值
+         * @param <T> 返回的类型的泛型
+         * @return
+         */
+        public <T> T queryForOne(Class<T> type, String sql, Object... args){
+            Connection connection = JdbcUtils.getConnection();
+            try {
+                return queryRunner.query(connection, sql, new BeanHandler<T>(type), args);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                JdbcUtils.close(connection);
+            }
+            return null;
+        }
+
+        /**
+         * 查询返回多个javaBean的sql语句
+         * @param type 返回的对象类型
+         * @param sql 执行的sql语句
+         * @param args sql对应执行的参数值
+         * @param <T> 返回的类型的泛型
+         * @return
+         */
+        public <T>List<T> queryForList(Class<T> type, String sql, Object... args){
+            Connection connection = JdbcUtils.getConnection();
+            try {
+                return queryRunner.query(connection, sql, new BeanListHandler<T>(type), args);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                JdbcUtils.close(connection);
+            }
+            return null;
+        }
+
+        /**
+         * 之乡返回一行以列的数据
+         * @param sql 执行的sql
+         * @param args sql对应的参数值
+         * @return
+         */
+        public Object queryForSingValue(String sql, Object... args){
+            Connection connection = JdbcUtils.getConnection();
+            try {
+                return queryRunner.query(connection,sql, new ScalarHandler(), args);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }finally {
+                JdbcUtils.close(connection);
+            }
+            return null;
+        }
+
+    }
+编写UserDao和测试
+	UserDao
+		package com.zler.dao;
+
+        import com.zler.bean.User;
+
+        /**
+         * @author zler
+         * @date 2020-03-13-下午1:29
+         */
+        public interface UserDao {
+
+            /**
+             * 根据用户名查询用户
+             * @param username 用户名
+             * @return 返回用户JavaBean,如果返回null,查不到
+             */
+            public User queryUserByUsername(String username);
+
+            /**
+             * 根据用户名和密码查询用户
+             * @param username 用户名
+             * @param password 密码
+             * @return 返回用户JavaBean,如果返回null,查不到
+             */
+            public User queryUserByUsernameAndPassword(String username, String password);
+
+            /**
+             * 保存用户信息
+             * @param user
+             * @return 返回-1 表示操作失败,其他是sql语句影响的行数
+             */
+            public int saveUser(User user);
+
+        }
+	UserDaoImpl
+		package com.zler.dao.impl;
+
+        import com.zler.bean.User;
+        import com.zler.dao.UserDao;
+
+        /**
+         * @author zler
+         * @date 2020-03-13-下午1:48
+         */
+        public class UserDaoImpl extends BaseDao implements UserDao {
+
+            @Override
+            public User queryUserByUsername(String username) {
+                String sql = "select `id`, `username`, `password`, `email` from t_user where username = ?";
+                return queryForOne(User.class, sql, username);
+            }
+
+            @Override
+            public User queryUserByUsernameAndPassword(String username, String password) {
+                String sql = "select `id`, `username`, `password`, `email` from `t_user` where username = ?  and password = ?";
+                return queryForOne(User.class, sql, username, password);
+            }
+
+            @Override
+            public int saveUser(User user) {
+                String sql = "insert into t_user(`username`, `password`, `email`) values(?,?,?)";
+                return update(sql, user.getUsername(), user.getPassword(), user.getEmail());
+            }
+        }
+	UserDaoTest
+		package com.zler.test;
+		
+        import com.zler.bean.User;
+        import com.zler.dao.UserDao;
+        import com.zler.dao.impl.UserDaoImpl;
+        import org.junit.Test;
+
+        import static org.junit.Assert.*;
+
+        /**
+         * @author zler
+         * @date 2020-03-13-下午1:59
+         */
+        public class UserDaoTest {
+            UserDao userDao = new UserDaoImpl();
+
+            @Test
+            public void queryUserByUsername() {
+
+                if(userDao.queryUserByUsername("admin1234") == null){
+                    System.out.println("用户名可用!");
+                }else{
+                    System.out.println("用户名已存在!");
+                }
+            }
+
+            @Test
+            public void queryUserByUsernameAndPassword() {
+                if(userDao.queryUserByUsernameAndPassword("admin", "admin") == null){
+                    System.out.println("用户名或密码错误,登陆失败");
+                }else{
+                    System.out.println("登陆成功");
+                }
+            }
+
+            @Test
+            public void saveUser() {
+                System.out.println(userDao.saveUser(new User(null, "wzg168", "123456", "wzg168@zler.com")));
+            }
+        }
+
+编写UserService和测试
+	UserService
+        package com.zler.service;
+
+        import com.zler.bean.User;
+
+        /**
+         * @author zler
+         * @date 2020-03-13-下午2:35
+         */
+        public interface UserService {
+            /**
+             * 注册用户
+             * @param user
+             */
+            public void registerUser(User user);
+
+            /**
+             * 登陆
+             * @param user
+             * @return
+             */
+            public User login(User user);
+
+            /**
+             * 检查用户名是否可用
+             * @param username
+             * @return 返回true表示用户名已经存在,返回false表示用户名可用
+             */
+            public boolean existsUsername(String username);
+        }
+    
+    UserServiceImpl
+        package com.zler.service.impl;
+
+        import com.zler.bean.User;
+        import com.zler.dao.UserDao;
+        import com.zler.dao.impl.UserDaoImpl;
+        import com.zler.service.UserService;
+
+        /**
+         * @author zler
+         * @date 2020-03-13-下午2:40
+         */
+        public class UserServiceImpl implements UserService {
+
+            private UserDao userDao = new UserDaoImpl();
+
+            @Override
+            public void registerUser(User user) {
+                userDao.saveUser(user);
+            }
+
+            @Override
+            public User login(User user) {
+                return userDao.queryUserByUsernameAndPassword(user.getUsername(),user.getPassword());
+            }
+
+            @Override
+            public boolean existsUsername(String username) {
+                if(userDao.queryUserByUsername(username) == null){
+                    return false;
+                }
+                return true;
+            }
+        }
+        
+    UserServiceTest
+        package com.zler.test;
+
+        import com.zler.bean.User;
+        import com.zler.service.UserService;
+        import com.zler.service.impl.UserServiceImpl;
+        import org.junit.Test;
+
+        import static org.junit.Assert.*;
+
+        /**
+         * @author zler
+         * @date 2020-03-13-下午2:43
+         */
+        public class UserServiceTest {
+
+            UserService userService = new UserServiceImpl();
+
+            @Test
+            public void registerUser() {
+                userService.registerUser(new User(null, "bbj", "666666", "bbj@zler.com"));
+            }
+
+            @Test
+            public void login() {
+                System.out.println(userService.login(new User(null, "wzg168", "123456", null)));
+            }
+
+            @Test
+            public void existsUsername() {
+                if(userService.existsUsername("wzg168ss")){
+                    System.out.println("用户名已存在");
+                }else {
+                    System.out.println("用户名可用");
+                }
+            }
+        }
+```
+
+# Jsp
+
+```reStructuredText
+   1.jsp技术
+        jsp是sun提供动态web资源开发技术。为了解决在Servlet中拼写html内容css、js内容十分不方便的问题，sun提供了这样一门技术。如果说Servlet是在java中嵌套HTML，则jsp就是在HTML中嵌套java代码,从而十分便于组织html页面
+        
+        jsp页面在第一次被访问到时会被jsp翻译引擎翻译成一个Servlet,从此对这个jsp页面的访问都是由这个Servlet执行后进行输出
+        a.jsp本质上是a_jsp继承了org.apache.jasper.runtime.HttpJspBase它继承了HttpServlet
+        
+    2.jsp语法
+        (1)JSP模版元素 :jsp页面中书写的HTML内容称作JSP的模版元素,在翻译过来的Servlet中直接被out.write()输出到浏览器页面上了
+            
+        (2)JSP表达式 <%= java表达式 %> 在翻译过来的Servlet中,计算java表达式的值后,被out输出到浏览器上
+        
+        (3)JSP脚本片断 <% 若干java语句 %> 在翻译过来的Servlet中,直接被复制粘贴到了对应的位置执行.
+            在一个JSP页面中可以有多个脚本片断，在两个或多个脚本片断之间可以嵌入文本、HTML标记和其他JSP元素
+            多个脚本片断中的代码可以相互访问，犹如将所有的代码放在一对<%%>之中的情况
+            单个脚本片断中的Java语句可以是不完整的，但是，多个脚本片断组合后的结果必须是完整的Java语句
+        (4)JSP声明  <%! 若干java语句 %> 在翻译过来的Servlet中会被放置到和Service方法同级的位置,变成了类的一个成员
+            
+        (5)JSP注释 
+         <%-- 注释的内容 --%> 被jsp注释注释掉的内容,在jsp翻译引擎将jsp翻译成Servlet的过程中会被丢弃,在翻译过来的Servlet中没有这些信息
+         <%//java注释%> java注释被当作jsp脚本片段被翻译到了Servlet中,在.java文件被翻译成.class文件的时候注释信息被丢弃
+         <!-- HTML注释 --> html注释被当作模版元素输出到了浏览器上,浏览器认识html注释不予显示
+       
+      6)JSP指令<%@ 指令名称 属性=... ...%>
+           JSP指令（directive）是为JSP引擎而设计的，它们并不直接产生任何可见输出，而只是告诉引擎如何处理JSP页面中的其余部分
+           
+      page指令
+         <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+         language:当前JSP编译后是什么语言的文件。暂时只支持java
+         contentType:表示jsp返回数据类型是什么。也是源代码中的response.setContentType()
+         pageEncoding: 表示当前jsp页面文件本身的字符集
+         import:跟java源代码一样。用于导包，导类。
+         以下属性是给out输出流使用
+         	autoFlush：设置当out输出流缓冲区满了之后,是否自动刷新缓冲区，默认为true，不需要更改
+         	buffer: 设置out的缓冲区的大小。默认是8kb,不需要改
+         errorPage: 设置当jsp页面运行时出错,自动跳转的错误页面路径
+         isErrorPage: 设置当前jsp页面是否是错误信息页面。默认是false.如果是true可以获取异常信息
+         session：设置访问当前jsp页面,是否会创建HttpSession对象。默认是true
+         extends: 
+            
+      Include指令: include指令用于引入其它JSP页面，如果使用include指令引入了其它JSP页面，那么JSP引擎将把这两个JSP翻译成一个servlet
+      只有include指令进行的包含是静态包含,其他的包含都是动态包含
+      taglib指令
+     
+     (7)JSP九大隐式对象:在翻译过来的Servlet中Service方法自动帮我们前置定义的九个对象,可以在jsp页面中直接使用
+          page
+          confing
+          application
+          response
+          request
+          session
+          out
+          exception
+          pageContext
+          
+          
+          out
+            相当于是response.getWriter得到PrintWriter
+            out和response.getWriter获取到的流不同在于,在于这个out对象本身就具有一个缓冲区.利用out写出的内容,会先缓冲在out缓冲区中,直到out缓冲区满了或者整个页面结束时out缓冲区中的内容才会被写出到response缓冲区中,最终可以带到浏览器页面进行展示
+            page指令中的
+             [buffer="none | 8kb | sizekb" ]可以用来禁用out缓冲区或设置out缓冲区的大小,默认8kb 
+             [ autoFlush="true | false"]用来设置当out缓冲区满了以后如果在写入数据时out如何处理,如果是true,则先将满了的数据写到response中后再接受新数据,如果是false,则满了再写入数据直接抛异常 
+
+            在jsp页面中需要进行数据输出时,不要自己获取response.getWriter,而是要使用out进行输出,防止即用out又用response.getWriter而导致输出顺序错乱的问题
+          
+          pageContext
+            (1)可以作为入口对象获取其他八大隐式对象的引用
+                getException方法返回exception隐式对象 
+                getPage方法返回page隐式对象
+                getRequest方法返回request隐式对象 
+                getResponse方法返回response隐式对象 
+                getServletConfig方法返回config隐式对象
+                getServletContext方法返回application隐式对象
+                getSession方法返回session隐式对象 
+                getOut方法返回out隐式对象
+            (2)域对象,四大作用域的入口,可以操作四大作用域中的域属性
+                
+                作用范围: 当前jsp页面
+                生命周期: 当对jsp页面的访问开始时,创建代表当前jsp的PageContext,当对当前jsp页面访问结束时销毁代表当前jsp的pageContext
+                作用:在当前jsp中共享数据
+                
+                    public void setAttribute(java.lang.String name,java.lang.Object value)
+                    public java.lang.Object getAttribute(java.lang.String name)
+                    public void removeAttribute(java.lang.String name)
+
+                    public void setAttribute(java.lang.String name, java.lang.Object value,int scope)
+                    public java.lang.Object getAttribute(java.lang.String name,int scope)
+                    public void removeAttribute(java.lang.String name,int scope)
+                    
+                    PageContext.APPLICATION_SCOPE
+                    PageContext.SESSION_SCOPE
+                    PageContext.REQUEST_SCOPE
+                    PageContext.PAGE_SCOPE 
+
+                    findAttribute方法 -- 搜寻四大作用域中的属性,如果找到则返回该值,如果四大作用域中都找不到则返回一个null,搜寻的顺序是从最小的域开始向最大的域开始寻找
+                    
+            (3)提供了请求转发和请求包含的快捷方法
+                pageContext.include("/index.jsp");
+  		        pageContext.forward("/index.jsp");	
+    3.零散知识
+        (1)jsp映射
+            <servlet>
+        		<servlet-name>index</servlet-name>
+        		<jsp-file>/index.jsp</jsp-file>
+        	</servlet>
+        	<servlet-mapping>
+        		<servlet-name>index</servlet-name>
+        		<url-pattern>/jsp/*</url-pattern>
+        	</servlet-mapping>
+            
+        (2)JSP最佳实践
+        
+        (3)域的总结
+            servletContext (application)
+            session (session)
+            request (request)
+            pageContext
+            
+            如果一个数据只在当前jsp页面使用,可以使用pageContext域存储
+            如果一个数据,除了在当前Servlet中使用,还要在请求转发时带到其他Servlet处理或jsp中显示,这个时候用request域
+            如果一个数据,除了现在我自己要用,过一会我自己还要用,存在session域
+            如果一个数据,除了现在我自己要用过一会其他人也要用,存在ServletContext域中
+           
+jsp的标签技术:在jsp页面中最好不要出现java代码,这时我们可以使用标签技术将java代码替换成标签来表示
+    
+1.jsp标签:sun原生提供的标签直接在jsp页面中就可以使用
+     <jsp:include> -- 实现页面包含,动态包含
+     <jsp:forward> -- 实现请求转发
+     <jsp:param> -- 配合上面的两个标签使用,在请求包含和请求转发时用来在路径后拼接一些请求参数
+2.EL表达式:最初出现的目的是用来取代jsp页面中的jsp脚本表达式.但是随着el的发展el的功能已经不限于此了
+    ${el表达式}
+    
+    (1)获取数据：
+        使用中括号的地方都可以使用点号替代,除了中括号中是数字或者中括号中包含特殊字符(-.)的情况除外
+        在中括号中如果不用双引号引起来则是变量,先找变量的值再拿变量的值使用.如果用双引号则是常量,直接使用常量的值
+    
+      ~获取常量
+        字符串/数字/布尔类型,直接写在el表达式中,el直接进行输出
+      ~获取域中的变量
+        如果el中写的是一个变量的名,则el会调用pageContext的findAttribute方法,在四大作用域中以给定的名字找对应的属性值,找到后进行输出,如果四个域中都找不到,什么都不输出
+      ~获取数组中的数据
+      ~获取集合中的数据
+      ~获取Map中的数据 
+      ~获取javabean的属性      
+    
+    (2)执行运算：
+        算数运算
+            +-*/
+        逻辑运算
+        比较运算
+       
+        三元运算符
+        empty运算符
+        
+    (3)获取常用开发对象:el中内置了11个内置对象,这些对象el内置的,不需要提前定义就可以直接在el中使用
+        !pageContext -- 有了它可以很方便的获取jsp页面中的9大隐式对象
+        
+        !pageScope -- page域中属性组成的Map
+        !requestScope -- request域中属性组成的Map
+        !sessionScope -- session域中属性组成的Map
+        !applicationScope --application域中属性组成的Map
+        
+        !param -- 所有请求参数组成的Map<String,String>
+        paramValues -- 所有请求参数组成的Map<String,String[]>
+        
+        header -- 所有请求头组成的Map<String,String>
+        headerValues -- 所有请求头组成的Map<String,String[]>
+        
+        !cookie -- 所有cookie信息组成的Map<String,Cookie>
+        
+        initParam -- 所有web应用的初始化参数组成Map
+        
+        
+            
+    (4)调用java方法: -- 不需要大家自己会写调用方法的过程,只要会调用别人写好的标签库就可以了 fn标签库
+           ~写一个类其中包含要被el调用的方法,这个方法必须是静态的方法
+           ~写一个tld文件在其中对要被调用的静态方法进行一下描述
+           ~在jsp页面中taglib指令将tld文件引入当前jsp页面,从而在jsp页面中就可以调用描述好的方法  
+
+3.JSTL:
+    <c:out> 标签用于输出一段文本内容到pageContext对象当前保存的“out”对象中。
+	<c:set>标签用于把某一个对象存在指定的域范围内，或者设置Web域中的java.util.Map类型的属性对象或JavaBean类型的属性对象的	属性。  
+	<c:remove>标签用于删除各种Web域中的属性
+	<c:catch>标签用于捕获嵌套在标签体中的内容抛出的异常，其语法格式如下：<c:catch [var="varName"]>nested actions</c:catch>
+	!!<c:if test=“”>标签可以构造简单的“if-then”结构的条件表达式 
+	!!<c:choose>标签用于指定多个条件选择的组合边界，它必须与<c:when>和<c:otherwise>标签一起使用。使用<c:choose>，<c:when>和<c:otherwise>三个标签，可以构造类似 “if-else if-else” 的复杂条件判断结构。
+	!!<c:forEach>标签用于对一个集合对象中的元素进行循环迭代操作，或者按指定的次数重复迭代执行标签体中的内容。 
+	!!<c:forTokens>用来浏览一字符串中所有的成员，其成员是由定义符号所分隔的
+	<c:param>标签  	在JSP页面进行URL的相关操作时，经常要在URL地址后面附加一些参数。<c:param>标签可以嵌套在<c:import>、<c:url>或<c:redirect>标签内，为这些标签所使用的URL地址附加参数。
+	<c:import> 标签,实现include操作
+	<c:url>标签用于在JSP页面中构造一个URL地址，其主要目的是实现URL重写。URL重写就是将会话标识号以参数形式附加在URL地址后面 
+	<c:redirect>标签用于实现请求重定向
+    
+4.自定义标签技术:
 ```
 
 
@@ -1135,81 +1863,81 @@ URL编码
 ​                    System.out.println(""+joinPoint.getSignature().getName()+"结束");
 ​                }
 ​    
-                //JoinPoint joinPoint一定出现在参数表的第一位
-                @AfterReturning(value = "pointCut()", returning = "result")
-                public void logReturn(JoinPoint joinPoint, Object result){
-                    System.out.println(""+joinPoint.getSignature().getName()+"正常返回...运行结果:{"+result+"}");
-                }
-    
-                @AfterThrowing(value = "pointCut()", throwing = "exception")
-                public void logException(JoinPoint joinPoint, Exception exception){
-                    System.out.println(""+joinPoint.getSignature().getName()+"异常...异常信息:{"+exception+"}");
-                }
-    
-            }
-        Aop原理
-            看给容器中注册了什么组件,这个组件什么时候工作,这个组件的功能是什么
-            总结：
-                1）、@EnableAspectJAutoProxy 开启AOP功能
-                2）、@EnableAspectJAutoProxy 会给容器中注册一个组件 AnnotationAwareAspectJAutoProxyCreator
-                3）、AnnotationAwareAspectJAutoProxyCreator是一个后置处理器；
-                4）、容器的创建流程：
-                    1）、registerBeanPostProcessors（）注册后置处理器；创建AnnotationAwareAspectJAutoProxyCreator对象
-                    2）、finishBeanFactoryInitialization（）初始化剩下的单实例bean
-                        1）、创建业务逻辑组件和切面组件
-                        2）、AnnotationAwareAspectJAutoProxyCreator拦截组件的创建过程
-                        3）、组件创建完之后，判断组件是否需要增强
-                            是：切面的通知方法，包装成增强器（Advisor）;给业务逻辑组件创建一个代理对象（cglib）；
-                5）、执行目标方法：
-                    1）、代理对象执行目标方法
-                    2）、CglibAopProxy.intercept()；
-                        1）、得到目标方法的拦截器链（增强器包装成拦截器MethodInterceptor）
-                        2）、利用拦截器的链式机制，依次进入每一个拦截器进行执行；
-                        3）、效果：
-                            正常执行：前置通知-》目标方法-》后置通知-》返回通知
-                            出现异常：前置通知-》目标方法-》后置通知-》异常通知
-    Spring声明式事物
-        环境搭建
-        1.导入相关依赖
-            数据源,数据驱动,Spring-jdbc模块
-        2.配置数据源,JdbcTemplate(Spring提供简化数据库操作的工具)操作数据
-        3.给方法上标注@Transactional 表示当前方法是一个事物方法
-        4.@EnableTransactionManagement 开启基于注解的事物管理功能
-        5.配置事物管理器来管理事物
-            @Bean
-            public PlatformTransactionManager transactionManager()
-        原理
-            1.@EnableTransactionManagement
-                利用TransactionManagementConfigurationSelector给容器导入组件
-                导入两个组件
-                    AutoProxyRegistrar，ProxyTransactionManagementConfiguration
-    扩展原理
-        BeanPostProcessor:bean的后置处理器,bean创建对象初始化前后进行拦截工作
-        1.BeanFactoryPostProcessor:beanFactory的后置处理器
-            在BeanFactory标准初始化之后调用,所有的bean定义已经保存加载到beanFactory，但是bean的实例还没创建
-        2.BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProcessor
-            postProcessBeanDefinitionRegistry()；
-            在所有bean定义信息将要被加载,bean实例还未创建的时候,进行执行
-            
-            优先于BeanFactoryPostProcessor执行,
-            利用BeanDefinitionRegistryPostProcessor给容器中再额外添加一些组件
-        3.ApplicationListener:监听容器发布的事件.事件驱动模型开发
-            public interface ApplicationListener<E extends ApplicationEvent> extends EventListener
-                监听ApplicationEvent及其下面的子事件:
-            自己发布事件步骤:
-                1.写一个监听器(ApplicationListener实现类)监听某个事件(ApplicationEvent及其子类)
-                    还有可以使用@EventListener来实现监听,这样比实现接口方便点
-                2.把监听器加入到容器
-                3.只要容器有相关事件的发布,我们就能监听到这个事件
-                    ContextRefreshedEvent：容器刷新完成(所有bean都完全创建)会发布事件
-                    ContextClosedEvent：关闭容器会发布这个事件
-                4.发布一个自己的一个事件:
-                    applicationContext.publishEvent(new ApplicationEvent(new String("我发布的事件")) {
-                    });
-            原理
-                spring可以自定义监听器也可以自定义设置派发器
-                比如之后的同步派发器和异步派法器
-    
+​                //JoinPoint joinPoint一定出现在参数表的第一位
+​                @AfterReturning(value = "pointCut()", returning = "result")
+​                public void logReturn(JoinPoint joinPoint, Object result){
+​                    System.out.println(""+joinPoint.getSignature().getName()+"正常返回...运行结果:{"+result+"}");
+​                }
+​    
+​                @AfterThrowing(value = "pointCut()", throwing = "exception")
+​                public void logException(JoinPoint joinPoint, Exception exception){
+​                    System.out.println(""+joinPoint.getSignature().getName()+"异常...异常信息:{"+exception+"}");
+​                }
+​    
+​            }
+​        Aop原理
+​            看给容器中注册了什么组件,这个组件什么时候工作,这个组件的功能是什么
+​            总结：
+​                1）、@EnableAspectJAutoProxy 开启AOP功能
+​                2）、@EnableAspectJAutoProxy 会给容器中注册一个组件 AnnotationAwareAspectJAutoProxyCreator
+​                3）、AnnotationAwareAspectJAutoProxyCreator是一个后置处理器；
+​                4）、容器的创建流程：
+​                    1）、registerBeanPostProcessors（）注册后置处理器；创建AnnotationAwareAspectJAutoProxyCreator对象
+​                    2）、finishBeanFactoryInitialization（）初始化剩下的单实例bean
+​                        1）、创建业务逻辑组件和切面组件
+​                        2）、AnnotationAwareAspectJAutoProxyCreator拦截组件的创建过程
+​                        3）、组件创建完之后，判断组件是否需要增强
+​                            是：切面的通知方法，包装成增强器（Advisor）;给业务逻辑组件创建一个代理对象（cglib）；
+​                5）、执行目标方法：
+​                    1）、代理对象执行目标方法
+​                    2）、CglibAopProxy.intercept()；
+​                        1）、得到目标方法的拦截器链（增强器包装成拦截器MethodInterceptor）
+​                        2）、利用拦截器的链式机制，依次进入每一个拦截器进行执行；
+​                        3）、效果：
+​                            正常执行：前置通知-》目标方法-》后置通知-》返回通知
+​                            出现异常：前置通知-》目标方法-》后置通知-》异常通知
+​    Spring声明式事物
+​        环境搭建
+​        1.导入相关依赖
+​            数据源,数据驱动,Spring-jdbc模块
+​        2.配置数据源,JdbcTemplate(Spring提供简化数据库操作的工具)操作数据
+​        3.给方法上标注@Transactional 表示当前方法是一个事物方法
+​        4.@EnableTransactionManagement 开启基于注解的事物管理功能
+​        5.配置事物管理器来管理事物
+​            @Bean
+​            public PlatformTransactionManager transactionManager()
+​        原理
+​            1.@EnableTransactionManagement
+​                利用TransactionManagementConfigurationSelector给容器导入组件
+​                导入两个组件
+​                    AutoProxyRegistrar，ProxyTransactionManagementConfiguration
+​    扩展原理
+​        BeanPostProcessor:bean的后置处理器,bean创建对象初始化前后进行拦截工作
+​        1.BeanFactoryPostProcessor:beanFactory的后置处理器
+​            在BeanFactory标准初始化之后调用,所有的bean定义已经保存加载到beanFactory，但是bean的实例还没创建
+​        2.BeanDefinitionRegistryPostProcessor extends BeanFactoryPostProcessor
+​            postProcessBeanDefinitionRegistry()；
+​            在所有bean定义信息将要被加载,bean实例还未创建的时候,进行执行
+​            
+​            优先于BeanFactoryPostProcessor执行,
+​            利用BeanDefinitionRegistryPostProcessor给容器中再额外添加一些组件
+​        3.ApplicationListener:监听容器发布的事件.事件驱动模型开发
+​            public interface ApplicationListener<E extends ApplicationEvent> extends EventListener
+​                监听ApplicationEvent及其下面的子事件:
+​            自己发布事件步骤:
+​                1.写一个监听器(ApplicationListener实现类)监听某个事件(ApplicationEvent及其子类)
+​                    还有可以使用@EventListener来实现监听,这样比实现接口方便点
+​                2.把监听器加入到容器
+​                3.只要容器有相关事件的发布,我们就能监听到这个事件
+​                    ContextRefreshedEvent：容器刷新完成(所有bean都完全创建)会发布事件
+​                    ContextClosedEvent：关闭容器会发布这个事件
+​                4.发布一个自己的一个事件:
+​                    applicationContext.publishEvent(new ApplicationEvent(new String("我发布的事件")) {
+​                    });
+​            原理
+​                spring可以自定义监听器也可以自定义设置派发器
+​                比如之后的同步派发器和异步派法器
+​    
     web
         1.servlet3.0之后可以使用注解来配置servlet filter listener三大组件
             需要tomcat7.0以上版本

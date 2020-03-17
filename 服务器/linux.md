@@ -6461,7 +6461,9 @@ kubectl delete pod --all  (删除所有的pod)
 
 kubectl get svc (获取service，service是k8s内部DNS的域名解析)
 
-kubectl delete svc nginx-deployment
+kubectl delete svc nginx-deployment(删除某一个svc)
+
+kubectl exec -ti readiness-httpget-pod -c xxx  /bin/bash(进入某个pod的里面的某个容器,如果就一个可以不指定-c)
 
 ### pod生命周期
 
@@ -6534,9 +6536,143 @@ spec:
 	ExecAction: 在容器内执行指定命令。如果命令退出时返回码为0则认为诊断成功
 	TcpSocketAction: 对指定端口上的容器的IP地址进行TCP检测。如果端口打开,则诊断被认为是成功的
 	HTTPGetAction: 对指定的端口和路径上的容器的IP地址
+
+livenessProbe: 指示容器是否正在运行。如果存活探测失败，则kubelet会杀死容器，并且容器将受其重启策略的影响。如果容器不提供存活探针,则默认状态为Success
+readinessProbe: 示容器是否准备好服务请求。如果就绪探测失败,端点控制将从与Pod匹配的所有Service的端点中删除该Pod的IP地址。初始延迟之前的就绪状态默认为Failure。如果容器不提供就绪探针,则默认状态为Success
 ```
 
+探针---就绪检测
 
+readinessProbe
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+    name: readiness-httpget-pod
+    namespace: default
+spec:
+    containers:
+    - name: readiness-httpget-container
+      image: myapp:v1
+      imagePullPolicy: IfNotPresent
+      readinessProbe:
+          httpGet:
+              port: 80
+              path: /index1.html
+          initialDelaySeconds: 1
+          periodSeconds: 3
+```
+
+探针---存活检测
+
+livenessProbe-exec
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+    name: liveness-exec-pod
+    namespace: default
+spec:
+    containers:
+    - name: liveness-exec-container
+      image: busybox:laster
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh", "-c", "touch /tmp/live ; sleep 60; rm -rf /tmp/live; sleep 3600"]
+      livenessProbe:
+          exec:
+              command: ["test", "-e", "/tmp/live"]
+          initialDelaySeconds: 1
+          periodSecond: 3
+```
+
+livenessProbe-httpget
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+    name: liveness-httpget-pod
+    namespace: default
+spec:
+    containers:
+    - name: liveness-httpget-container
+      image: myapp:v1
+      imagePullPolicy: IfNotPresent
+      ports:
+      - name: http
+        containerPort: 80
+      livenessProbe:
+          httpGet:
+              port: 80
+              path: /index.html
+          initialDelaySeconds: 1
+          periodSecond: 3
+          timeoutSeconds: 10
+```
+
+livenessProbe-tcp
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+    name: probe-pod
+spec:
+    containers:
+    - name: nginx
+      image: nginx
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          tcpSocket:
+              port: 8080
+```
+
+启动退出动作
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+    name: lifecycle-demo
+spec:
+    containers:
+    - name: lifecycle-demo-container
+      image: nginx
+      lifecycle: IfNotPresent
+          postStart: 
+              exec:
+                  command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+          preStop:
+              exec:
+                  command: ["/bin/sh", "-c", "echo Hello from the poststop handler > /usr/share/message"]
+```
+
+### 控制器
+
+```reStructuredText
+ReplicationController & ReplicaSet & Deployment
+
+	>HPA(HorizontalPodAutoScaling)
+
+	容器交给Pod进行组合成一个整体共用网络和卷,pod交给controller自动管理，官方已经将ReplicationController替换成replicationSet,将 replicationSet交给 deployment自动管理，
+deployment可以回滚，新增。
+
+	RS如何根据资源进行水平扩展的增加和减少POD，HPA可以做到
+
+StatefulSet
+	稳定的持久化存储
+	稳定的网络标志
+	有序部署，有序扩展，即POD启动是有顺序的
+	有序收缩，有序删除		
+
+DaemonSet：确保全部(或者一些)Node上运行一个Pod的副本。
+
+Job,Cronjob：定时任务
+```
 
 
 
