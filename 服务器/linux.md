@@ -6674,7 +6674,38 @@ DaemonSet：确保全部(或者一些)Node上运行一个Pod的副本。
 Job,Cronjob：定时任务
 ```
 
+#### RS与RC与Deployment关联
 
+RC用来确保容器应用的副本数始终保持在用户定义的副本数。即如果容器异常退出,会自动创建新的Pod来替代;而如果异常多出来的容器也会自动回收。
+
+Kubernetes官方建议使用RS(ReplicaSet)替代RC(ReplicationController)进行部署,RS跟RC没有本质的不同,只是名字不一样,并且RS支持集合氏的selector
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: ReplicaSet
+metadata:
+    name: frontend
+spec:
+    replicas: 3 # 3个副本
+    selector: #标签
+        matchLabels: 
+            tier: frontend 
+    template: #模板
+        metadata:
+            labels:
+                tier: frontend
+        spec:
+            containers:
+            - name: php-redis
+              image: grc.io/google_samples/gb-frontend:v3
+              env:
+              - name: GET_HOSTS_FROM
+                value: dns
+              ports:
+              - containerPort: 80
+```
+
+命令:
 
 ## k8s2
 
