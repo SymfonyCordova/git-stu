@@ -1113,199 +1113,275 @@ JdbcUtils测试
 # Jsp
 
 ```reStructuredText
-   1.jsp技术
-        jsp是sun提供动态web资源开发技术。为了解决在Servlet中拼写html内容css、js内容十分不方便的问题，sun提供了这样一门技术。如果说Servlet是在java中嵌套HTML，则jsp就是在HTML中嵌套java代码,从而十分便于组织html页面
+jsp技术
+	jsp是sun提供动态web资源开发技术。为了解决在Servlet中拼写html内容css、js内容十分不方便的问题，sun提供了这样一门技术。如果说Servlet是在java中嵌套HTML，则jsp就是在HTML中嵌套java代码,从而十分便于组织html页面
+	jsp页面在第一次被访问到时会被jsp翻译引擎翻译成一个Servlet,从此对这个jsp页面的访问都是由这个Servlet执行后进行输出
+	例如: a.jsp本质上是a_jsp继承了org.apache.jasper.runtime.HttpJspBase它继承了HttpServlet
         
-        jsp页面在第一次被访问到时会被jsp翻译引擎翻译成一个Servlet,从此对这个jsp页面的访问都是由这个Servlet执行后进行输出
-        a.jsp本质上是a_jsp继承了org.apache.jasper.runtime.HttpJspBase它继承了HttpServlet
-        
-    2.jsp语法
-        (1)JSP模版元素 :jsp页面中书写的HTML内容称作JSP的模版元素,在翻译过来的Servlet中直接被out.write()输出到浏览器页面上了
-            
-        (2)JSP表达式 <%= java表达式 %> 在翻译过来的Servlet中,计算java表达式的值后,被out输出到浏览器上
-        
-        (3)JSP脚本片断 <% 若干java语句 %> 在翻译过来的Servlet中,直接被复制粘贴到了对应的位置执行.
-            在一个JSP页面中可以有多个脚本片断，在两个或多个脚本片断之间可以嵌入文本、HTML标记和其他JSP元素
-            多个脚本片断中的代码可以相互访问，犹如将所有的代码放在一对<%%>之中的情况
-            单个脚本片断中的Java语句可以是不完整的，但是，多个脚本片断组合后的结果必须是完整的Java语句
-        (4)JSP声明  <%! 若干java语句 %> 在翻译过来的Servlet中会被放置到和Service方法同级的位置,变成了类的一个成员
-            
-        (5)JSP注释 
-         <%-- 注释的内容 --%> 被jsp注释注释掉的内容,在jsp翻译引擎将jsp翻译成Servlet的过程中会被丢弃,在翻译过来的Servlet中没有这些信息
-         <%//java注释%> java注释被当作jsp脚本片段被翻译到了Servlet中,在.java文件被翻译成.class文件的时候注释信息被丢弃
-         <!-- HTML注释 --> html注释被当作模版元素输出到了浏览器上,浏览器认识html注释不予显示
-       
-      6)JSP指令<%@ 指令名称 属性=... ...%>
-           JSP指令（directive）是为JSP引擎而设计的，它们并不直接产生任何可见输出，而只是告诉引擎如何处理JSP页面中的其余部分
-           
-      page指令
-         <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-         language:当前JSP编译后是什么语言的文件。暂时只支持java
-         contentType:表示jsp返回数据类型是什么。也是源代码中的response.setContentType()
-         pageEncoding: 表示当前jsp页面文件本身的字符集
-         import:跟java源代码一样。用于导包，导类。
-         以下属性是给out输出流使用
-         	autoFlush：设置当out输出流缓冲区满了之后,是否自动刷新缓冲区，默认为true，不需要更改
-         	buffer: 设置out的缓冲区的大小。默认是8kb,不需要改
-         errorPage: 设置当jsp页面运行时出错,自动跳转的错误页面路径
-         isErrorPage: 设置当前jsp页面是否是错误信息页面。默认是false.如果是true可以获取异常信息
-         session：设置访问当前jsp页面,是否会创建HttpSession对象。默认是true
-         extends: 
-            
+jsp语法
+	JSP模版元素 :jsp页面中书写的HTML内容称作JSP的模版元素,在翻译过来的Servlet中直接被out.write()输出到浏览器页面上了
+
+jsp头部的page指令
+	<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+	language:当前JSP编译后是什么语言的文件。暂时只支持java
+    contentType:表示jsp返回数据类型是什么。也是源代码中的response.setContentType()
+    pageEncoding: 表示当前jsp页面文件本身的字符集
+    import:跟java源代码一样。用于导包，导类。
+    以下属性是给out输出流使用
+    autoFlush：设置当out输出流缓冲区满了之后,是否自动刷新缓冲区，默认为true，不需要更改
+    buffer: 设置out的缓冲区的大小。默认是8kb,不需要改
+    errorPage: 设置当jsp页面运行时出错,自动跳转的错误页面路径
+    isErrorPage: 设置当前jsp页面是否是错误信息页面。默认是false.如果是true可以获取异常信息
+    session：设置访问当前jsp页面,是否会创建HttpSession对象。默认是true
+    extends: 设置jsp翻译过来的java类默认继承谁
+    6)JSP指令<%@ 指令名称 属性=... ...%>
+           JSP指令（directive）是为JSP引擎而设计的，它们并不直接产生任何可见输出，而只是告诉引擎如何处理JSP页面中的其余部分        
       Include指令: include指令用于引入其它JSP页面，如果使用include指令引入了其它JSP页面，那么JSP引擎将把这两个JSP翻译成一个servlet
       只有include指令进行的包含是静态包含,其他的包含都是动态包含
       taglib指令
-     
-     (7)JSP九大隐式对象:在翻译过来的Servlet中Service方法自动帮我们前置定义的九个对象,可以在jsp页面中直接使用
-          page
-          confing
-          application
-          response
-          request
-          session
-          out
-          exception
-          pageContext
-          
-          
-          out
-            相当于是response.getWriter得到PrintWriter
-            out和response.getWriter获取到的流不同在于,在于这个out对象本身就具有一个缓冲区.利用out写出的内容,会先缓冲在out缓冲区中,直到out缓冲区满了或者整个页面结束时out缓冲区中的内容才会被写出到response缓冲区中,最终可以带到浏览器页面进行展示
-            page指令中的
-             [buffer="none | 8kb | sizekb" ]可以用来禁用out缓冲区或设置out缓冲区的大小,默认8kb 
-             [ autoFlush="true | false"]用来设置当out缓冲区满了以后如果在写入数据时out如何处理,如果是true,则先将满了的数据写到response中后再接受新数据,如果是false,则满了再写入数据直接抛异常 
 
-            在jsp页面中需要进行数据输出时,不要自己获取response.getWriter,而是要使用out进行输出,防止即用out又用response.getWriter而导致输出顺序错乱的问题
-          
-          pageContext
-            (1)可以作为入口对象获取其他八大隐式对象的引用
-                getException方法返回exception隐式对象 
-                getPage方法返回page隐式对象
-                getRequest方法返回request隐式对象 
-                getResponse方法返回response隐式对象 
-                getServletConfig方法返回config隐式对象
-                getServletContext方法返回application隐式对象
-                getSession方法返回session隐式对象 
-                getOut方法返回out隐式对象
-            (2)域对象,四大作用域的入口,可以操作四大作用域中的域属性
-                
-                作用范围: 当前jsp页面
-                生命周期: 当对jsp页面的访问开始时,创建代表当前jsp的PageContext,当对当前jsp页面访问结束时销毁代表当前jsp的pageContext
-                作用:在当前jsp中共享数据
-                
-                    public void setAttribute(java.lang.String name,java.lang.Object value)
-                    public java.lang.Object getAttribute(java.lang.String name)
-                    public void removeAttribute(java.lang.String name)
+声明脚本(极少使用)
+	格式: <%! 声明的java代码 %> 
+	作用:可以给jsp翻译过来的在Servlet中会被放置到和Service方法同级的位置,变成了类的一个成员
 
-                    public void setAttribute(java.lang.String name, java.lang.Object value,int scope)
-                    public java.lang.Object getAttribute(java.lang.String name,int scope)
-                    public void removeAttribute(java.lang.String name,int scope)
-                    
-                    PageContext.APPLICATION_SCOPE
-                    PageContext.SESSION_SCOPE
-                    PageContext.REQUEST_SCOPE
-                    PageContext.PAGE_SCOPE 
+表达式脚本(常用)
+	格式: <%=表达式%> 
+	作用:jsp页面上输出数据,在翻译过来的Servlet中,计算java表达式的值后,被out输出到浏览器上
+	特点:
+		所有的表达式脚本会被翻译到_jspService中
+		表达式脚本都会被翻译为out.print()输出到页面上
+		由于表达式脚本翻译的内容都在_jspService()方法中,所以_jspService()方法中的对象都可以使用
+		表达式脚本中的表达式不能以分号结束
 
-                    findAttribute方法 -- 搜寻四大作用域中的属性,如果找到则返回该值,如果四大作用域中都找不到则返回一个null,搜寻的顺序是从最小的域开始向最大的域开始寻找
-                    
-            (3)提供了请求转发和请求包含的快捷方法
-                pageContext.include("/index.jsp");
-  		        pageContext.forward("/index.jsp");	
-    3.零散知识
-        (1)jsp映射
-            <servlet>
-        		<servlet-name>index</servlet-name>
-        		<jsp-file>/index.jsp</jsp-file>
-        	</servlet>
-        	<servlet-mapping>
-        		<servlet-name>index</servlet-name>
-        		<url-pattern>/jsp/*</url-pattern>
-        	</servlet-mapping>
+代码脚本
+	格式: <% 若干java语句 %>
+	作用: 可以在jsp页面中,编写自己需要的功能(写的是java语句),就是直接执行的代码
+	特点:
+		代码脚本翻译后都在_jspService()方法中
+		代码脚本由于翻译到_jspService()方法中,所以在_jspService()方法中的现有对象都可以直接使用
+		代码脚本还可以由多个代码脚本块组合完成一个java语句
+        在一个JSP页面中可以有多个脚本片断，在两个或多个脚本片断之间可以嵌入文本、HTML标记和其他JSP元素
+        多个脚本片断中的代码可以相互访问，犹如将所有的代码放在一对<%%>之中的情况
+        单个脚本片断中的Java语句可以是不完整的，但是，多个脚本片断组合后的结果必须是完整的Java语句  
+        代码脚本还可以和表达式脚本一起组合使用。在jsp页面上输出数据
             
-        (2)JSP最佳实践
-        
-        (3)域的总结
-            servletContext (application)
-            session (session)
-            request (request)
-            pageContext
-            
-            如果一个数据只在当前jsp页面使用,可以使用pageContext域存储
-            如果一个数据,除了在当前Servlet中使用,还要在请求转发时带到其他Servlet处理或jsp中显示,这个时候用request域
-            如果一个数据,除了现在我自己要用,过一会我自己还要用,存在session域
-            如果一个数据,除了现在我自己要用过一会其他人也要用,存在ServletContext域中
-           
-jsp的标签技术:在jsp页面中最好不要出现java代码,这时我们可以使用标签技术将java代码替换成标签来表示
-    
-1.jsp标签:sun原生提供的标签直接在jsp页面中就可以使用
-     <jsp:include> -- 实现页面包含,动态包含
-     <jsp:forward> -- 实现请求转发
-     <jsp:param> -- 配合上面的两个标签使用,在请求包含和请求转发时用来在路径后拼接一些请求参数
-2.EL表达式:最初出现的目的是用来取代jsp页面中的jsp脚本表达式.但是随着el的发展el的功能已经不限于此了
-    ${el表达式}
-    
-    (1)获取数据：
-        使用中括号的地方都可以使用点号替代,除了中括号中是数字或者中括号中包含特殊字符(-.)的情况除外
-        在中括号中如果不用双引号引起来则是变量,先找变量的值再拿变量的值使用.如果用双引号则是常量,直接使用常量的值
-    
-      ~获取常量
-        字符串/数字/布尔类型,直接写在el表达式中,el直接进行输出
-      ~获取域中的变量
-        如果el中写的是一个变量的名,则el会调用pageContext的findAttribute方法,在四大作用域中以给定的名字找对应的属性值,找到后进行输出,如果四个域中都找不到,什么都不输出
-      ~获取数组中的数据
-      ~获取集合中的数据
-      ~获取Map中的数据 
-      ~获取javabean的属性      
-    
-    (2)执行运算：
-        算数运算
-            +-*/
-        逻辑运算
-        比较运算
-       
-        三元运算符
-        empty运算符
-        
-    (3)获取常用开发对象:el中内置了11个内置对象,这些对象el内置的,不需要提前定义就可以直接在el中使用
-        !pageContext -- 有了它可以很方便的获取jsp页面中的9大隐式对象
-        
-        !pageScope -- page域中属性组成的Map
-        !requestScope -- request域中属性组成的Map
-        !sessionScope -- session域中属性组成的Map
-        !applicationScope --application域中属性组成的Map
-        
-        !param -- 所有请求参数组成的Map<String,String>
-        paramValues -- 所有请求参数组成的Map<String,String[]>
-        
-        header -- 所有请求头组成的Map<String,String>
-        headerValues -- 所有请求头组成的Map<String,String[]>
-        
-        !cookie -- 所有cookie信息组成的Map<String,Cookie>
-        
-        initParam -- 所有web应用的初始化参数组成Map
-        
-        
-            
-    (4)调用java方法: -- 不需要大家自己会写调用方法的过程,只要会调用别人写好的标签库就可以了 fn标签库
-           ~写一个类其中包含要被el调用的方法,这个方法必须是静态的方法
-           ~写一个tld文件在其中对要被调用的静态方法进行一下描述
-           ~在jsp页面中taglib指令将tld文件引入当前jsp页面,从而在jsp页面中就可以调用描述好的方法  
+JSP三种注释
+	html注释:<!-- HTML注释 --> 
+		会被翻译到Servlet源代码中。在_jspService方法里,以out.write输出到客户端
+		html注释被当作模版元素输出到了浏览器上,浏览器认识html注释不予显示
+	java注释:<% //java注释    %>
+		被当作jsp脚本片段被翻译到了Servlet中,在.java文件被翻译成.class文件的时候注释信息被丢弃
+	jsp注释: <%-- 注释的内容 --%>
+    	被jsp注释注释掉的内容,在jsp翻译引擎将jsp翻译成Servlet的过程中会被丢弃,在翻译过来的Servlet中没有这些信息，可以注释掉一切
 
-3.JSTL:
-    <c:out> 标签用于输出一段文本内容到pageContext对象当前保存的“out”对象中。
-	<c:set>标签用于把某一个对象存在指定的域范围内，或者设置Web域中的java.util.Map类型的属性对象或JavaBean类型的属性对象的	属性。  
-	<c:remove>标签用于删除各种Web域中的属性
-	<c:catch>标签用于捕获嵌套在标签体中的内容抛出的异常，其语法格式如下：<c:catch [var="varName"]>nested actions</c:catch>
-	!!<c:if test=“”>标签可以构造简单的“if-then”结构的条件表达式 
-	!!<c:choose>标签用于指定多个条件选择的组合边界，它必须与<c:when>和<c:otherwise>标签一起使用。使用<c:choose>，<c:when>和<c:otherwise>三个标签，可以构造类似 “if-else if-else” 的复杂条件判断结构。
-	!!<c:forEach>标签用于对一个集合对象中的元素进行循环迭代操作，或者按指定的次数重复迭代执行标签体中的内容。 
-	!!<c:forTokens>用来浏览一字符串中所有的成员，其成员是由定义符号所分隔的
-	<c:param>标签  	在JSP页面进行URL的相关操作时，经常要在URL地址后面附加一些参数。<c:param>标签可以嵌套在<c:import>、<c:url>或<c:redirect>标签内，为这些标签所使用的URL地址附加参数。
-	<c:import> 标签,实现include操作
-	<c:url>标签用于在JSP页面中构造一个URL地址，其主要目的是实现URL重写。URL重写就是将会话标识号以参数形式附加在URL地址后面 
-	<c:redirect>标签用于实现请求重定向
-    
-4.自定义标签技术:
+jsp中的九大内置对象
+	在翻译过来的Servlet中Service方法自动帮我们前置定义的九个对象,可以在jsp页面中直接使用
+	request:请求对象
+	response:响应对象
+    pageContext:jsp的上下文对象
+    session:会话对象
+	application:ServletContext对象
+	confing:ServletConfig对象
+	out:jsp输出流对象
+    page:指向当前jsp对象
+    exception:异常对象
+
+四个域对象
+	pageContext: PageContextImpl类  当前jsp页面范围内有效
+	request: HttpServletRequest类  一次请求有效
+	session: HttpSession类  一个会话范围内有效(打开浏览器访问服务器,直到关闭浏览器)
+	application: ServletContext类  整个web工程范围内都有效(只要web工程不停止,数据都在)
+	域对象是可以向Map一样存取数据的对象。四个域对象功能一样。不同的是它们对数据的存取范围
+	虽然四个域对象可以存取数据。在使用上它们是优先顺序的
+	四个域在使用的时候,优先顺序分别是,他们从小到大的范围的顺序
+		pageContext ====>>> request ====>>> session ====>>> application
+
+jsp中的out输出和response.getWriter输出的区别
+    response 中表示响应,我们经常用于设置返回给客户端的内容(输出)
+    out也是给用户输出使用,如果使用out.flush会立即放入response缓冲区
+```
+
+![52](../img/52.jpg)
+
+
+		由于jsp翻译之后,底层源代码都是使用out来进行输出,所以一般情况下，我们在jsp页面中统一使用out来进行输出,避免打乱页面输出内容的顺序
+		out.write()输出字符串没问题
+		out.print()输出任意数据都是没有问题(都转换成为字符串调用write输出)
+		深入源码,浅出结论:在jsp页面中,可以统一使用out.print()来输出
+	
+	常用的标签
+		静态包含
+			<%@ include file="/include/footer.jsp" %>
+	    动态包含
+	    	<jsp:include page="/include/footer.jsp"></jsp:include>
+	    	page属性是指定你要包含的jsp页面的路径
+	    	动态包含也可以像静态包含一样,把被包含的内容执行输出到包含的位置
+	    	
+	    	特点:
+	    		动态包含会把包含的jsp页面也翻译成为java代码
+	    		动态包含底层代码使用如下代码去调用被包含的jsp页面执行输出
+	    			JspRuntimeLibrary.include(request,response, "/include/footer.jsp",out,false),main.jsp把自己的request,response,out对象都传递给了footer.jsp页面去使用
+	    		动态包含,还可以传递参数
+	    			<jsp:include page="/include/footer.jsp">
+	    				<jsp:param name="username" value="aaa"/>
+	    				<jsp:param name="password" value="bbb"/>
+	    			</jsp:include>
+	    请求转发
+	    	<jsp:forward page="/scope2.jsp"></jsp:forward>
+	    	客户端请求servlet程序,servlet处理请求获取数据,但是显示在页面上是非常困难的,请求转发到jsp页面的话就可以很好的显示，一次请求的request的域是一致的,servlet将数据保存到request域中,然后转发到jsp，显示到浏览器和客户端
+	
+	练习:
+	    <%@ page import="java.util.List" %>
+	    <%@ page import="com.zler.bean.Student" %>
+	    <%@ page import="java.util.ArrayList" %>
+	
+	    <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+	    <html>
+	    <head>
+	        <title>Title</title>
+	    </head>
+	    <body>
+	        <%
+	            List<Student> students = new ArrayList<Student>();
+	            for (int i = 0; i < 10; i++) {
+	                students.add(new Student(i+1, "name"+i, 18+i, "phone"+i));
+	            }
+	        %>
+	
+	        <table>
+	        <%for (Student student: students) {%>
+	            <tr>
+	                <td><%=student.getId()%></td>
+	                <td><%=student.getName()%></td>
+	                <td><%=student.getAge()%></td>
+	                <td><%=student.getPhone()%></td>
+	            </tr>
+	        <%}%>
+	        </table>
+	    </body>
+	    </html>
+
+
+# Listener监听器
+
+```reStructuredText
+	Listener监听器它是javaweb的三大组件之一。javaweb的三大组件分别是:Servlet程序、Filter过滤器、Listener监听器。
+	Listener它是JAVAEE规范,就是接口
+	监听器的作用是,监听某种事物的变化。然后通过回调函数。反馈给客户(程序)去做一些相应的处理
+
+ServletContextListener监听器
+	ServletContextListener它可以监听ServletContext对象的创建和销毁
+	ServletContext对象在web工程启动的时候创建,在web工程停止的时候销毁
+	监听到创建和销毁之后对会分别调用ServletContextListener监听器的方反馈
+	两个方法分别是:
+		/*在ServletContext对象创建之后马上调用,做初始化*/
+		void contextInitialized(ServletContextEvent sce);
+		/*在ServletContext对象销毁之后调用*/
+		void contextDestroyed(ServletContextEvent sce);
+	如何使用ServletContextListener监听ServletContext对象
+		编写一个类实现ServletContextListener
+		实现其两个回调方法
+		在web.xml中去配置监听器
+```
+
+#  EL表达式
+
+```reStructuredText
+作用:替代jsp页面中的表达式脚本在jsp页面中进行的输出
+	因为EL表达式在输出数据的时候,要比jsp的表达式脚本要简洁很多
+格式: ${}
+	EL表达式在输出null值的时候,输出的是空串。jsp表达式脚本输出null值的时候,输出的是null字符串
+EL表达式搜索域
+	当四个域都有相同的key的数据的时候,EL表达式会按照四个域的从小到大的顺序去进行搜索,找到就输出。
+		pageContext ====>>> request ====>>> session ====>>> application
+EL表达式输出Bean,数组,List,Map
+	<%
+        Person person = new Person();
+        person.setName("aa");
+        person.setPhones(new String[]{"18812895478", "18588885567", "18699997777"});
+        List<String> cities = new ArrayList<String>();
+        cities.add("beijing");
+        cities.add("shanghai");
+        cities.add("shenzhen");
+        person.setCities(cities);
+
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("key1", "value1");
+        map.put("key2", "value2");
+        map.put("key3", "value3");
+        person.setMap(map);
+
+        pageContext.setAttribute("p", person);
+    %>
+    ${p} <br>
+    ${p.name} <br> 底层是这个属性找的是bean中的getName()这个方法
+    ${p.phones[1]} <br>
+    ${p.cities} <br>
+    ${p.cities[2]} <br>
+    ${p.map} <br>
+    ${p.map.key1} <br>
+EL表达式运算:
+	关系运算
+	逻辑运算
+	算术运算
+	empty运算
+		<%
+            //1.值为null的时候,为空
+            request.setAttribute("emptyNull", null);
+            //2.值为空串的时候,为空
+            request.setAttribute("emptyStr", "");
+            //3.值为Object类型数组,长度为零的时候
+            request.setAttribute("emptyArr", new Object[]{});
+            //4.list集合,元素个数为0
+            List<String> list = new ArrayList<String>();
+            request.setAttribute("emptyList", list);
+            //5.map集合,元素个数为0
+            HashMap<String, Object> map = new HashMap<String, Object>();
+            request.setAttribute("emptyMap", map);
+		%>
+        ${ empty emptyNull } <br/>
+        ${ empty emptyStr } <br/>
+        ${ empty emptyArr } <br/>
+        ${ empty emptyList } <br/>
+        ${ empty emptyMap } <br/>
+	三元运算
+		${12==12? "hao" : "buhao"}
+	"."点运算和[]中括号运算符
+		.点运算可以输出Bean对象中某个属性的值
+		[]中括号运算,可以输出有序集合中某个元素的值,还可以输出map集合中key里含有特殊字符的key值\
+            <%
+                HashMap<String, Object> map = new HashMap<String, Object>();
+                map.put("a.a.a", "a");
+                map.put("a", "aa");
+                map.put("b", "b");
+                map.put("b+b+b", "bb");
+                map.put("c", "c");
+                map.put("c-c-c", "cc");
+                request.setAttribute("map", map);
+            %>
+            ${map.a}
+            ${ map["a.a.a"] }
+            ${ map["b+b+b"] }
+            ${ map["c-c-c"] }
+EL表达式的11个隐含对象
+	pageContext			PageContextImpl			它可以获取jsp中的九大内置对象
+	
+	pageScope			Map<String, Object>		它可以获取pageContext域中的数据
+	requestScope		Map<String, Object>		它可以获取request域中的数据
+	sessionScope		Map<String, Object>		它可以获取session域中的数据
+	applicationScope	Map<String, Object>		它可以获取ServletContext域中的数据
+	
+	param				Map<String, String>		它可以获取请求参数的值
+	paramValue			Map<String, String[]>	它可以获取请求参数的值，获取多个值的时候
+	
+	header				Map<String, String>		它可以获取请求头的信息
+	headerValues		Map<String, String[]>	它可以获取请求头的信息，获取多个值的时候
+	
+	cookie				Map<String, Cookie>		它可以获取当前请求的Cookie信息
+	
+	initParam			Map<String, String>		它可以获取web.xml中的配置的<context-param>
+
+	p200
 ```
 
 
@@ -1938,26 +2014,26 @@ jsp的标签技术:在jsp页面中最好不要出现java代码,这时我们可�
 ​                spring可以自定义监听器也可以自定义设置派发器
 ​                比如之后的同步派发器和异步派法器
 ​    
-    web
-        1.servlet3.0之后可以使用注解来配置servlet filter listener三大组件
-            需要tomcat7.0以上版本
-            @WebServlet("/hello")
-            @WebFilter
-            @WebListener
-            @WebInitParam 初始化一些参数
-        2.Shared libraries（共享库） / runtimes pluggability（运行时插件能力）
-            1、Servlet容器启动会扫描，当前应用里面每一个jar包的
-                ServletContainerInitializer的实现
-            2、提供ServletContainerInitializer的实现类；
-                必须绑定在，META-INF/services/javax.servlet.ServletContainerInitializer
-                文件的内容就是ServletContainerInitializer实现类的全类名；
-    
-            总结：容器在启动应用的时候，会扫描当前应用每一个jar包里面
-            META-INF/services/javax.servlet.ServletContainerInitializer
-            指定的实现类，启动并运行这个实现类的方法；传入感兴趣的类型；
-    
-            ServletContainerInitializer；
-            @HandlesTypes；
+​    web
+​        1.servlet3.0之后可以使用注解来配置servlet filter listener三大组件
+​            需要tomcat7.0以上版本
+​            @WebServlet("/hello")
+​            @WebFilter
+​            @WebListener
+​            @WebInitParam 初始化一些参数
+​        2.Shared libraries（共享库） / runtimes pluggability（运行时插件能力）
+​            1、Servlet容器启动会扫描，当前应用里面每一个jar包的
+​                ServletContainerInitializer的实现
+​            2、提供ServletContainerInitializer的实现类；
+​                必须绑定在，META-INF/services/javax.servlet.ServletContainerInitializer
+​                文件的内容就是ServletContainerInitializer实现类的全类名；
+​    
+​            总结：容器在启动应用的时候，会扫描当前应用每一个jar包里面
+​            META-INF/services/javax.servlet.ServletContainerInitializer
+​            指定的实现类，启动并运行这个实现类的方法；传入感兴趣的类型；
+​    
+​            ServletContainerInitializer；
+​            @HandlesTypes；
 
 # springmvc常用的组件
     @RequestMapping("/queryItems")对queryItems方法和url进行映射，一个方法对应一个url
