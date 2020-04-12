@@ -1,0 +1,37 @@
+其中几所学校数据
+
+===育英===
+服务器远程桌面：
+202.101.184.37  Lgwsystem/Zjyyc86911042 
+
+堡垒机
+https://115.236.69.22/
+hdzz/2016929
+
+===医学院===
+远程IP122.224.231.93:9317
+用户名administrator
+密码tsxx505Q
+
+老程序
+http://gitlab.mostyouth.com/zqc 
+
+腾讯应用包
+账号:3532836342
+密码:hdzzzqc20151130
+待用3446507052
+密码:hdzzzqc20151130
+
+
+360手机助手 
+账号:MOSTYOUTH
+密码:mostyouth
+
+ windows cmd 下面
+ php app/console my:sync 
+Linux 下面
+app/console sync:fix
+
+/etc/init.d/php7.1-fpm restart
+
+新的服务器 47.100.5.94

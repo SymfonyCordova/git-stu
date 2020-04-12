@@ -1,0 +1,226 @@
+文件处理
+	写文件
+		file_put_contents("文件名"，"要写的内容",[FILE_APPEND])
+	读文件
+		file_get_contents("文件路径");
+	判断文件是否存在
+		file_exists()
+	-ini 配置文件操作
+		parse_ini_file()
+			加true 二维
+			不加true 一维
+	-xml 配置文件的操作
+		simplexml_load_file("文件地址");读取xml文件
+		返回数组object对象
+		如果要当数组使用的话，需要转成数组.
+			$arr_xml = json_decode(json_encode($xml), true);
+		
+正则表达式		
+	preg_match();  "/^ $/"  ^以什么开始 以什么$结束 匹配一次
+	preg_match_all 可以用来采集 匹配多次
+	preg_replace()
+
+	\w 字母（类型）
+		\W 非字母
+		\d数字
+		\D 非数字
+		. 除\n其他都可以
+		+ 1个或多个
+		* 0个或多个
+		？0个或1个
+		{n} 具体几位
+		{n,m}大于n 小于等于m （n,N]
+		| 或
+		()截取
+		[]范围
+		/^1([358][0-9]|4[57]|7[0678])\d{8}$/
+		
+		[\w\d_]{8,20}
+		*
+	 字符	 
+	 x 表示
+	 \\反斜线
+	 \n换行
+	 \r回车
+	 
+	 字符类
+	 [abc] a 、b 或c（简单类）
+	 [^abc] 任何字符 除了a 、b 或c（简单类）
+	 [a-zA-Z] 
+	 [0-9]
+	 
+	 预定义字符类
+	 . 任何字符  \.
+	 \d [0-9]
+	 \D [^0-9]
+	 \S 空白
+	 \w 单词字符[a-zA-Z_0-9]
+	 
+	 边界匹配器
+	 ^开头
+	 $结尾
+	 \b 单词边界
+		就是不是单词字符的地方
+		
+	数量词
+	x? 0次或1次
+	x* 0次或多次
+	X+ 1次或多次 ==至少一次
+	X{n,}只少n次
+
+mysql函数
+count()计数
+now()系统时间
+format()指定小数位
+
+
+-上传文件函数
+	name 文件的原始名称
+	type 文件的类型
+	tmp_name 文件在服务器上临时存放的地址
+	error 错误代码，如果没有错误为0
+	size 文件大小 以字节为单位1024
+
+	error错误代码
+	0 成功
+	1 文件大小超出服务器尺寸
+	2 文件大小超出浏览器限制
+	3 文件只上传了部分
+	4 文件没有上传
+	5 服务器临时文件丢失
+	6 文件写入到临时文件出错
+
+	size
+	2*1024*1024 文件尺寸
+
+	获取后缀名
+	$ext=pathinfo($_FILES['myfile']['name'],PATHINFO_EXTENSION);
+	如果没有PATHINFO_EXTENSION则返回数组
+
+	保存文件
+		bool move_uploaded_file(文件临时文件路径[tmp_name] , 新的路径)
+		* 同名文件覆盖的问题
+				重命名文件
+				思路：
+				随机生成一个文件名，然后连上文件的后缀，生成新文件名即可。
+				// "方法一: 使用md5函数";
+				echo md5(time(). rand(10000,99999));
+				echo "<br>";
+				// 方法二 使用uniqid函数 长度13位
+				echo uniqid();
+				echo "<br>";
+				// 方法三 使用com_create_guid 函数 长度13位
+				echo com_create_guid();
+	上次文件代码:
+		<form name="form1" method="post" action="" enctype="multipart/form-data">
+		  文件1： <input type="file" name="myfile"><br>
+		  <input type="submit" value=" 提交">
+		</form>
+		  if ($file_type != 'image/jpeg' && $file_type != 'image/png') {echo "<br>图片类型错误！";}
+
+图片处理技术
+	phpinfo()查看库
+	header("Content-type:image/png");
+	
+	imagecreatetruecolor(宽,高)//创建黑色画布
+	
+	imagecreate(宽,高)//创建一个没有颜色画布
+	
+	imagepng($huabu);//用来将生成图片以PNG的数据格式输出给浏览器
+	
+	imagedestroy($huabu);//用来最终释放掉创建的图片资源
+	
+	imagecolorallocate($huabu,255,0,0);//第一次设置颜色和给画布填充颜色 下一次就颜色
+	
+	imagecolorallocatealpha($huabu.255,0,0,0~127透明度) 0表示不透明 127表示完全透明
+	
+	imagesetpixel($huabu,X坐标,Y坐标,$color) 点
+	
+	imageline($huabu,X1坐标,Y1坐标,X2坐标,Y2坐标,$color)线
+	
+	imageellipse($huabu,圆心X坐标,圆心Y坐标,横长,竖长,$color) 圆 椭圆
+	
+	imagerectangle($huabu,左X坐标,左Y坐标,右X坐标,右X坐标,$color) 矩形
+	
+	imagepolygon($huabu,[x1,y1,x2,y2,x3,y3,....],边数,$color);多边形
+	
+	imagefill($huabu,X坐标,Y坐标,$color)填充一个封闭的颜色 哪里显示点击
+	
+	imagestring($huabu,[1-5]字体,X坐标,Y坐标,"要填充的字符串",$color)注意：不支持
+	
+	imagettftext($huabu,字体大小,倾斜度,X坐标,Y坐标,$color,"字体.ttf","文字")汉字
+	
+	imagecreatefrompng(路径) .png根据现有的图片生存画布
+	
+	imagecreatefromjpeg(路径) .jpeg根据现有的图片生存画布
+	
+	imagecreatefromjif(路径) .jif根据现有的图片生存画布
+	使用图片
+	<img src="image.php">
+
+
+Cookie技术
+	设置Cookie
+		bool setcookie(键,值)  向浏览器保留Cookie
+	读取Cookie
+		$_COOKIE["键"]数组 获取浏览器归还的Cookie 有可能返回null 
+	设置Cookie的生命周期 
+		bool setcookie(键,值,生命周期)
+		注意：有内存的有硬盘的
+			生命周期默认为0 就是关闭浏览器就死掉
+			设定值time()+86400话就是1分钟
+	杀死Cookie
+		setcookie(键,null)
+		setcookie(键,'')
+		setcookie(键,值,time()-1)
+	Cookie路径
+		setcookie(键,值,生命周期，path)
+		Cookie的path并不是设置这个Cookie在客户端的保存路经
+		Cookie的path由服务器创建Cookie时设置
+		当浏览器访问服务器某个路径时,需要归还哪些Cookie给服务器呢？这由Cookie的path决定。
+		浏览器访问服务器的路径,如果包含某个Cookie的路径,那么就会归还这个Cookie
+	Cookie共享
+		Domain域名设置为/baidu.com
+	path /
+		设置多个域名来共享Cookie
+	浏览器对Cookie的数量是有限制的
+	设置的Cookie数量是不可以超过50个的
+	浏览器对Cookie的尺寸也有限制，一般不得超过4K大小
+
+
+Session
+	会话范围：是某个用户从首次访问服务器开始,到用户关闭浏览器
+	一个用户对浏览器的多次连贯性请求：所谓连贯性就是用户多次请求中间没有关闭浏览器
+	底层依赖Cookie 或者是URL
+	服务器会为每个客户端创建一个session,session好比就是客户在服务器端的账户
+	开始session
+		在php.ini中开启session.auto_start=On session
+					路径:session.save_path="d:/wamp/tmp"
+		或者在程序代码中session_start();
+	设置/取值session
+		$_SESSION['键']=值
+
+验证码  加密md5() 已经不安全了shix
+	<?php
+		session_start();
+		header("Content-type:images/png");
+		$huabu=imagerreate(44,18);
+		$back=imagecolorallocate($huabu,245,245,245);
+		$sev='';
+		for($i=0;$i<4;++$i){
+			$color=imagecolorallocate($huabu,rand(100,255),rand(0,100),rand(100,255));
+			$str_num=rand(1,9);
+			$sev.=$str_num;
+			imagestring($huabu,5,2+$i*10,1,$str_num,$color);
+		}
+		setcookie("code")=$sev;
+		//生成点
+		for($i=0;$i<100;++$i){
+			$color=imagecolorallocate($huabu,rand(0,255),rand(0,255),rand(0,255));
+			imagesetpixel($huabu,rand(0,44),rand(0,18),$color);
+		}
+		imagepng($huabu);
+		imagedestroy($huabu);
+	?>
+
+

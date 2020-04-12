@@ -1,0 +1,187 @@
+制作星星图案
+百钱百鸡问题
+终止
+	break 正整数 n 终断更多层
+	continue 正整数 n 
+流程控制的替代语法
+$v1=5;
+if($v1>0):
+	echo "abcd";
+	echo "123";
+else:
+	echo "xyz";
+endif
+
+while($v1 <= 10):
+	echo "<br>$v1";
+	$v1++;
+endwhile
+当然还有.....
+
+goto语句:
+学此语句的目的是：学了不要用它！
+goto flag
+flag
+
+控制脚步执行顺序
+	die(字符串)/exit(字符串)
+	输出该字符串后,立即停止php的执行,包括后续其他所有php和html代码部分。
+	sleep($n)让程序停止运行指定的秒数。然后等待过了那个时间后,就继续运行！
+
+文件加载
+	1、有四个文件加载语句: include , require ,include_once , require_once
+	2、它们的使用形式完全一样,比如： include "要加载的文件路经" ,或
+		include("要加载的文件路径")；
+	3、他们的含义也几乎完全一样：只是在加载失败时或是否重复加载这种情况,有所不同。
+文件加载的路径问题
+	前提说明：以下的说明举例,以include为例 其他3个也适用 __DIR__   $_SERVER['DOCUMENT ROOT']
+文件载入和执行过程详解
+	从include 语句处退出php脚步模式(进入html代码)
+	载入include语句所设定的文件中的代码，并执行
+	退出html模式重新进入php脚本代码，继续执行后面代码
+四个载入文件语句的区别
+	include 和require区别
+		include 载入文件失败时(即没有找到该文件),报一个"提示错误",然后继续执行后续代码,
+		require 载入文件失败时,报错立即终止执行
+		通常require 用于在页面中,后续的代码依赖于载入文件的时候。
+	include_once和require_once的区别
+		同include和require区别：
+	include和include_once的区别 (广告)
+		include载入的文件不判断是否重复,只要有include语句,就会载入一次--即此时可能导入重复载入
+		include_once载入的文件会有内部判断机制是否"前面代码"已经载入过,如果载入过,就不再载入
+	require和require_once的区别
+		同include和include_once的区别；	
+在【被载入文件】中return语句的作用
+	一个载入语句,如果载入成功,其实是有返回值的为1,如果载入失败,则返回的是false(虽然通常不去使用该返回值)
+	但,如果被载入文件中有return语句,此时就有另外的机制和作用
+	1、return语句此时的作用是终止载入过程--该return语句的后续被载入的文件的代码不再载入。
+	2、return语句也可以用于该被载入文件时返回一个数据,形式 return xx;
+	
+错误处理
+错误的分类
+	通常分三种
+		语法错误
+			程序运行之前,都要先检查语法.如果语法有错误,就会立即保错,并且不会执行程序。
+		运行时错误
+			就是在程序语法检查通过后,开始运行程序并在此过程中遇到的错误,常见的有3中:
+			提示性错误:
+			警告性错误:
+			致命错误:
+		逻辑错误
+			指的是,程序本身可以正常执行,没有报错--但"计算结果"却错了。
+错误的分级
+	php语言中,将各种错误进行了不同级别的分类归纳,并形成大约有10几个级别的错误;这就是技术层面的错误分级。
+	每一级别的错误,都有一个”代号“,这个代号其实也就是一个系统内部的"常量而已".比如：
+		E_ERROR:  致命错误   1 二进制 1
+		E_WARING：警告性错误 2 二进制 10
+		E_NOTICE：提示性错误 8 二进制 1000
+	用户自定义的错误
+		E_USER_ERROR:  自定义致命错误
+		E_USER_WARING：自定义警告性错误
+		E_USER_NOTICE：自定义提示性错误
+		其他
+		E_STRICT 严谨性语法检查错误
+		E_ALL    代表所有错误
+	详细参考手册
+		php手册》函数参考》错误处理》预定义常量
+		
+错误的触发
+	就是然错误"产生"
+	系统触发
+		程序运行到某行代码,确实出现了某种错误,此时系统就会报错--这就是触发了系统错误
+		典型的三种
+		E_ERROR:  致命错误  导致程序无法执行后续程序
+			比如调用一个未定义的函数！
+		E_WARING：警告性错误 会输出错误提示,并继续执行后续执行(看具体情况,比如require)
+			引入一个不存在的文件或者路径不对
+		E_NOTICE：提示性错误 会输出错误提示,并继续执行后续执行
+			比如使用不存在的变量或常量
+	自定义触发
+		具体需求需要指明该数据的"非法性"。
+		trigger_error("年龄不符合",E_USER_ERROR);
+		str_pad()
+错误报告的显示问题
+	就是显示在网页上的错误提示内容！
+	有关错误报告,有两个问题需要处理
+		-是否显示错误报告
+		有2种做法可以来设置是否显示
+			当然开发阶段都应该显示
+			做法1：在php.ini文件中,设定display_erros的值,为on（显示）,或为off(不显示)
+			注意：前提条件都是我们apache已经装载了php.ini文件--这一点,需要在apache的配置文件
+			httpd.config中加入如下一行
+				PHPIniDir "php.ini文件的位置(路径)"	
+			方法2：
+				直接在php的脚本文件中使用ini_set()来对其进行设置
+				ini_set("display_error",0);//不显示错误报告
+				当然设置为1,就是显示！
+				注意：
+					不管哪种形式,该单词是一样的: display_errors
+					使用php.ini 配置,影响的是全局(即所有的php网页)
+					在某个脚本代码中使用ini_set()设置,就只影响该脚步代码本身--这是常用的方式
+		-显示哪些级别的错误报告(erroe_reporting)
+			前提"display_errors"设置为On(或1),表示可以显示。
+			方法1：
+			在php.ini文件中
+				//有三个选择值 分别是 默认值 开发阶段使用值 产品阶段使用值
+				error_reporting = E_ALL | E_STRICT (代表显示所有错误)
+				修改为
+				error_reporting = E_NOTICE | E_WARING | E_ERROR//显示3种
+				error_reporting = E_ERROR| E_USER_ERROR //显示2种
+				要想代表真正的"所有错误",应该写成为:E_ALL | E_STRICT
+			方法2：
+				在当前脚本代码中
+					ini_set("error_reporting",E_NOTICE)//就显示该一个级别错误
+					ini_set("error_reporting",E_NOTICE | E_WARING)//就显示该2个级别错误
+					ini_set("error_reporting",E_STRICT | E_ALL)//就显示该所有错误
+错误日志的记录问题
+	错误日志其实就是错误报告,只是它会'写入文件中',此时就称称为错误日志!
+	也就是2个问题,每个问题也会2种做法
+	是否记录
+		php.ini中
+			log_errors=On 或off
+		脚本中
+			ini_set("log_errors",1); 或0
+			ini_get()获取php.ini 中某项的值
+	记录到哪里 error_log
+		写法1：直接使用一个文件名,此时系统会自动在每个文件夹下都建立该文件名，并用其记录该文件夹
+				下的所有网页发生的错误信息
+				ini_set("error_log","myerror.txt");
+		写法2：使用一个特殊的名字'syslog',则此时所有的错误信息都会记录到系统的"日志文件"中。
+			系统日志文件在这里：控制面板》管理工具》事件查看器》window日志》应用程序
+				ini_set("error_log",'syslog');
+
+自定义错误处理器
+	什么叫错误处理器？
+		就是一旦发生错误,用来处理该错误的一种"机器"--其实就是一个函数。
+	自定义错误处理
+		让系统不要去处理错误,而完全由我们(开发者)来对错误处理：显示和记录
+	做法,其实非常简答,就2步:
+		1 设定要用于处理错误的函数名！
+		set_error_handle("f1");
+		2 去定义该函数！
+		function f1(){
+			//这里写任意代码：正常时去显示错误报告,和记录错误日志
+			
+		}
+		
+		例子
+			set_error_handle("my_error_handle");
+			//需要定义四个形参,分别代表
+			//$errCode：代表错误代号(级别)
+			//$errMsg：代表错误信息内容
+			//$errFile:代表发送错误的文件名
+			//$errline:代表发送错误的行号
+			//注意：该函数我们不要再程序中调用，而是，一旦发生错误会被自动调用
+			//而且会传入该4个实参数据
+			function my_error_handle($errCode,$errMsg,$errFile,$errline){
+				$str="";
+				str.= "<p><font color='red'>大事不好,发送错误</font>";
+				str.= "<br>错误代号为".$errCode;
+				str.= "<br>错误内容为".$errMsg;
+				str.= "<br>错误文件为".$errFile;
+				str.= "<br>错误行号为".$errline;
+				str.="</p>"
+				echo str;
+			}
+		
+		

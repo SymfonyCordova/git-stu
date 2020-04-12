@@ -1,0 +1,124 @@
+其他系统函数
+	自己会查
+	1、字符串函数
+		字符串去除与填充：trim ltrim rtrim |   str_pad 
+			string trim(字符串,要清除的不想要的字符)
+				默认是清除空 \t\r\n 
+			string str_pad("字符串",总长度,要填充的东西,STR_PAD_LEFT /STR_PAD_RIGHT /STR_PAD_BOTH 左/右/两边 ) 
+				说明：总长度值是负数，小于或者等于输入字符串的长度，不会发生任何填充
+
+		字符串链接与分割：implode(别名join)  |  explode str_split
+		
+			string	implode(一位数组,"连接符")将一位数组按照连接符进行连接成一个字符串 可以为一个数组参数 另外参数顺序随便
+			【array】 explode(分隔符,要分的字符串) 将要分的字符串按照分隔符边界点进行分割成数组
+			【array】 str_split(字符串,每段长度) 每段不写 默认为1 	
+				简单记忆： 就是均分切割变成数组
+			
+		字符串截取：substr  strstr(别名strchr) strrchr
+		
+			string substr(要截取的字符串,开始下标,长度) 从开始下标字符串截取长度的字符串 开始下标 长度 可以为负数
+				简单记忆：截取一个范围
+			string strstr(要截取的字符串,字符串1)按照字符串1截取包括字符串1之后的字符串 如果是true就截取前面的 
+				简单记忆：截取一刀两段切割
+			stristr忽略大小写 中间加i
+			strrchr(要截取的字符串,字符串1)按照最后字符串1截取包括字符串1一致到末尾
+				简单记忆：截取最后出现字符1到末尾
+			
+		字符串替换： str_replace substr_replace
+			string str_replace(替换的字符,替换后的字符,字符串,&$count) $count替换的次数
+			string str_replace([数组],[数组],字符串)注意数组元素一样不然少了后面就为空
+			string str_replace([数组],替换后的字符,字符串)将数组里面的都替换成了替换后的字符
+			string substr_replace(字符串,替换内容,开始下标,长度)
+				简单即就是截取范围替换为别的内容
+				
+		字符串长度与位置: strlen | strpos strrpos
+			strpos(字符串,要查找的字符)
+				返回字符首次出现的位置
+			strrpos
+				计算指定字符串在目标字符串中最后一次出现的位置
+		字符转换： strtolower strtoupper lcfirst ucfirst ucwords
+			string lcfirst(字符串) 将字符串的首字母转换为小写
+			string ucfirst(字符串) 将字符串的首字母转换为大写 
+			string ucwords(字符串) 将字符串中每个单词的首字母转换为大写 
+		特殊字符处理：nl2br addslashes htmlspecialchars
+			string nl2br(字符串) 将其他的"\r\n"变成html的<br/>
+			string addslashes(字符串) 使用反斜线引用字符串 
+			.....
+	2、时间函数
+		time microtime,mktime,date,idate,strtotime,date_add,date_diff,
+		date_default_timezone_set,date_default_timezone_get
+		
+		int time( void )返回自从 Unix 纪元（格林威治时间 1970 年 1 月 1 日 00:00:00）到当前时间的秒数。
+		date()
+		date_default_timezone_set(Asia/Shanghai)设定用于所有日期时间函数的默认时区。 
+		......
+	3、数学函数
+		max min round ceil floor abs sqrt pow rand
+			max(数字/数组)
+			min(数字/数组)
+			float round(浮点数)//对浮点数进行四舍五入 
+			float ceil(浮点数)// 进一法取整 
+			float floor(浮点数)// 舍去法取整 
+			abs()// 绝对值 
+			sqrt()//平方根 
+			pow()//指数表达式 
+			int rand()//产生一个随机整数 
+			
+指针操作函数 current key next prev,reset end each
+$v1=current($数组)//获取数组的当前指针所在单元的"值"
+$v2=key($数组)//获取数组的当前指针所在单元的"键"(下标)
+$v3=next($数组)//先将数组的指针移向下(后)一个单元,然后取得新单元的值
+$v4=prev($数组)//先将数组的指针移向上(前)一个单元,然后取得新单元的值
+$v5=end($数组)//先将数组的指针直接移向最后一个单元,然后取得新单元的值
+$v5=reset($数组)//先将数组的指针直接移向第一个单元,然后取得新单元的值
+
+单元操作函数 array_pop array_push array_shift array_unshift array_slice array_splice
+	array_pop(数组)将数组最后一个单元弹出（出栈） 
+	int array_push(数组,一个或多个字符串)将一个或多个单元压入数组的末尾（入栈） 并返回之后的长度
+	array_shift(数组)将数组开头的单元移出数组 
+	int array_unshift(数组,一个或多个字符串)在数组开头插入一个或多个单元 并返回之后的长度
+	array array_slice(数组,开始下标,个数)截取一个范围的数组 原来的数组不变
+	array array_splice(数组,开始下标,个数 【array(元素1,元素2,...)】)截取一个范围的数组 原来的数组改变 还可以替换截取的部分
+排序函数 sort asort ksort usort rsort arsort krsort shuffle (遵循自然规则)
+			按照(键/值)排序     是否保留键名     排序规则
+	sort 		 值                  否          从小到大
+	asort		 值 				 是			 从小到大
+	ksort		 键					 是			 从小到大
+	usort		 值					 否			 用户定义
+	rsort		 值					 否			 从大到小
+	arsort		 值					 是			 从大到小
+	krsort		 键					 是			 从大到小
+	shuffle		 值					 否				随机
+array_multisort  
+查找函数 in_array,array_key_exists array_search
+其他函数 count array_reverse array_merge array_sum array_keys array_values array_map array_walk range
+
+array array_reverse() 反序 返回一个单元顺序相反的数组 
+array array_merge(数组,一个或多个数组)  合并一个或多个数组 
+array array_chunk(数组,大小) 按大小等分数组 将一维数组变成二维
+array array_unique(数组)筛选重复数组 数字下标没问题 关联下标保留第一个键	
+
+array array_keys(数组)取键	
+array array_values(数组)取值
+
+array_rand(数组) 随机返回数组下标
+array array_fill(开始下标，长度，值)初始化数组
+array array_range(1,10) array_range('a','f')初始化有序数组
+
+
+array array_combine()将keys 和values一一对应起来
+array_filter() 删除为可以形象为'false'的值
+
+
+并集  合并并且去掉重复的
+	$name1=array('andy','tom','jack','joe');
+	$name2=array('luck','tom','judy');
+	$name12=array_merge($name1,$name2);
+	$name12=array_unique($name12);
+	print_r($name12);
+
+交集
+	array_intersect(2个或多个数组) 多个数组相同的部分
+
+差集	
+	array_diff(数组1,数组2); 数组1特有的

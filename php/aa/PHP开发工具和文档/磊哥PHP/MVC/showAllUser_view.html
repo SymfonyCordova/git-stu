@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+    <title>新建网页</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="" />
+    <style type="text/css">
+
+    </style>
+</head>
+<body>
+<a href="ProductController.class.php?a=ShowAllProduct">产品列表</a>
+<a href="UserController.class.php">用户列表</a>
+<hr/>
+<a href='?a=showForm'>添加新用户</a>
+<h2>用户列表</h2>
+<table border="1">
+<?php
+    foreach($data1 as $key=>$rec)
+    {
+?>
+    <tr>
+        <td><?php echo $rec['name'];?></td>
+        <td><?php echo $rec['sex'];?></td>
+        <td><?php echo $rec['xueli'];?></td>
+        <td><?php echo $rec['address'];?></td>
+        <td><a href='?a=del&id=<?php echo $rec['id'];?>' onClick="return queren()">删除</a></td>
+        <td><a href='?a=detail&id=<?php echo $rec['id'];?>'>详细</a></td>
+        <td><a href='?a=edit&id=<?php echo $rec['id'];?>'>修改</a></td>
+    </tr>
+<?php
+    }
+?>
+</table>
+当前用户总数：<?php echo $data2;?>
+</body>
+<script type="text/javascript">
+function queren(){
+    return window.confirm("你确定要删除吗？");
+}
+</script>
+</html>

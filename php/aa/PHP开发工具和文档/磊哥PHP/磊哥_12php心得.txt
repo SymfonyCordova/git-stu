@@ -1,0 +1,384 @@
+数据控制语言
+数据控制语言,是对于mysql的用户及其权限进行管理的语句
+mysql中的所有用户，都存储在系统数据库(mysql)中的user表中--不管哪个数据库的用户,都存在这里
+创建用户
+	create user '用户名'@'允许登陆地址/服务器' identified by '密码'
+	create user 'user1'@'localhost' identified by '123'
+	允许登陆地址/服务器
+删除用户
+	drop user '用户名'@'允许登陆地址/服务器' 
+修改用户密码
+	修改自己的密码
+	set password  = password('密码')
+	修改他人的密码(前提是有权限)
+	set password for '用户名'@'允许登陆地址/服务器' =password('密码')
+
+权限管理
+权限是什么？
+msyql数据库,将其中所能做的所有事情,都分门别类分配到大约30个权限中去了，其中每个权限,都是一个'单词'而已！
+其中有一个权限all(全部权限)
+授予权限：
+	形式:
+		grant 权限列表 on 某库.某个对象 to '用户名'@'允许登陆的位置' [identified by '密码']
+	说明:
+		1、权限列表,就是,多个权限的名词,相互之间用逗号分开,比如：select,insert,update 
+		也可以写all
+		2、某库.某个对象,表示，给制定的某个数据库中的某个"下级单位"赋权
+			下级单位有:表名，视图名，存储过程名，存储函数名
+			其中有2个特殊的语法:
+				*.*代表所有数据库中的所有下级单位
+				某库.*：代表指定的该库所有下级单位
+	grant all on *.* to 'root'@'%' identified by '123456';
+	grant all on *.* to 'root'@'%' identified by 'root';
+FLUSH PRIVILEGES;刷新
+
+剥夺权限：
+	revoke 权限列表 on 某库.某对象 from '用户名'@'允许登陆的位置'
+	其含义,跟grant完全一样
+	
+事务控制语言
+	银行汇款事件 如果不一致人类的矛盾开始了
+什么叫做"事务"：
+	事务就是用来保证多条"增删改"语句的执行的"一致性";要么都执行完成,要么都没有执行
+	事务的特点：
+		原子性  要么全做,要么一个不做
+		一致性 让数据保持逻辑的"合理性"
+		隔离性 如果多个事务同时并发执行,事务和事务就像各自独立执行一样
+		持久性 一个事务执行成功,则对数据来说是一个明确的硬盘数据更改
+		
+事务模式
+	指在我们cmd命令行模式中,是否开启了"一条语句就是一个事务"的这个开关
+	默认情况下(安装后),这个模式是开启的,称为'自动提交模式';
+	我们可以把他关闭,那就是"非自动提交模式"--即需要人为提交;
+	首先,我们以前的经验都是:一条增删改语句,一旦回车,执行就完成了(前提不出错)
+	现在我们关闭这个模式 set autocommit=0;
+	然后,再执行一条简单的insert into
+	再人为提交 commit;
+	
+事务的执行基本流程
+1、开启一个事务
+	start transaction //也可以写成: begin;
+2、执行多条增删改语句 //也就相当于希望这么多条语句要作为一个"不可分割"的整体区执行的任务
+3、判断这些语句执行的结果情况
+	if(没有出错){
+		commit;//提交事务,此时就是一次性完成;
+	}else{
+		rollback;//回滚事务,此时就是都没有做;
+	}
+	
+具体分2种情况来做:
+在cmd中:就是凭"肉眼"观察
+在php中:
+	$link=mysql_connect('localhost','root','123');
+	mysql_query("set names uft8");
+	mysql_query("use aa");
+	
+	$sql="start transaction";
+	mysql_query($sql);
+	
+	$sql1="insert into tab_int(f1,f2,f3)values(15,25,35)";
+	$result1=mysql_query($sql1);//得到结果
+	
+	$sql2="insert into tab_int(f1,f2,f3)values(166,266,366)";
+	$result2=mysql_query($sql2);//会出错
+	
+	if($result1&&$result2){
+		mysql_query("commit;");
+		echo "事务执行成功！所有事务都完成"
+	}else{
+		mysql_query("rollback;");
+		echo "事务执行失败！数据没有被修改"	
+	}
+	
+mysql编程
+语句块包含符
+其实就是相当于js或PHp中大括号语法
+	[标识符:]begin
+		//语句
+	end [标识符];
+	
+	if(条件判断)
+	begin
+		//
+	end;
+	
+	if(条件判断)
+	A:begin
+		//
+	end A;	
+	
+	A就是表示符, 它的作用就是"标识"该语句块,以期可以在该语句块"使用它"--其实就是退出
+	
+流程控制
+if语句
+	if(条件语句)then
+		begin
+			语句块...
+		end;
+		elseif (条件语句) then
+		begin
+			语句块...
+		end;
+		/*若干个else if*/
+		else
+		begin
+			语句块...
+		end;
+	end if ;
+	
+case语句
+	相当于之前的switch
+	case @v1
+		when 1 then 
+		begin
+			//....
+		end;
+		when 2 then 
+		begin
+			//....
+		end;
+		else
+		begin
+			//.....
+		end;
+	end case;
+	说明:
+		@v1是一个变量
+		
+	case
+		when @v1>0 then
+		begin
+			//.....
+		end;
+		when @v1<0 then
+		begin 
+			//....
+		end;
+		else
+		begin
+			//...
+		end;
+	end case; 
+	
+loop循环语句
+	标识符:loop
+	begin
+		//这里就是循环的语句块
+		//注意：这里必须有一个"退出循环"的逻辑机制;否则该循环就是死循环,其基本形式类似这样
+		if(条件)then
+			leave 标识符;//退出
+		end if; 
+	end;
+	end loop 标识符
+
+while 循环语句
+	set @v1=1//赋值语句
+	while @v1<10 do
+		insert into tab1(id,num)values(null,@v1);
+		set @v1=@v1+1;
+	end while;
+
+repeat循环语句
+	set @v1=1;//赋值语句
+	repeat
+	begin
+		insert into tab (id,name)values(null ,@v1);
+		set @v1=@v1+1;
+	end;
+	until @v1>=10;
+	end repeat;
+	
+leave语句
+语法：
+	leave 标识符
+作用：
+	用来退出begin...end结构或其他具有标识符的结构。
+	
+mysql中有两种变量形式
+	普通变量:不带"@"符号
+		定义形式： declare 变量名 类型名 [default 默认值] ;//普通变量必须先这样定义
+		赋值形式:
+			set 变量名=值;
+		取值：直接使用变量名
+		使用场所:只能在"编程环境"中使用
+			什么是编程环境?只有3个:
+				定义函数内部
+				定义存储过程内部
+				定义触发器的内部
+	会话变量:带"@"符号
+		定义形式：set @变量名=值//跟php类似,无需要定义,直接赋值,第一次就算定义
+		取值：直接使用变量名
+		使用场所:哪里都可以
+
+	会话变量：select @变量名 ：= 值
+	
+	会话变量 select 表达式 into @变量名
+
+(存储)函数:
+寒素,也说成"存储函数",其实就是js或php中所说的函数
+唯一的区别
+	这里的函数必须返回一个数据(值)
+定义形式:
+	create function f1(形1,形2,形3,...)
+	returns 返回类型
+	begin
+		#这里语句
+		return xx值;
+	end;
+说明：
+		1、在函数内容,可以有各种变量和流程控制的使用;
+		2、在函数内部,也可以有各种增删改语句
+		3、在函数内部,不可以用select 或其他"返回结果集"的查询语句；
+	
+调用形式；
+	跟调用内部函数一样！比如:
+	select now(),8+3 as f2, func1();
+	如果在编程语句中:
+	set @v1=now();
+	set @v2=func1();
+	
+--代码
+#创建一个函数
+#函数的目标是：取得3个数中的最大值
+create function getMaxValue(p1 float,p2 float,p3 float)
+returns float #返回float类型
+begin
+	declare result float;#声明变量，没有默认值
+	if(p1>=p2 and p1 >=p3)then
+	begin
+		set result=p1;
+	end;
+	elseif(p2>=p1 and p2 >=p1)then
+	begin
+		set result=p2;
+	end;
+	else
+	begin
+		set result=p3;
+	end;
+	end if;
+	return result;
+end;
+//不过,注意： 在cmd执行该代码,需要更换"语句结束符":
+delimiter ///
+
+删除函数
+drop function 函数名
+
+存储过程
+其实还是函数--但其规定:不能有返回值；
+定义形式:
+	create procedure 存储过程名([in|out|inout]形参1 类型1,[in|out|inout]形参2 类型2,....)
+	begin
+		#这里写完整的过程中语句
+		#其中可以有各种流程控制
+		#还可以有增删改查等等
+		#其中查询语句(select)会作为存储过程调用的结果,跟执行select语句一样,返回结果集
+	end;
+	说明:
+		1、in:用于设定该变量是用来"接受实参数据"的,即"传入",默认不写,就是in
+		2、out:用于设定该变量是用来"存储过程中数据"的,即"传出",即函数必须对他赋值;
+		3、inout : 是in和out的结合,具有双向作用
+		4、对于,out和inout设定,对应的实参,就必须是一个变量,因为该变量是用于接受传出数据
+
+代码
+#创建存储过程
+#该存储过程的目标：将3个数据写到表cv；
+#并返回该表的最新的第一个字段的前3大值的行
+create procedure insert_get_Data(p1 int,p2 tinyint, p3 bigint )
+begin
+	insert into tab_int(f1,f2,f3)values(p1,p2,p3);
+	select * from tab_int order by f1 desc limit 0,3;
+end;
+
+#使用 in out inout 	
+create procedure pro2(in p1 int ,out p2 int ,inout p3 int )
+begin
+	set p2=p1*2;
+	set p3=p3+p1*3;
+end;
+insert into tab_int(f1,f2,f3)values(p1,p2,p3);
+调用存储过程
+	call 存储过程名(实参1,实参2,...)
+	它应该是在"非编程环境中"调用,既可以增删改查
+代码call insert_get_Data;
+call pro1(1,2,3)报错
+set @s3=3;
+call pro1(1,@s2,@s3);///
+select @s2 ,@s3///
+
+删除存储过程
+drop procedure 存储过程名
+
+在php中使用存储函数或存储过程的示意
+<?php
+	//调用存储函数
+	$v1=$_POST['a'];
+	$v2=$_POST['b'];
+	$sql="insert into tab1 (id,f2,f3) values(null,now(),func1(1,2))";
+	$result=mysql_query($sql);
+	//调用存储过程
+	$v1=$_POST['username'];
+	$v2=$_POST['pass'];
+	$v3=$_POST['age'];
+	$sql="call inset_user($v1,$v2,$v3)"//inse_user()是一个存储过程,带三个参数,会将三个参数数据写入某个表中
+	$result=mysql_query($sql);
+	
+	$id=$_POST['id'];
+	$sql="call Get_User_Info($id)";//Get_User_Info是一个存储过程,其中会返回某个指定ID的用户信息
+	mysq_query($sql);//这里得到就是"结果集"了
+?>
+
+触发器(trigger)
+含义：触发器,也是一段预先定义好的编程代码(跟存储过程和存储函数一样),并有个名字。
+	但他不能调用,而是发生某个事件(增删改)的时候,会自动"触发"而调用起来。
+定义形式：
+	create trigger 触发器名 触发时机 触发事件 on 表名 for each row 
+	begin
+		//这里,此时编程的位置,也就是触发的内部语句
+	end;
+说明:
+	1、触发时机只有2个: befor(在...之前)，after（在。。。之后）
+	2、触发事件,只有3个: insert update delete
+	3、即触发器的含义是:在某个表上进行insert(或update或delete)之前或之后,会去执行其中写好的代码(语句);
+		即每个表只有6个情形可能会调用该触发器；一个表最多可以写6个触发器
+	4、通常,触发器用于在某个表进行增删改的操作的时候
+	5、在触发器内部,有2个关键字代表某种特定的含义,可以用于获取数据
+		new :它代表当前正要执行的insert或update的时候的新行数据;通过它,可以获取这一新行的数据的任意的
+		一个字段的值,形式为:
+			set @v1=new.id;//获取该新插入或update行的id字段的值(前提是有该id)
+			set @v2=new.age;//同上
+		old:它代表当前正要执行的delete的时候的旧行数据;通过它,可以获取这一旧行的数据的任意的
+		一个字段的值,形式为:
+			set @v1=old.id;//获取delete的时候的旧行数据id字段的值(前提是有该id)
+			set @v2=old.age;//同上
+	
+#定义一个触发器
+#在表tab1插入一行数据的时候,能够同时将这个表的第一个字段的最大值得行
+#写入到另一个表中(tab2)
+#其中tab1表的结构为:
+create table tab1(
+	f1 int(11) default null,
+	f2 tinyint(4) default null,
+	f3 bigint(20) default null
+);
+#然后,表tab2的结构跟其一样：
+#但永远都只存储tab1中的最大值的行
+create table tab2(
+	f1 int(11) default null,
+	f2 tinyint(4) default null,
+	f3 bigint(20) default null
+);
+然后再tab1上写触发器
+create trigger tril after insert on tab1 for each row
+begin
+	#先删除tab2中的所有数据
+	delete from tab2; 
+	#取得tab1中的最大值,并存入变量@maxf1 
+	select max(f1) into @maxf1 from tab1;
+	#然后,根据该得到的f1字段的最大值,作为条件取出3个字段值
+	select f2 into @v2 from tab1 where f1=@maxf1;
+	select f3 into @v3 from tab1 where f1=@maxf1;
+	#然后,将@maxf1,@v2,@v3 插入到表tab2
+	insert into tab2(f1,f2,f3)values(@maxf1,@v2,@v3);
+end;	

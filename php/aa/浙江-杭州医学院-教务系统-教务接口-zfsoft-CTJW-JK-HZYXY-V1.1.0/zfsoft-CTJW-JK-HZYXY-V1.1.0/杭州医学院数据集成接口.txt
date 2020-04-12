@@ -1,0 +1,143 @@
+
+----0、在数据库管理员的用户下sys
+----1、以教务数据库用户（一般为zfxfzb）登录plsql
+----2、建立用户并授权zfjwjkfs_ZQC  告知对方  数据库服务器ip,Oracle的sid,用户名/口令：zfjwjkfs_ZQC/zfsoft20171010
+create user zfjwjkfs_ZQC
+  identified by zfsoft20171010;
+  grant create session to zfjwjkfs_ZQC;
+  grant   resource   to   zfjwjkfs_ZQC;
+/
+
+---1.（V_JSLHDMB）
+     CREATE OR REPLACE VIEW V_JSLHDMB AS 
+      select JSLHDM ,
+             JSLHMC
+        from JSLHDMB ;
+/
+
+--2、教学场地
+    CREATE OR REPLACE VIEW V_jxcdxxb AS
+      SELECT JSMC,
+             JSBH,
+             LH,
+             ZWS,
+             CH
+      FROM jxcdxxb;  
+/
+
+--3.班级代码表
+    CREATE OR REPLACE VIEW V_BJDMB AS
+      SELECT BJMC, 
+             BJDM,
+             SSZYDM,
+             NJ, 
+             BZRZGH
+        FROM BJDMB  ;
+/
+
+--4.学院代码表
+    CREATE OR REPLACE VIEW V_XYDMB AS
+      SELECT XYMC, 
+             XYDM,
+             XQDM
+        FROM XYDMB  ;
+/
+--5.专业代码表
+    CREATE OR REPLACE VIEW V_ZYDMB AS
+      SELECT ZYMC, 
+             ZYDM,
+             TJZYDM,
+             SSXYDM,
+             SSXDM,
+             XZ
+        FROM ZYDMB;
+/
+
+--6.校区代码表
+    CREATE OR REPLACE VIEW V_XQDMB AS
+      SELECT ZYMC, 
+             ZYDM,
+             TJZYDM,
+             SSXYDM,
+             SSXDM,
+             XZ
+        FROM  XQDMB;
+
+/
+
+--7.人员信息表
+    CREATE OR REPLACE VIEW V_USERS AS
+      SELECT ZGH as nickname, 
+             LXDH ,
+             EMLDZ,
+             'teacher' as type,
+             '0' as major_id ,
+             '0' as clazz_id,
+            ZGH as numbers,
+            XB as sex
+        FROM  jsxxb
+union all
+       SELECT xh as nickname, 
+             LXDH ,
+             YXDZ as EMLDZ ,
+             'student' as type,
+             zymc as major_id ,
+             XZB as clazz_id,
+            xh as numbers,
+            XB as sex
+        FROM xsjbxxb;
+
+/
+--8.选课信息表
+    CREATE OR REPLACE VIEW V_xsxkb AS
+      SELECT XH, 
+             XKKH
+        FROM  xsxkb;
+
+/
+
+---9.学生课表
+CREATE OR REPLACE VIEW V_XSKCB AS 
+    select distinct a.xn,--学年
+           a.xq,--学期
+           a.xh,--学号
+           a.xkkh,--选课课号
+           b.kcdm,--课程代码
+           b.bjmc,--上课班级
+           (select kczwmc from kcdmbview where kcdm=substr(a.XKKH,15,instr(a.XKKH,'-',1,4)-15)) KCMC,--课程名称
+           a.xqj,--星期几、
+           a.qsz||'-'||a.jsz AS ZC,--周次
+           a.djj,--第几节
+           a.dsz,--单双周
+           a.qsz,--起始周
+           a.jsz,--结束周
+           A.DJJ||'-'||(A.DJJ+(A.SKCD-1)) as JC,--节次
+           B.SKDD,--上课地点
+           B.JSXM,--任课教师
+           a.skcd,--上课长度
+           a.kcb,--课程表
+           a.xsf
+    from xskcb a,jxrwbview_xy2 b 
+    where a.xn=b.xn and a.xq=b.xq and a.xkkh=b.xkkh;
+/
+
+grant select on V_JSLHDMB   to  zfjwjkfs_ZQC;
+grant select on V_jxcdxxb      to  zfjwjkfs_ZQC;
+grant select on V_BJDMB   to  zfjwjkfs_ZQC;
+grant select on V_XYDMB   to  zfjwjkfs_ZQC;
+grant select on V_ZYDMB      to  zfjwjkfs_ZQC;
+grant select on V_XQDMB   to  zfjwjkfs_ZQC;
+grant select on V_USERS   to  zfjwjkfs_ZQC;
+grant select on V_xsxkb      to  zfjwjkfs_ZQC;
+grant select on V_XSKCB   to  zfjwjkfs_ZQC;
+   
+   
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_JSLHDMB        Select * From zfxfzb.V_JSLHDMB;
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_jxcdxxb        Select * From zfxfzb.V_jxcdxxb;
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_BJDMB        Select * From zfxfzb.V_BJDMB;
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_XYDMB        Select * From zfxfzb.V_XYDMB;
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_ZYDMB        Select * From zfxfzb.V_ZYDMB;
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_XQDMB        Select * From zfxfzb.V_XQDMB;
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_USERS        Select * From zfxfzb.V_USERS;
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_xsxkb        Select * From zfxfzb.V_xsxkb;
+CREATE OR REPLACE VIEW zfjwjkfs_ZQC.V_XSKCB        Select * From zfxfzb.V_XSKCB;

@@ -1,0 +1,241 @@
+封装性:
+	就是将一个类中的成员,
+	设计为"尽量少地"对外开发其访问权限的一种指导原则
+	
+抽象类,抽象方法
+	是一个不能实例化的类
+定义形式:
+	abstract class 类名{}
+为什么需要抽象类:
+	它是为了技术管理而设计的！
+抽象方法
+	是一个只有方法头,没有方法体的方法定义形式;
+定义形式：
+	abstract function 方法名(形参1....)//注意这里必须有分号
+为什么需要抽象方法：
+	它也是为了技术管理而设计：要求下级类需要去实现这个方法的"具体做法";
+	
+	
+-代码
+//怪物类
+abstract class Guai{
+	protected $blood=100;
+	abstract protected function Attach();
+}
+//蛇怪类
+class Snake extends Guai{
+	function Attach(){
+		echo "<br/>悄悄靠近主人公,然后迅猛咬一口";
+		$this->blood--;//自身掉血1点
+	}
+}
+//虎怪类
+class Tiger extends Guai{
+	function Attach(){
+		echo "<br/>猛扑猛咬主人公";
+		$this->blood--;//自身掉血1点
+	}
+}
+//妖怪这个类作为抽象类,可以不去实现父类的抽象方法：
+//也可以去实现
+abstract class Yao extends Guai{
+	//这里,这个抽象方法仍然是保留父类抽象方法的身份 不用写
+}
+抽象类和抽象方法的细节
+1、一个抽象方法:必须在抽象类中;
+2、反过来,抽象类中可以没有抽象方法--虽然不常见
+3、可见：抽象方法是为了规定下级类中"必须"要做具体的完整某个工作(任务);
+4、下级类中继承了上级类的抽象方法,则要么去"实现该方法的具体内容",要么自己也作为抽象类
+	(即其继承的抽象方法仍然是抽象的);
+5、子类实现父类的抽象方法的时候,其形参也应该跟父亲保持一致,其访问权限也不能更小;
+	--其原因其实这是"重写",自然应该遵循重写的要求;
+	
+重载技术
+	重载的基本概念
+		重载在"通常面向对象语言"中的含义:
+			是指在一个类(对象),有多个名字相同但形参不同的方法的现象;
+			类似这样:
+			class C{
+				function f1(){}
+				function f2($p1){}
+				function f2($p1,$p2){}
+			}
+		重载在"php语言"中的含义：
+		是指,一个对象或类使用其未定义的属性或方法的时候,其中的一些"处理机制";
+		比如:
+			class A{
+				public $p1=1;
+			}
+			$a1=new A();
+			echo $a1->p1;//1
+			echo $a1->p2;//出错,未定义
+		则:php中的重载技术,就是应对上述"出错"的情况,时代码不出错,而且还能优雅的处理	
+		
+		class A{
+			public $p1=1;
+			function __get($prop_name){
+				echo "<br />你小心点啊,你正在用的属性{$prop_name}我还没定义呢";
+				echo "<br />属性{$prop_name}不存在";
+				return "";//也可以返回0,或false......
+				trigger_error("发送错误：属性不存在",E_USER_ERROE);// 产生一个用户级别的 error/warning/notice 信息 
+				die();
+			}
+		}
+		$o1=new A();
+		echo $o1->p1;
+		echo $o1->p2;
+	属性重载
+		就是对一个对象的不存在的属性进行使用的时候,这个类中预先设定要的对应办法(处理机制);
+		属性,本质就是变量,其只有4个操作
+			取值:当对一个对象不存在的属性进行取值的时候,就会自动调用__get()
+			赋值:当对一个对象不存在的属性进行赋值的时候,就会自动调用__set()
+			判断(isset):当对一个对象不存在的属性进行isset()判断的时候,就会自动调用__isset()
+			销毁(unset):当对一个对象不存在的属性进行unset()销毁的时候,就会自动调用__unset()
+	以上四个方法被称为魔术方法
+		__get($属性名)
+			在对一个对象不存在的属性进行"取值"的时候,会自动调用
+			我们其实是可以使用该方法对这种意外方法进行特别处理
+			其中该方法可以带一个形参,表示这个要对之取值的不存在的属性名(字符串)
+		__set($属性名,值)
+			当对一个对象不存在的属性进行赋值的时候,就会自动调用__set($属性名,值);
+			它有两个形参,分别代表要不存在的属性进行赋值时候的属性名和值
+			这个方法,结合__get方法,往往可以使我们定义的类,就有一种可简便扩展属性的特性
+			即类(或对象)的属性,可以更为方便自由,如下所示：
+				代码:
+					class A{
+						//定义一个属性,这个属性意图存储"若干个"不存在的属性数据
+						protected $prop_list=array();
+						function __set($p,$v){
+							$this->prop_list[$p]=$v;
+						}
+						function __get($p){
+							if(isset($p)){
+								return $this->prop_list[$p];
+							}else{
+								return "该属性不存在";
+							}							
+						}
+						function __isset($prop){
+							$v1=isset($this->prop_list[$prop]);
+							return $v1;
+						}
+						function __unset($prop){
+							unset($this->prop_list[$prop]);
+						}
+					}
+					$a1=new A()
+					$a1->p1=1;
+					$a1->p2=2;
+					$a1->abc="磊哥";
+					echo "<br/>然后可以输出这些'不存在的属性'";
+					echo $a1->p1;
+					echo $a1->p2;
+					echo $a1->abc;
+		__isset($属性名)
+			当对一个对象不存在的属性进行isset()判断的时候,就会自动调用__isset()
+			用法:
+				$v1=isset($对象->不存在的属性)//此时就会自动调用魔术方法__isset();
+		__unset($属性名)
+	方法重载
+		当对一个对象的不存在的实例方法进行"调用"的时候.会自动调用类中的__call($methodName,$argument)这个魔术方法;
+			必须这个2个参数 $methodName不存在的方法名  $argument调用不存在的方法时 使用实参数据,是一个数组
+		当对一个类的不存在的静态方法进行"调用"的时候.会自动调用类中的__callstatic()这个静态魔术方法;
+		
+利用php的重载技术,实现通常的"方法重载"
+	class A{
+		function __call($Func_name,$argument){
+			if(($Func_name==='f1'){
+				$len=count($argument);
+				if($len<1||$len>3){
+					trigger_error("使用非法的方法！",E_USER_ERROE);
+				}elseif($len==1){
+					return $argument[0];
+				}elseif($len==2){
+					return $argument[0]*$argument[0]+$argument[1]*$argument[1]
+				}elseif($len==3){
+					return pow($argument[0],3)+pow($argument[1],3)+pow($argument[2],3);
+				}
+			}
+		}
+	}	
+	$ob=new A();
+	$ob->f1();
+	$ob->f1(2);
+	$ob->f1(3,4,5);
+	
+接口技术
+什么是借口？
+先看抽象类
+	abstract class 类名{
+		属性1
+		属性2
+		....
+		非抽象方法1
+		非抽象方法2
+		......
+		抽象方法1
+		抽象方法2
+		......
+	}
+设想,将上述抽象类中"实在的成员",删除,即删除哪些非抽象的成员,则自然抽象类中,就
+只有抽象类
+	abstract class 类名{
+		抽象方法1
+		抽象方法2
+		......
+	}
+	由此,可以理解为:这个抽象类,"太抽象了",几乎自己什么都不做,就光让别人做什么。
+	那么：
+		接口就是这样一个"天然不实在"的家伙：
+		接口,就是规定,里面只能放"抽象方法"和"常量"的一种类似类的结构体
+		--可见,接口就是比抽象类还要抽象的一种语法结构
+	接口(interface)定义形式
+	interface 接口名{
+		常量1;
+		常量2;
+		......
+		抽象方法1
+		抽象方法2//方法没有方法体
+		抽象方法3//方法没有方法体
+		.......
+	}
+	说明:
+		1、可见,接口中,只有常量(接口常量)和抽象方法两种成员
+		2、接口常量的使用形式:(接口名称):常量名称;
+		3、接口的抽象方法,不要使用abstract修饰,也不需要使用访问控制修饰符,因为其天然就是public  abstract
+		
+		
+	
+	使用形式:
+		class 类名 implements 接口名1,接口名1,...{}
+	代码
+		interface Player{//播放器接口
+			function play();
+			function stop();
+			function next();
+			function prev();
+		}
+		interface USBset{
+			const USBWidth=12;
+			const USBHeight=5;
+			function dataIn();
+			function dataOut();
+		
+		}
+		
+		class MP3Player implements Player,USBset{
+			function play(){}
+			function stop(){}
+			function next(){}
+			function prev(){}
+			function dataIn(){}
+			function dataOut(){}			
+		}
+	其中接口跟接口之间,也可以继承,跟类之间的继承
+		interface 接口1 extends 接口2{
+			//接口定义成员
+		}
+		
+		
+类和接口大总结
+	
