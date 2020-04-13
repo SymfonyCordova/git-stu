@@ -768,12 +768,27 @@ font-size: 12px;
 示例:
 
 ```css
-
+.selector{
+    margin:0;
+}
 ```
 
 
 
 # CSS背景(background)
+
+CSS可以添加背景颜色和背景图片,以及来进行图片设置。
+
+| background-color                                            | 背景颜色         |
+| ----------------------------------------------------------- | ---------------- |
+| background-image                                            | 背景图片地址     |
+| background-repeat                                           | 是否平铺         |
+| background-position                                         | 背景位置         |
+| background-attachment                                       | 背景固定还是滚动 |
+| 背景的和写(复合属性)                                        |                  |
+| background:背景颜色 背景图片地址 背景平铺 背景滚动 背景位置 |                  |
+
+
 
 ## 背景图片(image)
 

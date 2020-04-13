@@ -1381,7 +1381,23 @@ EL表达式的11个隐含对象
 	
 	initParam			Map<String, String>		它可以获取web.xml中的配置的<context-param>
 
-	p200
+EL获取四个特定域中的属性
+	pageScope			Map<String, Object>		它可以获取pageContext域中的数据
+	requestScope		Map<String, Object>		它可以获取request域中的数据
+	sessionScope		Map<String, Object>		它可以获取session域中的数据
+	applicationScope	Map<String, Object>		它可以获取ServletContext域中的数据
+	默认是从小到大的顺序进行搜索，如果是选择性的搜索${requestScope.key2}
+		<%
+            pageContext.setAttribute("key", "page");
+            request.setAttribute("key", "request");
+            session.setAttribute("key", "session");
+            application.setAttribute("key", "application");
+		%>
+        ${key}
+        ${requestScope.key}
+        ${sessionScope.key}
+        ${applicationScope.key}
+P201
 ```
 
 
