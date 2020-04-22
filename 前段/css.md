@@ -349,6 +349,8 @@ word-spacing和letter-spacing均可对英文进行设置。不同的是letter-sp
 color: rgba(r,g,b,a) a是alpha 透明的意思 取值范围 0～1之间  color: rgba(0,0,0,0.3)
 ```
 
+
+
 ## 文字阴影(CSS3)
 
 以后我们可以给我们的文字添加阴影效果了shadow影子
@@ -788,21 +790,94 @@ CSS可以添加背景颜色和背景图片,以及来进行图片设置。
 | 背景的和写(复合属性)                                        |                  |
 | background:背景颜色 背景图片地址 背景平铺 背景滚动 背景位置 |                  |
 
+示例:
+
+```css
+background-color: pink;
+background-image: url(images/jpg);
+background-repeat: no-repeat;
+background-position: left top; /*默认左上角*/
+background-position: bottom right; /*方位名词没有顺序,谁在前都可以*/
+background-position: center center; 
+background-position: left; /*方位名词只写一个,另外一个默认为center*/
+background-position: 10px 10px; /*精确单位第一值一定是x坐标,第二个值一定是y坐标*/
+background-position: 10px center;/*方位名词和精确单位是可以混搭的*/
+```
 
 
-## 背景图片(image)
-
-## 背景平铺(repeat)
-
-## 背景位置(position)
 
 ## 背景附着
 
+语法:
+
+```css
+background-attachment: scroll|fixed
+```
+
+参数:
+
+scroll: 背景图像是随对象内容滚动
+
+fixed: 背景图像固定
+
+说明:
+
+设置或检索背景图像是随对象内容滚动还是固定的
+
+
+
 ## 背景简写
+
+background属性的值的书写顺序官方并没有强制标准的。为了可读性,建议大家如下写:
+
+background: 背景颜色 背景图片地址 背景平铺 背景滚动 背景位置
+
+```css
+background: #000 url(images/ms.jpg) repeat-y scroll center -15px;
+```
+
+
 
 ## 背景透明(CSS3)
 
+CSS3支持背景半透明的写法语法格式是:
+
+```css
+background: rgba(0,0,0,0,3)
+```
+
+最后一个参数是alpha透明度 取值范围0~1之间
+
+注意: 背景半透明是指盒子背景半透明,盒子里面的内容不收影响
+
+同样,可以给文字和边框透明 都是rgba的格式来写
+
+
+
 ## 背景缩放(CSS3)
+
+通过background-size设置背景图片的尺寸,就像我们设置img的尺寸一样,在移动web开发中做屏幕适配应用广泛。
+
+其参数设置如下:
+
+a)可以设置长度单位(px)或百分比(设置百分比时,参照盒子的宽度)
+
+b)设置cover时,会自动调整缩放比例,保证图片始终填充满背景区域,如有溢出部分则会被隐藏
+
+c)设置contain会自动调整缩放比例,保证图片完整显示在背景区域
+
+```css
+backgroud-image: url('images/gyt.jpg')
+background-size: 300px 100px;
+/* background-size: contain; */
+/* background-size: cover; */
+```
+
+我们插入的图片img直接通过width和height设置即可
+
+背景图片设置大小我们尽量只改一个值,防止缩放失真扭曲
+
+
 
 ## 多背景(CSS3)
 
@@ -821,4 +896,6 @@ CSS可以添加背景颜色和背景图片,以及来进行图片设置。
 # 盒模型(CSS重点)
 
 看透网页布局的本质
+
+盒子模型
 
