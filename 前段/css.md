@@ -881,7 +881,108 @@ background-size: 300px 100px;
 
 ## 多背景(CSS3)
 
+以逗号分割可以设置多背景,可用于自适应布局做法就是用逗号隔开就好了
+
+- 一个元素可以设置多重背景图像
+- 每组属性间使用逗号分割
+- 如果设置的多重背景图之间存在着交集(即存在重叠关系),前面的背景图会覆盖在后面的背景图之上
+- 为了避免背景色将图像盖住,背景色通常都定义在最后一组上
+
+```css
+background: url(test1.jpg) no-repeat scroll 10px 20px/50px 60px,
+			url(test2.jpg) no-repeat scroll 10px 20px/70px 90px,
+			url(test2.jpg) no-repeat scroll 10px 20px/110px 130px c #aaa;
+```
+
+
+
 ## 凹凸文字
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {
+                background-color
+            }
+            div {
+                font: 700 80px "微软雅黑";
+                color: #ccc;
+            }
+            div:first-child {
+                text-shadow: 1px 1px 1px #000,
+                    		 -1px -1px 1px #fff;
+            }
+            div:last-child {
+                text-shadow: -1px -1px 1px #000,
+                    		 1px 1px 1px #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <div>我是凸起的文字</div>
+        <div>我是凹下的文字</div>
+    </body>
+</html>
+```
+
+## 导航栏案例
+
+
+
+文本的装饰
+
+text-decoration 通常我们用于给链接修改装饰效果
+
+| 值           | 描述                   |
+| ------------ | ---------------------- |
+| none         | 默认 定义标准的文本    |
+| underline    | 定义文本下的一条线     |
+| overline     | 定义文本上的一条线     |
+| line-through | 定义穿过文本下的一条线 |
+
+**使用技巧**:  在一行内的盒子内,我们设定行高等于盒子的高度,就可以使用文字垂直居中
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: #000;
+        }
+        a {
+            width: 200px;
+            height: 50px;
+            /* background-color: orange; */
+            display: inline-block;
+            text-align: center;
+            line-height: 50px;
+            color: #fff;
+            font-size: 22px;
+            text-decoration: none;
+        }
+        a:hover {
+            background: url(images/1123.gif) no-repeat;
+        }
+    </style>
+</head>
+<body>
+    <a href="#">专区说明</a>
+    <a href="#">申请资格</a>
+    <a href="#">兑换奖励</a>
+    <a href="#">下载游戏</a>
+</body>
+</html>
+```
+
+
+
 
 # CSS三大特性
 
