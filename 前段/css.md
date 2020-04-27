@@ -983,20 +983,226 @@ text-decoration 通常我们用于给链接修改装饰效果
 
 
 
-
 # CSS三大特性
 
 ## CSS层叠性
 
+css最后的执行口诀: 长江后浪推前浪,前浪死在沙滩上
+
 ## CSS继承性
+
+子承父业
+
+**注意**：
+
+```
+恰当地使用继承可以简化代码,降低css样式的复杂性。子元素可以继承父元素的样式(text,font-,line-这些元素开头的都可以继承,以及color属性)
+```
+
+
 
 ## CSS优先级
 
-## CSS特殊性(Specificity)
+定义CSS样式时,经常出现两个或更多规则应用在用一个元素上,这时就会出现优先级的问题
+
+在考虑权重时,需要注意一些特殊情况,具体如下:
+
+```text
+	继承样式的权重为0. 即在嵌套结构中,不管父元素样式权重多大,被子元素继承时,他的权重都为0,也就是说子元素定义的样式会覆盖继承来的样式
+	行内样式优先. 应用style属性的元素,其行内样式的权重非常高,可以理解为远大于100.总之,他拥有比上面提高的选择器都大的优先级
+	权重相同时,css就遵循就近原则.也就是说靠近元素的样式具有最大的优先级,或者说排在最后的样式优先级最大.
+	css定义了一个!important命令,该命令被赋予最大的优先级.也就是说不管权重如何及样式位置的远近,!important都具有最大优先级
+```
+
+
+
+### CSS特殊性(Specificity)
+
+关于CSS权重,我们需要一套计算公式去计算,这个就是CSS Specificity,我们称为CSS特殊或非凡性,它是一个衡量CSS值优先级的一个标准具体规范如下:
+
+specificity用一个四位的数 字串(CSS2是三位)来表示,更像四个级别,值从左到右,左面的最大,一级大于一级,数位之间没有进制,级别之间不可超越
+
+| 继承或者*的贡献值      | 0,0,0,0 |
+| ---------------------- | ------- |
+| 每个元素(标签)贡献值为 | 0,0,0,1 |
+| 每个类,伪类贡献值为    | 0,0,1,0 |
+| 每个ID贡献值           | 0,1,0,0 |
+| 每个行内样式贡献值     | 1,0,0,0 |
+| 每个!important贡献值   | 无穷大  |
+
+案例:
+
+```css
+div {
+    color: orange!important /* important就是重要的 级别最高 一旦出现优先执行 */
+}
+```
+
+权重可以叠加
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        ul li { /* ul 0001  li 0001  叠加 0,0,0,2 */
+            color: green;
+        }
+        li {
+            color: red;
+        }
+        nav ul li { /* 0,0,0,3  */
+            color: blue;
+        }
+        .daohang ul li { /* 0,0,1,2 最后执行粉色 */
+            color: pink;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li>李白</li>
+            <li>程咬金</li>
+            <li>鲁班一号</li>
+        </ul>
+    </nav>
+</body>
+</html>
+```
+
+**注意**:
+
+```reStructuredText
+1.数位之间没有进制 比如说: 0,0,0,5+0,0,0,5=0,0,0,10而不是0,0,1,0 所以不会存在10个div能赶上一个类选择器
+2.继承的权重是0,不管你父亲多牛逼,继承的时候还是0
+```
+
+**总结优先级**:
+
+1. 使用!important的声明的规则
+2. 内嵌在HTML元素的style属性里面声明
+3. 使用ID选择器的规则
+4. 使用类选择器、属性选择器、伪元素和伪类选择器的规则
+5. 使用了元素选择器的规则
+6. 只包含一个通用选择器的规则
+7. 同一选择器的遵循就近原则
+
+```
+总结:权重是优先级的算法,层叠是优先级的表现
+```
+
+
 
 # 盒模型(CSS重点)
 
-看透网页布局的本质
+其实,CSS就是三大模块: 盒子模型、浮动、定位,其余的都是细节。要求这三部分,无论如何也要学的非常精通。
 
-盒子模型
+所谓盒子模型就是把HTML页面中的元素看作是一个矩形的盒子,也就是一个盛装内容的容器。每个矩形都由元素的内容、内边距(padding)、边距(border)和外边距(margin)组成
+
+## 看透网页布局的本质
+
+网页布局中,我们是如何把里面的文字,图片,按照美工给我们的效果排列的整齐有序呢?
+
+看透网页布局的本质: 把网页元素比如文字图片等等,放入盒子里面,然后利用CSS摆放盒子的过程,就是网页布局。
+
+## 盒子模型
+
+首先看一张图体会一下什么是盒子模型
+
+![](../img/53.jpg)
+
+margin
+
+border
+
+padding
+
+context
+
+## 盒子边框(border)
+
+语法:
+
+```css
+border: border-width || border-style || border-color
+```
+
+border-style: 边框样式,常用的属性
+
+```
+none: 没有边框即忽略所有边框的宽度(默认值)
+solid: 边框为单实线(最为常用的)
+dashed: 边框为虚线
+dotted: 边框为点线
+```
+
+
+
+### 盒子边框总结表
+
+| 设置内容     | 样式属性                                                     | 常用属性                                                     |
+| ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 上边框       | border-top-style:样式;border-top-width:宽度;border-top-color:颜色;border-top:宽度 样式 颜色； |                                                              |
+| 下边框       | border-bottom-style:样式;border-bottom-width:宽度;border-bottom-color:颜色;border-bottom:宽度 样式 颜色； |                                                              |
+| 左边框       | border-left-style:样式;border-left-width:宽度;border-left-color:颜色;border-left:宽度 样式 颜色； |                                                              |
+| 右边框       | border-right-style:样式;border-right-width:宽度;border-right-color:颜色;border-right:宽度 样式 颜色； |                                                              |
+| 样式综合设置 | border-style: 上边 [右边 下边 左边]；                        | none无(默认)、solid单实线、dashed虚线、dotted点线、double双实线 |
+| 宽度综合设置 | border-width: 上边 [右边 下边 左边]；                        | 像素值                                                       |
+| 颜色综合设置 | border-color: 上边 [右边 下边 左边]；                        | 颜色值、#十六进制、rgb(r,g,b)、rgb(%r,g%,b%)                 |
+
+
+
+### 表格的细线边框
+
+```css
+table {
+    border-collapse:collapse;
+}
+
+border-collapse: collapse; //表示边框合并在一起
+```
+
+
+
+### 圆角边框(CSS3)
+
+语法格式:
+
+```css
+border-radius: 左下角 右上角 右下角 左下角
+```
+
+案例:
+
+```css
+
+```
+
+
+
+## 内边距
+
+## 外边距
+
+## 外边距合并
+
+## content宽度和高度
+
+## 三个计算题
+
+## 盒子模型布局稳定性
+
+## CSS3盒模型
+
+## 盒子阴影
+
+浮动
+
+普通流
+
+浮动
 
