@@ -1160,10 +1160,27 @@ dotted: 边框为点线
 
 ```css
 table {
-    border-collapse:collapse;
+    border-collapse:collapse; //collapse单词是合并的意思
 }
 
 border-collapse: collapse; //表示边框合并在一起
+```
+
+
+
+案例
+
+```css
+table {
+  width: 70rem;
+  height: 30rem;
+  border: 0.1rem solid red;
+  border-collapse: collapse;
+}
+
+td {
+  border: 0.1rem solid red;
+}
 ```
 
 
@@ -1179,7 +1196,20 @@ border-radius: 左下角 右上角 右下角 左下角
 案例:
 
 ```css
+div {
+    width:200px;
+ 	height:200px;
+}
 
+div {
+ border-radius: 10px; //如果这个圆角值越大最终可以变成一个圆,前提div是个正方形,取div宽度和高度的一般
+ border-radius: 50%;//但是如果宽和高的值不是一个整数,可以使用百分数,这样也能得到一个圆
+}
+
+div {
+    border-radius: 100px;
+    height: 100px; //这样可以得到一个胶囊
+}
 ```
 
 

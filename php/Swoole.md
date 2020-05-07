@@ -3,7 +3,7 @@
 ## swoole install
     安装php
         sudo -y apt-get install php7.2-fpm php7.2-mysql php7.2-curl php7.2-json php7.2-mbstring php7.2-xml  php7.2-intl 
-
+    
     安装其他扩展（按需安装）
         sudo apt-get install php7.2-gd
         sudo apt-get install php7.2-soap
@@ -32,12 +32,16 @@
         sudo apt-get install php7.2-zip
     安装swoole
         pecl install swoole
+    
+    ubuntu 没有安装 phpize 可执行命令：sudo apt-get install php7.2-dev 来安装 phpize
         git clone https://github.com/swoole/swoole-src.git && \
         cd swoole-src && \
         git checkout v4.x.x
-        phpize && \
+     	phpize && \
         ./configure && \
-        make && make install
+        make && sudo make install
+        
+    在php.ini里面加上 extension=swoole.so
     安装swoole提示包
         composer -dev require swoole/ide-helper
     测试
