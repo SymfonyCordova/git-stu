@@ -977,12 +977,12 @@ https://symfony.com/doc/2.8/components/security/authentication.html
 			用户登陆网站后触发该事件
 		security.switch_user			SecurityEvents::SWITCH_USER							SwitchUserEvent	
 			每次激活switch_user防火墙侦听器时都会触发security.switch_user事件。
-
+	
 		如果是ajax请求返回json格式,如果是html请求返回页面
 			如果是html请求跳转
 			只需要创建一个监听security.interactive_login的监听器
 			php app/console config:dump-reference security
-
+	
 	2.如何使用Guard创建自定义身份验证系统
 		需要实现GuardAuthenticatorInterface接口的四个方法
 			getCredentials(Request $request)
@@ -1025,5 +1025,5 @@ https://symfony.com/doc/2.8/components/security/authentication.html
 		例如微信登陆 参考: https://www.chrisyue.com/use-symfony-guard-as-authentication.html
 	有些是表单登陆 有些是微信登陆 有些是api登陆等等,那怎么办呢?
 		参考: https://symfony.com/doc/2.8/security/multiple_guard_authenticators.html
-
+	
 	防火墙的配置 使用 php app/console debug:config security 命令来检查

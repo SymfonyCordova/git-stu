@@ -169,7 +169,7 @@ set  key  value：
 
 取值：
 get key
-获取key的value。如果与该key关联的value不是string类型,redis将返回错误信息,因为get命令只能于 获取String value;如果该key存在,返回(nil)
+获取key的value。如果与该key关联的value不是string类型,redis将返回错误信息,因为get命令只能于 获取String value;如果该key不存在,返回(nil)
 
 删除：
 del key
