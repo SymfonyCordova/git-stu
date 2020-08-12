@@ -3,32 +3,32 @@
     rpm -qa | grep -i mysql 查看是否安装了mysql
     如果有就卸载
     rpm -e --nodeps mysql--libs-5.7.24-1.el7.x86_64 卸载自带的MySQL
-
+    
     windows下 Setup.exe就一个安装包(先安装了服务器 再安装了客户端)
     linux要分开安装
     mysql-community-client-5.7.24-1.el7.x86_64.liunx.rpm
     mysql-community-server-5.7.24-1.el7.x86_64.liunx.rpm
     rpm -ivh MySQL-server--5.7.24-1.el7.x86_64.liunx.rpm
     rpm -ivh MySQL-client--5.7.24-1.el7.x86_64.liunx.rpm
-
+    
     启动mysql服务
     service mysql start
-
+    
     初始化mysql的root密码
     /usr/bin/mysqladmin -u root password ‘root’
-
+    
     设置开机启动mysql
       加入到系统服务:
     chkconfig --add mysql
     自动启动
     chkconfig mysql on
-
+    
     开启远程连接
       登陆mysql
       //赋予root用户所有权限,远程登陆密码是root
       grant all privileges on *.* to ‘root’ @’%’ identified by ‘root’
       flush privileges
-
+    
     设置linux的防火墙
       /sbin/iptables -I INPUT -p tcp --dport 3306 -j ACCEPT
       /etc/rc.d/init.d/iptables save
@@ -68,7 +68,7 @@
     5.使用数据库
       切换数据库 use db_name;
       查看当前使用的数据库 select database();
-
+    
     /s 列出当前服务器的信息
     show charset; 列出编码和对应的排版方式
 
@@ -81,14 +81,14 @@
       ...
       fieldn type
     )[character set xxx][collate xxx];
-
+    
     ****java和mysql的数据类型比较
       String  ----------------------  char(n) varchar(n) 255  65535
       byte short int long float double -------------- tinyint  smallint int bigint float double
       boolean ------------------ bit 0/1
       Date ------------------ Date、Time、DateTime、timestamp
       FileInputStream FileReader  ------------------------------ Blob Text
-
+    
       *创建一个员工表employee
       create table employee(
         id int primary key auto_increment ,
@@ -100,7 +100,7 @@
         salary double,
         resume text
       );
-
+    
       约束:
         primary key
         unique
@@ -124,7 +124,7 @@
         rename table 表名 to 新表名;
       (6)修该表所用的字符集			
         alter table student character set utf8;
-
+    
     4.删除表
       drop table tab_name;
 
@@ -138,16 +138,16 @@
     *字符和日期型数据应包含在单引号中'zhang' '2013-04-20'
     *插入空值：不指定某列的值或insert into table value(null)，则该列取空值。
     *如果要插入所有字段可以省写列列表，直接按表中字段顺序写值列表insert into tab_name values(value1,value2,......);
-
+    
     *练习：使用insert语句向表中插入三个员工的信息。
     insert into emp (name,birthday,entry_date,job,salary) values ('张飞','1990-09-09','2000-01-01','打手',999);
     insert into emp (name,birthday,entry_date,job,salary) values ('关羽','1989-08-08','2000-01-01','财神',9999);
     insert into emp (name,birthday,entry_date,job,salary) values ('赵云','1991-07-07','2000-01-02','保安',888);
     insert into emp values (7,'黄忠',1,'1970-05-05','2001-01-01','战神',1000,null);
-
+    
     show variable like 'character%'; 列出服务器他处理客户端服务器短的编码
     set names gbk；告诉服务器我当前的客户端编码形式 处理的时候解决乱码
-
+    
     2.修改表记录 
     update tab_name set field1=value1,field2=value2,......[where 语句]
     *UPDATE语法可以用新值更新原有表行中的各列。
@@ -162,7 +162,7 @@
       update emp set salary=4000,job='ccc' where name='zs';
       将wu的薪水在原有基础上增加1000元。	
       update emp set salar=salary+4000 where name='wu';
-
+    
     3.删除表操作
     delete from tab_name [where ....]
     *如果不跟where语句则删除整张表中的数据
@@ -213,7 +213,7 @@
                   in(10,20,3)值是10或20或30
                   like '张pattern' pattern可以是%或者_，如果是%则表示任意多字符，此例中张三丰 张飞 张abcd ，如果是_则表示一个字符张_，张飞符合。张
                   Is null
-
+    
             *逻辑运算符
               在多个条件直接可以使用逻辑运算符 and or not
         *实验
@@ -264,7 +264,7 @@
           求班级最高分和最低分（数值范围在统计中特别有用）
           select Max((ifnull(math,0)+ifnull(chinese,0)+ifnull(english,0))) from exam;
           select Min((ifnull(math,0)+ifnull(chinese,0)+ifnull(english,0))) from exam;
-
+    
     （6）group by字句，其后可以接多个列名，也可以跟having子句对group by 的结果进行筛选。
           练习：对订单表中商品归类后，显示每一类商品的总价
             select product，sum(price) from orders group by product;
@@ -293,7 +293,7 @@
         ref_id int,
         foreign key(ref_id) references tb2(id)
       );
-
+    
       create table tb2(
         id int primary key auto_increment
       );
@@ -305,7 +305,7 @@
         RESTRICT : 只要本表格里面有指向主表的数据， 在主表里面就无法删除相关记录。
         CASCADE : 如果在foreign key 所指向的那个表里面删除一条记录，那么在此表里面的跟那个key一样的所有记录都会一同删掉。
         alter table book add [constraint FK_BOOK] foreign key(pubid) references pub_com(id) [on delete restrict] [on update restrict];
-
+    
       （2）删除外键
         alter table 表名 drop foreign key 外键（区分大小写，外键名可以desc 表名查看）;
 
@@ -355,7 +355,7 @@
         如何确定两张表之间的关系:
             找外键
             此种方式能解决确立表关系90%的情况, 剩余的10%请听项目阶段的打断设计。
-
+    
     多对多联合主键的例子
         create table student_teacher_ref(
             sid int,
@@ -376,7 +376,7 @@
             tname varchar(20),
             tsalary double(7,2)
         );
-      
+
 ## 多表查询
 
     create table tb (id int primary key,name varchar(20) );
@@ -388,7 +388,7 @@
     insert into tb values(1,'财务部');
     insert into tb values(2,'人事部');
     insert into tb values(3,'科技部');
-
+    
     insert into ta values (1,'刘备',1);
     insert into ta values (2,'关羽',2);
     insert into ta values (3,'张飞',3);
@@ -410,10 +410,10 @@
       |  2 | yyy  |
       |  3 | yyy  |
       +----+------+
-
+    
     1.笛卡尔积查询：两张表中一条一条对应的记录，m条记录和n条记录查询，最后得到m*n条记录，其中很多错误数据
       select * from ta ,tb;
-
+    
       mysql> select * from ta ,tb;
         +----+------+-------+----+------+
         | id | name | tb_id | id | name |
@@ -431,7 +431,7 @@
     2.内连接：查询两张表中都有的关联数据,相当于利用条件从笛卡尔积结果中筛选出了正确的结果。
       select * from ta ,tb where ta.tb_id = tb.id;
       select * from ta inner join tb on ta.tb_id = tb.id;
-
+    
       mysql> select * from ta inner join tb on ta.tb_id = tb.id;
         +----+------+-------+----+------+
         | id | name | tb_id | id | name |
@@ -442,7 +442,7 @@
     3.外连接
       （1）左外连接：在内连接的基础上增加左边有右边没有的结果
       select * from ta left join tb on ta.tb_id = tb.id;
-
+    
       mysql> select * from ta left join tb on ta.tb_id = tb.id;
         +----+------+-------+------+------+
         | id | name | tb_id | id   | name |
@@ -453,7 +453,7 @@
         +----+------+-------+------+------+
       （2）右外连接：在内连接的基础上增加右边有左边没有的结果
         select * from ta right join tb on ta.tb_id = tb.id;
-
+    
         mysql> select * from ta right join tb on ta.tb_id = tb.id;
         +------+------+-------+----+------+
         | id   | name | tb_id | id | name |
@@ -462,13 +462,13 @@
         |    2 | bbb  |     2 |  2 | yyy  |
         | NULL | NULL |  NULL |  3 | yyy  |
         +------+------+-------+----+------+
-
+    
       （3）全外连接：在内连接的基础上增加左边有右边没有的和右边有左边没有的结果
         select * from ta full join tb on ta.tb_id = tb.id; --mysql不支持全外连接
         select * from ta left join tb on ta.tb_id = tb.id 
         union
         select * from ta right join tb on ta.tb_id = tb.id;
-
+    
         mysql> select * from ta left join tb on ta.tb_id = tb.id
             -> union
             -> select * from ta right join tb on ta.tb_id = tb.id; --mysql可以使用此种方式间接实现全外连接
@@ -496,13 +496,13 @@
           在解散一个部门时应该同时处理员工表中的员工保证这个事务结束后，仍然保证所有的员工能找到对应的部门，满足外键约束。
       ~隔离性：当多个事务同时操作一个数据库时，可能存在并发问题，此时应保证各个事务要进行隔离，事务之间不能互相干扰。
       ~持久性：持久性是指一个事务一旦被提交，它对数据库中数据的改变就是永久性的，不能再回滚。
-
+    
     事务的隔离性导致的问题
     （所有的问题都是在某些情况下才会导致问题）
       ~脏读：一个事务读取到了另一个事务未提交的数据。
       ~不可重复读：在一个事务内读取表中的某一行数据，多次读取结果不同.
       ~幻读(虚读)：一个事务读取到了另一个事务插入的数据（已提交）
-
+    
     6.数据库的隔离级别
       ~Read uncommitted：如果将数据库设定为此隔离级别，数据库将会有脏读、不可重复度、幻读的问题。
       ~Read committed：如果将数据库设定为此隔离级别，数据库可以防止脏读，但有不可重复度、幻读的问题。
@@ -527,12 +527,12 @@
       ~演示不可重复度
       ~演示幻读：幻读有可能发生有可能不发生，但是一旦发生就可能造成危害。
       ~演示Serializable:基于锁机制运行
-
+    
     事务隔离演示
     演示不同隔离级别下的并发问题
     set   transaction isolation level 设置事务隔离级别
     select @@tx_isolation	查询当前事务隔离级别
-
+    
     1.当把事务的隔离级别设置为read uncommitted时，会引发脏读、不可重复读和虚读
 
 
@@ -541,17 +541,17 @@
     start transaction;
     select * from account;
     -----发现a帐户是1000元，转到b窗口
-
+    
     B窗口
     start transaction;
     update account set money=money+100 where name='aaa';
     -----不要提交，转到a窗口查询
-
+    
     select * from account
     -----发现a多了100元，这时候a读到了b未提交的数据（脏读）
-
+    
     2.当把事务的隔离级别设置为read committed时，会引发不可重复读和虚读，但避免了脏读
-
+    
     A窗口
     set transaction isolation level  read committed;
     start transaction;
@@ -562,39 +562,39 @@
     update account set money=money+100 where name='aaa';
     commit;
     -----转到a窗口
-
+    
     select * from account;
     -----发现a帐户多了100,这时候，a读到了别的事务提交的数据，两次读取a帐户读到的是不同的结果（不可重复读）
-
+    
     3.当把事务的隔离级别设置为repeatable read(mysql默认级别)时，会引发虚读，但避免了脏读、不可重复读
-
+    
     A窗口
     set transaction isolation level repeatable read;
     start transaction;
     select * from account;
     ----发现表有4个记录，转到b窗口
-
+    
     B窗口
     start transaction;
     insert into account(name,money) values('ggg',1000);
     commit;
     -----转到 a窗口
-
+    
     select * from account;
     ----可能发现表有5条记如，这时候发生了a读取到另外一个事务插入的数据（虚读）
-
+    
     4.当把事务的隔离级别设置为Serializable时，会避免所有问题
     A窗口
     set transaction isolation level Serializable;
     start transaction;
     select * from account;
     -----转到b窗口
-
+    
     B窗口
     start transaction;
     insert into account(name,money) values('ggg',1000);
     -----发现不能插入，只能等待a结束事务才能插入
-
+    
     8.锁机制：
       共享锁：共享锁和共享锁可以共存。
       排他锁：排他锁和所有锁都不能共存。
@@ -665,7 +665,7 @@
                     先关闭mysql再启动,如果启动了慢查询日志,默认把这个文件放在
                     my.ini文件中记录的位置
                     datadir="c:/ProgramData/MySQL/MySQL Server5.5/Data/"
-
+    
         3.添加索引(普通索引,主键索引,唯一索引,全文索引)【核心】
             不加索引叫全表扫描
             索引实现原理--B-Tree树 折半查找 二分查找
@@ -749,7 +749,7 @@
                     .MYI文件存放的是索引
                     myisam删除的时候不会立马删除,要清理碎片化
                     optimize table aa;//清理碎片
-
+    
         4.分库分表技术(取模算法,水平分割,垂直分割)
             什么时候分库
                 电商项目将一个项目拆分，分成多个小项目,每个小的项目有自己单独的数据库
@@ -840,7 +840,7 @@
         一般使用mycat来管理这个帮助我们管理主从复制存在的数据问题,权限问题
         主从复制服务器一般是走内网,速度是非常快的
     mysql主从复制的配置
-
+    
         主机 172.17.0.2
         备机 172.17.0.3
         1.先查看是否开启bin_log
@@ -973,7 +973,7 @@
           timeout server 30000ms  #服务器超时
           #timeout check 2000 #心跳检测超时
           log 127.0.0.1 local0 err #[err warning info debug]
-
+    
       listen test1	#这里是配置负载均衡,test1是名字,可以任意
           bind 0.0.0.0:3306	#这是监听的IP地址和端口,端口号可以在0-65535之间,要避免端口冲突
           mode tcp	#连接的协议,这里是tcp协议	
@@ -984,7 +984,7 @@
           server s3 172.17.0.4:3306 check port 3306 #负载的机器
           server s4 172.17.0.5:3306 check port 3306 #负载的机器
           # balance source
-
+    
       listen admin_stats
           bind 0.0.0.0:8888
           mode http
@@ -1068,7 +1068,7 @@
         编写shell脚本
             vim mysql.sh
               #!/bin/bash
-
+    
               nc -w2 localhost 3306
               if [ $? -ne 0 ]
               then
@@ -1210,3 +1210,18 @@
         1:表示始终开启查询缓存
         2:表示按需开启查询缓存
     select sql_cache * from xxx
+# mysql预处理
+
+```c
+//预处理为了加快客户端和服务器之间的速度
+#define INSERT_SAMPLE "INSERT INTO test_table(col1, col2, col3) VALUES(?,?,?)"
+//先发送一个语句的模型,再发送模型需要的参数 mysql_stmt_init()
+mysql_stmt_init(); //初始化预处理环境
+mysql_stmt_prepare();//向预处理句柄添加sql语言,带占位符的
+mysql_stmt_param_count(stmt);//辅助函数 求多少个占位符？
+mysql_stmt_bind_param(stmt, bind[3]/*数组*/);//向预处理句柄中添加占位符?的参数 bind是一个数组
+mysql_stmt_execute(stmt); //执行预处理sql语句
+
+//下次再次执行的就不需要发送预处理语句的模型，只需要添加参数就好了，这样可以反复的使用
+```
+

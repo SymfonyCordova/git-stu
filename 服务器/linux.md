@@ -11358,14 +11358,24 @@ int main(int argc, char const *argv[])
 4. 互斥锁的使用步骤
 
    - 创建互斥锁:   pthread_mutex_t mutex;
+
    - 初始化: pthread_mutex_init(&mutex, NULL); -- **此时可以理解mutex = 1此时有一把锁可以使用**
+
    - 找到线程共同操作的共享数据 **找到线程操作共享数据代码开始和结束上加锁和解锁 不能多也不能少**
-     - 加锁: pthread_mutex_lock(&mutex) //阻塞线程。-- **此时可以理解mutex = 0 此时没有锁可以使用**
+
+      **如果代码中一段是操作共享数据 下一段不是操作共享数据 再下一段是共享数据.....**
+
+      **要间隔的不断的加锁和解锁保证  操作共享资源代码的临界区越小越好**
+
+     - 加锁: pthread_mutex_lock(&mutex) //阻塞线程。-- **此时可以理解mutex = 0 此时没有锁**
      - pthread_mutex_trylock(&mutex) //如果锁 上锁 直接返回，不阻塞
        - 。。。。共享数据操纵
      - 解锁: pthread_mutex_unlock(&mutex); -- **此时可以理解mutex = 1此时锁可以使用**
        - 阻塞在锁上的线程会被唤醒
+
    - 销毁：pthread_mutex_destory(&mutex);
+
+   - **所有共享数据的线程都要用同一把锁进行加锁**
 
 5. 互斥锁的相关函数
 
@@ -11392,7 +11402,7 @@ int main(int argc, char const *argv[])
 
      - 没有锁上： 当前线程会给这把锁加锁
 
-     - 如果锁上了： 不会阻塞,返回
+     - 如果锁上了： 不会阻塞,成功加上锁返回0 **一定要对返回值进行判断**
 
        if(pthread_mutex_trylock(&mutex) == 0){//成功
 
@@ -11400,7 +11410,7 @@ int main(int argc, char const *argv[])
 
        }else{
 
-       ​	//错误处理或者等一会 再此尝试加锁
+       ​	//错误处理或者等一会 再此尝试加锁 具体操作
 
        }
 
@@ -11408,18 +11418,1808 @@ int main(int argc, char const *argv[])
 
      - pthread_mutex_unlock(pthread_mutex_t * mutex)
 
-死锁
+### 理解原子操作
 
-读写锁
+不能分割的最小单位 不能拆分的操作
 
-条件变量
+一条代码就是一条指令 cpu必须处理完成一个指令 不回失去cpu 这就是原子操作
 
-信号量(信号灯)
+多条指令会失去cpu 加锁就是为了让多个指令变成类似于一个原子操作 模拟了一个原子操作
 
-条件变量他不是锁 他只是引起阻塞的函数一般开发的时候与互斥锁一起使用
+### 理解死锁
 
-条件变量实现生产者和消费者模型
+造成死锁的原因？
 
-信号量实现的生产者和消费者模型
+- 自己锁自己
+
+  ```c
+  //错误代码示例
+  for(int i = 0; i < 1000; ++i){
+    pthread_mutex_lock(&mutex); //加锁成功不阻塞 忘记解锁 锁的传递性 不要嵌套锁
+    pthread_mutex_lock(&mutex); //加锁不成功阻塞 永远走不下去了 释放锁的代码再下面 这样就一直这样了
+    int cur = number;
+    cur++;
+    number = cur;
+    printf("Thread A, id = %lu, number = %d\n", pthread_self(), number);
+    pthread_mutex_unlock(&mutex);
+  }
+  ```
+
+  操作完成后一定要解锁
+
+- 两把锁
+
+  一个共享资源就是一把锁 两个共享资源就是两把锁
+
+  <img src="../img/77.jpg" alt="77" style="zoom:50%;" />
+
+  两个线程都阻塞了,谁也解不开,都被对方阻塞了
+
+  如何解决呢?
+
+  ​		让线程按照一定的顺序去访问共享资源
+
+  ​		在访问其他锁的时候，需要先将自己的锁解开
+
+  ​		trylock也可以解决死锁
+
+### 读写锁
+
+1. 读写锁是几把锁？
+   - 一把锁
+   - pthread_rwlock_t  lock
+   
+2. 读写锁的类型
+   - 读锁  - 对内存做读操作时候上读锁
+   - 写锁  - 对内存做写操作时候上写锁
+   
+3. 读写锁的特性
+   - 线程A加读锁成功,又来了三个线程,做读操作,可以加锁成功
+     - **读共享  - 并行处理**
+   - 线程A加写锁成功,又来了三个线程,做读操作,三个线程阻塞
+     - **写独占 写操作只允许一个线程来处理**
+   - 线程A加读锁成功,又来了B线程加写锁阻塞,又来了C线程加读锁阻塞,做读操作
+     - **读写不能同时进行**
+     - **写的优先级高**
+   
+4. 读写锁场景练习    目的:   这些进程谁先执行谁之后执行
+   - 线程A加写锁成功,线程B请求读锁
+     - 线程B阻塞 因为写独占
+   - 线程A持有读锁,线程B请求写锁
+     - 线程B阻塞  因为读写不能同时进行
+   - 线程A持有读锁,线程B请求读锁
+     - 线程B加锁成功
+   - 线程A持有读锁,然后线程B请求写锁,然后线程C请求读锁
+     -  B阻塞   C阻塞  写优先级高
+     - A解锁 B加写锁成功，C继续阻塞
+     - B解锁 C加读锁成功
+   - 线程A持有写锁,然后线程B请求读锁,然后线程C请求写锁
+     - B阻塞  C阻塞
+     - A解锁 C加写锁成功 B阻塞
+     - C解锁 B加读锁成功
+   
+5. 读写锁的适用场景
+
+   - 互斥锁 - 不管读写操作都是串行的
+   - 读写锁
+     - 读: 并行
+     - 写: 串行
+   - 程序读操作大于写操作的时候加读写锁效率比较高
+
+6. 主要操作函数
+
+   - 初始化读写锁
+
+     pthread_rwlock_init(pthread_rwlock_t * restrict rwlock,const pthread_rwlockattr_t * restrict attr);
+
+   - 销毁读写锁
+
+     pthread_rwlock_destroy(pthread_rwlock_t  * rwlock);
+
+   - 加读锁
+
+     pthread_rwlock_rdlock(pthread_rwlock_t *  rwlock);
+
+     - 之前对这把锁加的写锁操作就会阻塞
+
+   - 尝试加读锁
+
+     pthread_rwlock_tryrdlock(pthread_rwlock_t * rwlock);
+
+     - 加锁成功: 0
+     - 失败: 错误号
+
+   - 加写锁
+
+     pthread_rwlock_wrlock(pthread_rwlock_t * rwlock);
+
+     - 上一次加写锁，还没有解锁的时候
+     - 上一次加读锁,还没解锁的时候
+
+   - 尝试加写锁
+
+     pthread_rwlock_trywrlock(pthread_rwlock_t * rwlock);
+
+   - 解锁
+
+     pthread_rwlock_unlock(pthread_rwlock_t  * rwlock);
+
+7. 练习
+
+   - 3个线程不定时写同一个全局资源,5个线程不定时读同一个全局资源
+
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <string.h>
+     #include <pthread.h>
+     
+     //全局变量
+     int num = 0;
+     //读写锁
+     pthread_rwlock_t rwlock;
+     
+     
+     void * dowrite(void * arg){
+         while (1){
+             pthread_rwlock_wrlock(&rwlock);
+             num++;
+             printf("== write: %lu, %d\n", pthread_self(), num);
+             pthread_rwlock_unlock(&rwlock);
+             usleep(500);
+         }
+         return NULL;
+     }
+     
+     void * doread(void * arg){
+         while (1){
+             pthread_rwlock_rdlock(&rwlock);
+             printf("== read: %lu, %d\n", pthread_self(), num);
+             pthread_rwlock_unlock(&rwlock);
+             usleep(500);
+         }
+         return NULL;
+     }
+     
+     int main(int argc, char const *argv[])
+     {
+         pthread_t p[8];
+         int i = 0;
+         int ret;
+     
+         pthread_rwlock_init(&rwlock, NULL);
+     
+         //创建3个写线程
+         for (i = 0; i < 3; ++i){
+             ret = pthread_create(&p[i], NULL, dowrite, NULL);
+             if(ret != 0){
+                 printf("error number: %s\n", strerror(ret));
+             }
+         }
+     
+         //创建5个读线程
+         for (i = 3; i < 8; ++i){
+             ret = pthread_create(&p[i], NULL, doread, NULL);
+             if(ret != 0){
+                 printf("error number: %s\n", strerror(ret));
+             }
+         }
+         
+         for (i = 0; i < 8; ++i){
+             pthread_join(p[i], NULL);
+         }
+         
+         pthread_rwlock_destroy(&rwlock);
+     
+         return 0;
+     }
+     ```
+
+8. 读写锁,互斥锁
+
+   - 两个都能阻塞线程
+
+   - 不是什么时候都能阻塞线程? 不是  下面这种需求 读写锁和互斥锁就不能满足了
+
+     ```c
+     Node * head = NULL;  //head是链表的头节点
+     while(head){//假如此时head为NULL 为NULL的话代码会往下走 
+       //我们想让代码这个位置阻塞
+       //等待链表有了节点之后再继续向下运行
+       
+       //解决办法：使用后面讲的条件变量 条件变量可以阻塞线程
+     }
+     
+     //下面是链表不为空的处理代码
+     ```
+
+### 条件变量
+
+1. 条件变量是锁吗？
+
+   - 不是锁，但是条件变量能够阻塞线程
+   - 使用条件变量 + 互斥量
+     - 互斥量：保护一块共享数据
+     - 条件变量：引起阻塞
+       - 生产者和消费者模型
+
+2. 条件变量的两个动作？
+
+   - 条件满足，阻塞线程
+   - 当条件满足，通知阻塞的线程开始工作
+
+3. 条件变量的类型: 
+
+   - pthread_cond_t cond;  创建一个条件变量
+
+4. 主要函数
+
+   - 初始化一个条件变量
+
+     pthread_cond_init(pthread_cond_t * restrict cond, const pthread_condattr_t * restrict attr)
+
+   - 销毁一个条件变量
+
+     pthread_cond_destory(pthread_cond_t * cond)
+
+   - 阻塞等待一个条件变量
+
+     pthread_cond_wait(pthread_cond_t * restrict cond, pthread_mutex_t *  restrict mutex)
+
+     - 阻塞线程
+     - 将已经上锁mutex解锁   因为你不解锁生产者没解锁 就没办法生产 参数二  互斥锁变量
+     - 唤醒通知时 该函数继续加锁，会对互斥锁加锁 然后再访问共享数据
+
+   - 限时等待一个条件变量
+
+     pthread_cond_timedwait(
+
+     ​	pthread_cond_t * restrict cond, 
+
+     ​	pthread_mutex_t *  restrict mutex,
+
+     ​	const struct timespec * restrict abstime);
+
+   - 唤醒至少一个阻塞在条件变量上的的线程
+
+     pthread_cond_signal(pthread_cond_t *  cond);
+
+   - 唤醒全部阻塞在条件变量上的的线程
+
+     pthread_cond_broadcastl(pthread_cond_t *  cond);
+
+5. 练习
+
+   - 使用**条件变量+互斥锁量**实现生产者，消费者模型
+
+     条件变量他不是锁 他只是引起阻塞的函数 一般开发的时候与互斥锁一起使用
+
+     先从消费者开始分析
+
+     ![78](../img/78.jpg)
+
+     为什么会使用到条件变量 因为生产者线程和消费者线程在干不同的事情，而消费者需要判断如果为空的话不消费, 需要等待生产者来生产过后通知自己，又因为烧饼是共享资源多个线程在操作同一个资源是需要加锁
+
+     //带思考和解释
+
+     消费者先加锁-> 判断head是否为空 为空的话 pthread_cond_wait()阻塞等待 并释放锁
+
+     ​	->> 第一条线路 此时如果另外一个消费者线程抢到cpu 执行也判断head是否为空  此时head为空 也会执行pthread_cond_wait() 阻塞等待 并释放锁 没毛病
+     
+     ​	->> 第二条线路 此时如果是一个生产者线程抢到cpu 会加锁 其他生产者和消费者线程会阻塞   将烧饼加入到链表 通知所有消费者 至少有一个消费者会先加锁  其他的消费者和生产者看到已经加锁了 会阻塞  等该消费者消费后解除锁时 其他的线程就继续工作  这样也没毛病 整个逻辑是讲的通的
+     
+     ```c
+     #include <stdio.h>
+     #include <unistd.h>
+     #include <stdlib.h>
+     #include <sys/types.h>
+     #include <sys/stat.h>
+     #include <string.h>
+     #include <pthread.h>
+     
+     //烧饼 不带头节点的链表 插入的时候用头插法 删除的时候头部删除
+     //定义节点结构 
+     typedef struct node{
+         int data;
+         struct node * next;
+     }Node;
+     //永远指向链表头部的指针 
+     Node * head = NULL;
+     
+     //线程同步需要互斥锁
+     pthread_mutex_t mutex;
+     //条件变量
+     pthread_cond_t cond;
+     
+     //生产者
+     void * producer(void * arg){
+         while (1){
+             //创建一个链表的节点
+             Node * pnew = (Node *)malloc(sizeof(Node));
+             //节点的初始化
+             pnew->data = rand() % 1000; //0~999
+             pthread_mutex_lock(&mutex);
+     
+             pnew->next = head;
+             head = pnew;
+             printf("=====生产：%lu %d \n", pthread_self(), pnew->data);
+     
+             pthread_mutex_unlock(&mutex);
+             pthread_cond_signal(&cond); //通知对面接触阻塞
+             //或者 pthread_cond_broadcast(&cond);
+             sleep(rand() % 3);
+         }
+         return NULL;
+     }
+     
+     void * customer(void * arg){
+         while (1){
+             pthread_mutex_lock(&mutex);
+     
+             if(head == NULL){
+                 //continue;
+                 pthread_cond_wait(&cond, &mutex);
+     
+             }
+             //链表不为空 //删掉一个节点  删头节点
+             Node * pdel = head;
+             head = head->next;
+             printf("-----消费：%lu %d \n", pthread_self(), pdel->data);
+             free(pdel);
+     
+             pthread_mutex_unlock(&mutex); 
+         }
+         return NULL;
+     }
+     
+     int main(int argc, char const *argv[])
+     {
+         pthread_t p1, p2;
+         
+         pthread_mutex_init(&mutex, NULL);
+         pthread_cond_init(&cond, NULL);
+     
+         //创建生产者线程
+         pthread_create(&p1, NULL, producer, NULL);
+         //创建消费者线程
+         pthread_create(&p2, NULL, customer, NULL);
+     
+         pthread_join(p1, NULL);
+         pthread_join(p2, NULL);
+     
+         pthread_mutex_destroy(&mutex);
+         pthread_cond_destroy(&cond);
+     
+         return 0;
+     }
+     ```
+     
+     
+
+### 信号量(信号灯)
+
+1. 头文件 - **semaphore.h**
+
+2. 信号量的类型
+
+   - sem_t sem
+
+   - 加强版的互斥量 高级的互斥锁
+
+     <img src="../img/79.jpg" alt="79" style="zoom:30%;" />
+
+     就是说有4个车位 如果是互斥锁 每次只能进去一个车，而信号量每次可以进去4个车，效率就提高了。
+
+     所以信号量这个加强版的锁 在初始化的时候可以根据共享资源的长度 来设置value 也就是图中的4个车位
+
+3. 主要函数
+
+   - 初始化信号量
+
+     sem_init(sem_t * sem, int shared, unsigned int value);
+
+     - 0 - 线程同步 shared
+     - 1 - 进程同步 shared
+     - value - 最多有几个线程操纵共享数据
+
+   - 销毁信号量
+
+     sem_destory(sem_t * sem, int shared);
+
+   - 加锁
+
+     sem_wait(sem_t * sem)
+
+     调用一次相当于对sem做了--操作
+
+     如果sem值为0,线程会阻塞
+
+   - 尝试加锁
+
+     sem_trywait(sem_t * sem)
+
+     - sem == 0，加锁失败，不阻塞，直接返回
+
+   - 限时尝试加锁
+
+     sem_timedwait(sem_t * sem, xxxx); 在3秒中内一直尝试加锁
+
+   - 解锁
+
+     sem_post(sem_t * sem)
+
+     对sem做了++操作
+
+4. **信号量**实现的生产者和消费者模型
+
+<img src="../img/80.jpg" alt="80" style="zoom:30%;" />
+
+<img src="../img/81.jpg" alt="81" style="zoom:50%;" />
+
+资源相互的给，消费者初始化给0阻塞  等到生产者sem_post(&customer) sem++操作 sem_wait就不是0了执行 sem-- 其他的消费者线程sem==0阻塞 消费完了sem_post(&produce) sem++ 生产者又获得资源 解除阻塞 生产
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <string.h>
+#include <semaphore.h>
+#include <pthread.h>
+
+sem_t custom_sem;
+sem_t produce_sem;
+
+typedef struct node{
+    int data;
+    struct node * next;
+}Node;
+
+Node * head = NULL;
+
+//生产
+void * producer(void * arg){
+    while (1){
+        sem_wait(&produce_sem);
+        Node * pnew = (Node *)malloc(sizeof(Node));
+        pnew->data = rand() % 1000;
+        pnew->next = head;
+        head = pnew;
+        printf("======生产: %lu, %d \n", pthread_self(), pnew->data);
+        sem_post(&custom_sem);
+        sleep(rand() % 3);  //生产不要过快 容易造成内存益处
+    }
+    return NULL;
+}
+
+//消费
+void * customer(void * arg){
+    while (1){
+        sem_wait(&custom_sem);
+        Node * del = head;
+        head = head->next;
+        printf("------消费: %lu, %d \n", pthread_self(), del->data);
+        free(del);
+        sem_post(&produce_sem);
+    }
+    return NULL;
+}
+
+int main(int argc, char const *argv[]){
+    pthread_t thid[3];
+
+    sem_init(&produce_sem, 0, 4);
+    sem_init(&custom_sem, 0, 0);
+
+    pthread_create(&thid[0], NULL, producer, NULL);
+    pthread_create(&thid[1], NULL, producer, NULL);
+    pthread_create(&thid[2], NULL, customer, NULL);
+
+    for (int i = 0; i < 2; i++){
+        pthread_join(thid[3], NULL);
+    }
+    
+    sem_destroy(&produce_sem);
+    sem_destroy(&custom_sem); 
+    return 0;
+}
+```
+
+
 
 # Linux 网络编程
+
+## 协议
+
+<img src="../img/82.png" alt="82" style="zoom:75%;" />
+
+## 数据包封装
+
+
+
+<img src="../img/83.jpg" alt="83" style="zoom:50%;" />
+
+数据在网络传输过程中必须进行封装
+
+封装数据是操作系统帮我实现的 
+
+我们写代码只是在应用层封装了
+
+<img src="../img/84.png" alt="84" style="zoom:75%;" />
+
+物 数 网 传 会 表 应
+
+网络层 
+
+​			主要是IP协议 里面有 源mac地址 和 目标mac地址 就是我们程序中指定的ip(118.168.45.23)
+
+​			其中IP协议中有 **TTL**：是数据包在传输过程中经历过多少下一跳   就是经过多少个路由器 每经过一个路由器做减减操作  假如经历过56跳还没有到达目标机器 那路由器会丢弃这个数据包
+
+
+
+传输层 
+
+​			主要选择UDP协议和TCP协议 里面有 目标地址的端口号
+
+
+
+## TCP时序图
+
+由于ip层也就是网络层 由于硬件的不稳定性，传输层就需要弥补操作
+
+​	udp完全不弥补 丢了就丢了 无链接不可靠报文传输
+
+​	tcp完全不弥补  面向链接可靠数据包报文传输 所以要建立链接 也就是三次握手和四次挥手
+
+
+
+1.客户端发送SYN 1000(0) <mss 1460>给服务器端
+
+​	SYN是向客户端发送的建立连接的标志位 1000是发送的包号  0字节
+
+2.服务器接受到数据应答客户端发送的数据包 SYN,8000(0)	ACK 1001(0), <mss 1460>
+
+​	ACK是应答的标志位 1001表示之前的100字节我都收到了 应答的同时向客户端发送了请求SYN建立连接的标志位 包号是8000 数据为0字节
+
+3.客户端又发送ACK 2001(0), <mss 1460>给服务器端
+
+这就是三次握手 确立了连接 确定网络通路是通的
+
+
+
+接下来客户端和服务器之间开始发送数据 接收数据 都是 ACK  这个简单 当然这个都是随便发没有先后顺序，通过数据包的包号来确定数据包到底有没有发错，发错的重新发
+
+
+
+为什么是四次挥手？在linux操作系统允许一端关闭连接一端不关闭 这种情况叫半关闭
+
+1.客户端发送 FIN 1021(0) ACK 1022(0), <mss 1460>给服务器端
+
+​	FIN是向客户端发送的关闭连接的标志位 ACK是前一次服务器发送过来的应答数据
+
+2.**服务器给客户端**发送了应答标志位 ACK 1022(0), <mss 1460> 允许你关闭
+
+此时客户端收到这个允许关闭的信息就关闭了，但是此时服务器还没关闭 这个时间点叫**半关闭**状态
+
+从理论上讲此时客户端可以接受数据,但不发送数据
+
+3.服务器也要关闭，这时候**服务器发送FIN过去**，
+
+4.客户端发送ACK 这时候服务器也关闭连接
+
+这就是四次挥手
+
+## TCP状态转换图
+
+<img src="../img/90.jpg" alt="90" style="zoom:50%;" />
+
+状态图和客户端和服务器没有关系 都有可能先发起
+
+分三个部分
+
+​	粗实线： 主动发起连接和关闭连接   
+
+​	虚线：被动发起连接和关闭连接
+
+​	小细线： 两端同时操作的部分
+
+1.对于主动一方发起的 看粗实线
+
+​	SYN_SENT 三次握手的第1步骤 发送完SYN就进入SYN_SENT
+
+​	ESTABLISHED 数据传输状态
+
+​	FIN_WAIT1 也就是上面4次挥手的第1个步骤
+
+​	FIN_WAIT2 半关闭状态 也就是上面4次挥手的第2个步骤
+
+​	TIME_WAIT 4次挥手的第4个步骤 主动关闭不是一下子进入close 而是等待2MSL超时时间目的是确保发送ACK能够发送给对面 等一段时间过后不管又接受到还是没接受到 都进入close状态了 2MSL大概是1分钟的时间
+
+2.被动方
+
+​	SYN_RVVD 三次握手的第2步骤 接受到SYN就进入SYN_RVVD
+
+​	ESTABLISHED 数据传输状态
+
+​	CLOSE_WAIT 也就是上面4次挥手的第1个步骤我接受到了FIN 进入CLOSE_WAIT
+
+​	LAST_ACK  也就是上面4次挥手的第3个步骤 发送FIN （在程序中调用close ）进入LAST_ACK
+
+## 配套的程序函数调用对应的TCP时序图
+
+
+
+![91](../img/91.jpg)
+
+很清晰一目了然
+
+## shutdown函数比close更加的细腻
+
+从程序的角度，可以使用API来控制实现半连接状态。这个函数就是shutdown
+
+
+
+连接客户端和服务器端socket文件描述符是可以使用dup2进行复制的,close只是关闭当前的文件描述符，而shutdown能够关闭所有的相当于一刀切，所有的连接客户端和服务器端socket文件描述符都会被关闭掉， 由于socket文件描述符有两端一端读一端写,所以shutdown可以关闭其中一个写端或者读端
+
+```c
+#include <sys/socket.h>
+int shutdown(int sockfd, int how);
+sockfd: 需要关闭的socket的描述符
+how:	允许为shutdown操作选择以下几种方式:
+	SHUT_RD(0)：	关闭sockfd上的读功能，此选项将不允许sockfd进行读操作。
+					该套接字不再接受数据，任何当前在套接字接受缓冲区的数据将被无声的丢弃掉。
+	SHUT_WR(1):		关闭sockfd的写功能，此选项将不允许sockfd进行写操作。进程不能在对此套接字发出写操作。
+	SHUT_RDWR(2):	关闭sockfd的读写功能。相当于调用shutdown两次：首先是以SHUT_RD,然后以SHUT_WR。
+
+```
+
+
+
+## NAT映射
+
+双方都有一个NAT映射表主要是路由器分配的ip局域网也能在公网上传输 弥补了我国ip地址不足的情况
+
+<img src="../img/85.png" alt="85" style="zoom:75%;" />
+
+## 打洞机制
+
+私有ip之间的通信 借助公网服务器 打洞 
+
+<img src="../img/86.png" alt="86" style="zoom:70%;" />
+
+公网与公网之间通信 直接访问
+
+公网与私网之间通信 NAT映射
+
+私网与公网之间通信 NAT映射
+
+私网与私网之间通信 NAT映射+打洞机制
+
+## 套接字
+
+<img src="../img/87.png" alt="87" style="zoom:100%;" />
+
+socket一个文件描述符指向两个缓冲区 一个读缓冲区 一个写缓冲区   也就是说同一时刻即可以读数据也可以写数据 
+
+socket是成对出现的
+
+<img src="../img/88.png" alt="88" style="zoom:75%;" />
+
+## 网络字节序
+
+在网络传输中都是二进制字节流
+
+TCP/IP协议规定，网络数据流应采用大端字节序，即低地址高字节
+
+而我们的x86架构的机器是小端法存储的
+
+<img src="../img/89.png" alt="89" style="zoom:100%;" />
+
+网络字节序和主机字节序的转换
+
+```c
+#include <arpa/inet.h>
+
+uint32_t htonl(uint32_t hostlong); //本地字节序转网络字节序 32位 转ip的
+uint16_t htons(uint16_t hostshort);//本地字节序转网络字节序 16位 转端口号 主要使用端口
+uint32_t ntohl(uint32_t netlong);  //网络字节序转本地字节序 32位 转ip的
+uint16_t ntohs(uint16_t netshort); //网络字节序转本地字节序 16位 转端口号 主要使用端口
+```
+
+
+
+## ip地址转换函数
+
+man 7 ip
+
+```c
+	#include <arpa/inet.h>
+	int inet_pton(int af, const char *src, void *dst); //"192.168.1.24" 字符串 转 网络字节序
+		//af指定是ipv4还是ipv6
+    // src就是"192.168.1.24"
+		// dst传出参数 网络字节序
+	const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
+	//网络字节序 转 "192.168.1.24" 字符串
+
+//还可以使用一个宏将"192.168.1.24" 字符串 转 网络字节序  htonl(INADDR_ANY)
+```
+
+
+
+## sockaddr结构体
+
+```c
+
+struct sockaddr_in {
+  sa_family_t    sin_family; /* ipv4还是ipv6 AF_INET */
+  in_port_t      sin_port;   /* 端口号 */
+  struct in_addr sin_addr;   /* ip地址 */
+};
+
+/* Internet address. */
+struct in_addr {
+  uint32_t       s_addr;     /* address in network byte order */
+};
+
+struct sockaddr {
+	sa_family_t sa_family; 		/* address family, AF_xxx */
+	char sa_data[14];			/* 14 bytes of protocol address */
+};
+```
+
+本身定义的应该是 struct sockaddr addr
+
+当时因为历史原因 使用 struct sockaddr_in 然后强转为struct sockaddr addr
+
+## 网络套接字函数
+
+### 服务器端的函数
+
+```c
+int socket(int domain, int type, int protocol); //创建文件描述符 也就是指定什么样的协议来传输 ipv4 还是ipv6 是tcp 还是udp 
+
+int bind(int sockfd, const struct sockaddr * addr, socklen_t addrlen);  //绑定ip和端口号
+
+int listen(int sockfd, int backlog); //不是用来监听的  而是排队建立3次握手队列和刚刚建立3次握手队列的链接数和 也就是同一时刻允许三次握手的客户端和刚刚建立三次握手的客户端的数量 可以有多少个来连接
+
+int accept(int sockfd, struct sockaddr * addr, socklen_t * addrlen);
+	//阻塞等待客户端链接 知道客户端连接接触阻塞
+  //sockdf:  socket文件描述符 socket()函数的返回值
+  //addr:  传出参数，返回链接客户端地址信息，含IP地址和端口号
+  //addrlen:  传入传出参数（值-结果）,传入sizeof(addr)大小，函数返回时返回真正接收到地址结构体的大小
+  //返回值： 成功返回一个 新的 socket文件描述符，用于和客户端通信 失败返回-1，设置errno 
+int close(sockfd);
+```
+
+### 客户端的函数
+
+```c
+int socket(int domain, int type, int protocol);//创建文件描述符 也就是指定什么样的协议来传输 ipv4 还是ipv6 是tcp 还是udp 
+
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+//sockdf: socket文件描述符
+//addr:  传入参数，指定服务器端地址信息，含IP地址和端口号
+//addrlen: 传入参数,传入sizeof(addr)大小
+//返回值： 成功返回0，失败返回-1，设置errno
+//直接sockfd就可以和服务器通信了
+
+int close(sockfd);
+```
+
+### 编写流程
+
+服务器端
+
+```
+1.socket() 创建套接字
+2.bind() 绑定ip端口号 struct sockaddr_in addr 初始化
+3.listen() 指定最大同时发起链接数
+4.accept() 阻塞等待客户端发起连接
+5.read()
+6.处理读取的数据
+7.write() 写给客户端
+8.close()
+```
+
+代码
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
+#include <ctype.h>
+
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 6666
+
+int main(int argc, char const *argv[])
+{
+    int server_fd;
+    int client_fd;
+    struct sockaddr_in server_addr;
+    struct sockaddr_in client_addr;
+    socklen_t client_addr_len;
+    //定义缓冲区和缓冲区的长度
+    char buf[BUFSIZ];
+    int len;
+    int i = 0;
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  	bzero(&server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT); //将端口变成网络字节序
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);//将ip变成网络字节序
+    bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+
+    listen(server_fd, 128);//默认值是128 同时和客户端建立连接的个数
+
+    client_addr_len = sizeof(client_addr);
+    client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+
+    while (1){
+      	//socket两个缓冲区在内核区 两个管道 读写不相互影响
+        len = read(client_fd, buf, sizeof(buf)); //没有数据阻塞等待
+        for (i = 0; i < len; i++){
+            buf[i] = toupper(buf[i]); //用户的buf缓冲区 保存在栈中
+        }
+        write(client_fd, buf, len);
+    }
+    
+    close(server_fd);
+    close(client_fd);
+
+    return 0;
+}
+```
+
+客户端
+
+```
+1.socket() 创建套接字
+2.connect() 发起连接
+3.write() 写给服务器
+4.read() 读服务器发回来的数据
+5.close()
+```
+
+代码
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <ctype.h>
+
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 6666
+
+int main(int argc, char const *argv[])
+{
+    int client_fd;
+    struct sockaddr_in server_addr;
+    socklen_t server_len;
+    char buf[BUFSIZ];
+    int n;
+    
+    client_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr.s_addr);//客户端必须指定服务器的ip
+    server_len = sizeof(server_addr);
+    connect(client_fd, (struct sockaddr *)&server_addr, server_len);//阻塞等待链接服务器
+
+    while (1)
+    {
+        fgets(buf, sizeof(buf), stdin);//用户的buf缓冲区 保存在栈中
+      	//socket两个缓冲区在内核区 两个管道 读写不相互影响
+        write(client_fd, buf, strlen(buf)); //阻塞等待读取
+        n = read(client_fd, buf, sizeof(buf));
+        write(STDOUT_FILENO, buf, n);
+    }
+
+    close(client_fd);
+ 
+    return 0;
+}
+```
+
+makfile
+
+```makefile
+src = $(wildcard *.c)
+targets = $(patsubst %.c, %, $(src))
+
+CC = gcc
+CFLAGS = -Wall -g 
+
+all:$(targets)
+
+$(targets):%:%.c
+	$(CC) $< -o $@ $(CFLAGS)
+
+.PHONY:clean all
+clean:
+	-rm -rf $(targets) 
+```
+
+
+
+### 错误封装
+
+由于对每个函数调用非常麻烦，所以进行了封装
+
+wrap.h
+
+```c
+#ifndef __WRAP_H_
+#define __WRAP_H_
+
+void perr_exit(const char *s);
+int Accept(int fd, struct sockaddr *sa, socklen_t *salenptr);
+int Bind(int fd, const struct sockaddr *sa, socklen_t salen);
+int Connect(int fd, const struct sockaddr *sa, socklen_t salen);
+int Listen(int fd, int backlog);
+int Socket(int family, int type, int protocol);
+ssize_t Read(int fd, void *ptr, size_t nbytes);
+ssize_t Write(int fd, const void *ptr, size_t nbytes);
+int Close(int fd);
+ssize_t Readn(int fd, void *vptr, size_t n);
+ssize_t Writen(int fd, const void *vptr, size_t n);
+ssize_t my_read(int fd, char *ptr);
+ssize_t Readline(int fd, void *vptr, size_t maxlen);
+
+#endif
+```
+
+wrap.c
+
+```c
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/socket.h>
+
+void perr_exit(const char *s)
+{
+	perror(s);
+	exit(-1);
+}
+
+int Accept(int fd, struct sockaddr *sa, socklen_t *salenptr)
+{
+	int n;
+//这里为什么用again是因为有些系统函数是慢速系统调用 可能被信号杀死
+again:
+	if ((n = accept(fd, sa, salenptr)) < 0) {
+		if ((errno == ECONNABORTED) || (errno == EINTR))
+			goto again;
+		else
+			perr_exit("accept error");
+	}
+	return n;
+}
+
+int Bind(int fd, const struct sockaddr *sa, socklen_t salen)
+{
+    int n;
+
+	if ((n = bind(fd, sa, salen)) < 0)
+		perr_exit("bind error");
+
+    return n;
+}
+
+int Connect(int fd, const struct sockaddr *sa, socklen_t salen)
+{
+    int n;
+    n = connect(fd, sa, salen);
+	if (n < 0) {
+		perr_exit("connect error");
+    }
+
+    return n;
+}
+
+int Listen(int fd, int backlog)
+{
+    int n;
+
+	if ((n = listen(fd, backlog)) < 0)
+		perr_exit("listen error");
+
+    return n;
+}
+
+int Socket(int family, int type, int protocol)
+{
+	int n;
+
+	if ((n = socket(family, type, protocol)) < 0)
+		perr_exit("socket error");
+
+	return n;
+}
+
+ssize_t Read(int fd, void *ptr, size_t nbytes)
+{
+	ssize_t n;
+
+again:
+	if ( (n = read(fd, ptr, nbytes)) == -1) {
+		if (errno == EINTR)
+			goto again;
+		else
+			return -1;
+	}
+
+	return n;
+}
+
+ssize_t Write(int fd, const void *ptr, size_t nbytes)
+{
+	ssize_t n;
+
+again:
+	if ((n = write(fd, ptr, nbytes)) == -1) {
+		if (errno == EINTR)
+			goto again;
+		else
+			return -1;
+	}
+	return n;
+}
+
+int Close(int fd)
+{
+    int n;
+	if ((n = close(fd)) == -1)
+		perr_exit("close error");
+
+    return n;
+}
+
+/*参三: 应该读取的字节数*/                          //socket 4096  readn(cfd, buf, 4096)   nleft = 4096-1500 以太网帧每次发1500个字节 但是如果我的包要求要4096算一个包 那就可以使用Readn
+ssize_t Readn(int fd, void *vptr, size_t n)
+{
+	size_t  nleft;              //usigned int 剩余未读取的字节数
+	ssize_t nread;              //int 实际读到的字节数
+	char   *ptr;
+
+	ptr = vptr;
+	nleft = n;                  //n 未读取字节数
+
+	while (nleft > 0) {
+		if ((nread = read(fd, ptr, nleft)) < 0) {
+			if (errno == EINTR)
+				nread = 0;
+			else
+				return -1;
+		} else if (nread == 0)
+			break;
+
+		nleft -= nread;   //nleft = nleft - nread 
+		ptr += nread;
+	}
+	return n - nleft;
+}
+//和Readn思想一样
+ssize_t Writen(int fd, const void *vptr, size_t n)
+{
+	size_t nleft;
+	ssize_t nwritten;
+	const char *ptr;
+
+	ptr = vptr;
+	nleft = n;
+	while (nleft > 0) {
+		if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
+			if (nwritten < 0 && errno == EINTR)
+				nwritten = 0;
+			else
+				return -1;
+		}
+		nleft -= nwritten;
+		ptr += nwritten;
+	}
+	return n;
+}
+
+static ssize_t my_read(int fd, char *ptr) //一次 性读100字节
+{
+	static int read_cnt;
+	static char *read_ptr;
+	static char read_buf[100];
+
+	if (read_cnt <= 0) {
+again:
+		if ( (read_cnt = read(fd, read_buf, sizeof(read_buf))) < 0) {   //"hello\n"
+			if (errno == EINTR)
+				goto again;
+			return -1;
+		} else if (read_cnt == 0)
+			return 0;
+
+		read_ptr = read_buf;
+	}
+	read_cnt--;
+	*ptr = *read_ptr++;
+
+	return 1;
+}
+
+/*readline --- fgets*/    
+//传出参数 vptr 在socket读取一行 就是读\n就表示一行
+ssize_t Readline(int fd, void *vptr, size_t maxlen)
+{
+	ssize_t n, rc;
+	char    c, *ptr;
+	ptr = vptr;
+
+	for (n = 1; n < maxlen; n++) {
+		if ((rc = my_read(fd, &c)) == 1) {   //ptr[] = hello\n
+			*ptr++ = c;
+			if (c == '\n')
+				break;
+		} else if (rc == 0) {
+			*ptr = 0;
+			return n-1;
+		} else
+			return -1;
+	}
+	*ptr = 0;
+
+	return n;
+}
+```
+
+makefile
+
+```makefile
+src = $(wildcard *.c)
+obj = $(patsubst %.c, %.o, $(src))
+
+all: server client
+
+server: server.o wrap.o
+	gcc server.o wrap.o -o server -Wall
+client: client.o wrap.o
+	gcc client.o wrap.o -o client -Wall
+
+%.o:%.c
+	gcc -c $< -Wall
+
+.PHONY: clean all
+clean: 
+	-rm -rf server client $(obj)
+```
+
+read函数返回值
+
+```text
+1. > 0 实际读到的字节数 buf=1024  1.  == buf 1024   2. < buf  56；
+
+		2. = 0 数据读完(读到文件、管道、socket 末尾--对端关闭) 如果对面没写数据会阻塞
+
+		3. -1  异常
+
+			1. errno == EINTR  被信号中断  重启/quit
+
+			2. errno == EAGAIN (EWOULDBLOCK) 非阻塞方式读，并且没有数据
+
+			3. 其他值   出现错误。--perror exit。
+```
+
+MTU mss 半关闭
+
+错误处理
+
+## 并发服务器模型
+
+### 多进程并发服务器
+
+父进程一边要去连接客户端,还要回收子进程,这是做不到的，使用信号就可以，因为信号的优先级高，进程会把其他事情停下来去处理信号,   收到子进程退出死亡的时候子进程会向父进程发送一个信号SIGCHLD默认是忽略,所以捕捉这个信号,来回收子进程
+
+
+
+使用多进程并发服务器时要考虑以下几点：
+
+1. 父进程最大文件描述个数(父进程中需要close关闭accept返回的新文件描述符)
+2. 系统内创建进程个数(与内存大小相关)
+3. 进程创建过多是否降低整体服务性能(进程调度)
+
+```c
+#include <stdio.h>
+#include <strings.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <ctype.h>
+#include <signal.h>
+#include "wrap.h"
+
+#define PORT 6666
+
+void recycle_child_process(int signo){
+    pid_t wpid;
+    int status;
+    while ((wpid = waitpid(-1, &status, WNOHANG)) != -1){
+        if(wpid == 0){
+            continue;
+        }
+        printf("---- child died pid = %d\n", wpid);
+        if(WIFEXITED(status)){
+            printf("return value:%d\n", WEXITSTATUS(status));
+        }
+
+        if(WIFSIGNALED(status)){
+            printf("died by signal:%d\n", WTERMSIG(status));
+        }
+    }
+    
+    return;
+}
+
+int main(int argc, char const *argv[])
+{
+    pid_t pid;
+    int server_fd, client_fd;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t client_addr_len;
+    char buf[BUFSIZ],client_ip[BUFSIZ];
+    int n,i;
+    struct sigaction act;
+
+    server_fd = Socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero(&server_addr, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(PORT);
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    Bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+
+    Listen(server_fd, 128);
+
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+    sigaddset(&act.sa_mask, SIGCHLD);
+    act.sa_handler = recycle_child_process;
+
+    while (1){
+        bzero(&client_addr, sizeof(client_addr));
+        client_addr_len = sizeof(client_addr);
+        client_fd = Accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+        printf("client ip:%s, port:%d\n", 
+                inet_ntop(AF_INET, &client_addr.sin_addr.s_addr, client_ip, sizeof(client_ip)),
+                ntohs(client_addr.sin_port));
+
+        pid = Fork();
+        if(pid == 0){
+            close(server_fd);
+            break;
+        }else{
+            close(client_fd);
+            Sigaction(SIGCHLD, &act,NULL);
+        }
+    }
+    
+    if(pid == 0){
+        while (1){
+            n = Read(client_fd, buf, sizeof(buf));
+            if(n == 0){ //当读到0时 客户端关闭了
+                close(client_fd);
+                exit(0);
+            }else if(n == -1){
+                perror("read error");
+                exit(1);
+            }else{
+                for (i = 0; i < n; ++i)
+                    buf[i] = toupper(buf[i]);
+                Write(client_fd, buf, n);
+                Write(STDIN_FILENO, buf, n);
+            }
+        }
+    }
+
+    return 0;
+}
+```
+
+### 多线程版本
+
+在使用线程模型开发服务器时需考虑以下问题：
+
+1. 调整进程内最大文件描述符上限
+2. 线程如有共享数据，考虑线程同步
+3. 服务于客户端线程退出时，退出处理。（退出值，分离态）
+4. 系统负载，随着链接客户端增加，导致其它线程不能及时得到CPU
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+#include <ctype.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#include "wrap.h"
+
+#define MAXLINE 8192
+#define SERV_PORT 8000
+
+struct s_info {                     //定义一个结构体, 将地址结构跟cfd捆绑
+    struct sockaddr_in cliaddr;
+    int connfd;
+};
+
+void *do_work(void *arg)
+{
+    int n,i;
+    struct s_info *ts = (struct s_info*)arg;
+    char buf[MAXLINE];
+    char str[INET_ADDRSTRLEN];      //#define INET_ADDRSTRLEN 16  可用"[+d"查看
+
+    while (1) {
+        n = Read(ts->connfd, buf, MAXLINE);                     //读客户端
+        if (n == 0) {
+            printf("the client %d closed...\n", ts->connfd);
+            break;                                              //跳出循环,关闭cfd
+        }
+        printf("received from %s at PORT %d\n",
+                inet_ntop(AF_INET, &(*ts).cliaddr.sin_addr, str, sizeof(str)),
+                ntohs((*ts).cliaddr.sin_port));                 //打印客户端信息(IP/PORT)
+
+        for (i = 0; i < n; i++) 
+            buf[i] = toupper(buf[i]);                           //小写-->大写
+
+        Write(STDOUT_FILENO, buf, n);                           //写出至屏幕
+        Write(ts->connfd, buf, n);                              //回写给客户端
+    }
+    Close(ts->connfd);
+
+    return (void *)0;
+}
+
+int main(void)
+{
+    struct sockaddr_in servaddr, cliaddr;
+    socklen_t cliaddr_len;
+    int listenfd, connfd;
+    pthread_t tid;
+    struct s_info ts[256];      //根据最大线程数创建结构体数组.
+    int i = 0;
+
+    listenfd = Socket(AF_INET, SOCK_STREAM, 0);                     //创建一个socket, 得到lfd
+
+    bzero(&servaddr, sizeof(servaddr));                             //地址结构清零
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);                   //指定本地任意IP
+    servaddr.sin_port = htons(SERV_PORT);                           //指定端口号 8000
+
+    Bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr)); //绑定
+
+    Listen(listenfd, 128);      //设置同一时刻链接服务器上限数
+
+    printf("Accepting client connect ...\n");
+
+    while (1) {
+        cliaddr_len = sizeof(cliaddr);
+        connfd = Accept(listenfd, (struct sockaddr *)&cliaddr, &cliaddr_len);   //阻塞监听客户端链接请求
+        ts[i].cliaddr = cliaddr;
+        ts[i].connfd = connfd;
+
+        /* 达到线程最大数时，pthread_create出错处理, 增加服务器稳定性 */
+        pthread_create(&tid, NULL, do_work, (void*)&ts[i]);
+        pthread_detach(tid);                                                    //子线程分离,防止僵线程产生.
+        i++;
+    }
+
+    return 0;
+}
+```
+
+## 多路IO连接服务器
+
+​	多路IO转接服务器也叫做多任务IO服务器。该类服务器实现的主旨思想是，不再由应用程序自己监视客户端连接，取而代之由内核替应用程序监视文件。
+
+​	内核给我当帮手 以前在应用程序自己写代码处理的时候 accept都是阻塞在哪里干活 现在内核去干这个事情，我就不需要等待了,可以干别的事情了。有人连接我的时候,内核就告诉我,有人来连接了，当然链接也让内核去干
+
+​	等到对方发送数据,内核也会通知我,这样我读数据也不用阻塞了,非常好。 accept不需要阻塞 read不用阻塞这样我就解放出来了能干其他的事情就更多,不会老阻塞在哪里。
+
+​	效果：单进程高并发
+
+### select
+
+int select(int nfds, fd_set *readfds, fd_set *writefds,fd_set *exceptfds, struct timeval *timeout);
+
+先将socket文件描述符 放入到 读事件集合里面 或者写集合里面 异常事件集合里面。然后当select返回值有值的时候表明有读 写 异常事情发生了。这时候读集合里面只保留可读的文件描述符 写集合里面也只保留可写的文件描述符异常集合只保留异常文件描述符 readfds，writefds，exceptfds 都是传入传出参数
+
+返回值是 有读+有写+有异常的和。 select受文件描述符个数的影响只能1024个 所以要想知道哪个文件描述符在读，写，异常集合事件里面，还要挨个遍历。 哪怕只要两个文件描述符都需要遍历
+
+所以我们一般程序猿自己新建一个数组或者集合来保存起来，这样方便遍历
+
+### poll
+
+poll升级了select 可以突破select 1024文件描述符的限制
+
+监听的集合和返回事件的集合分离
+
+int ppoll(struct pollfd *fds, nfds_t nfds,const struct timespec *tmo_p, const sigset_t *sigmask);
+
+​      struct pollfd {
+
+​        int  fd;     /* file descriptor */
+
+​        short events;   /* requested events */
+
+​        short revents;  /* returned events */
+
+​      };
+
+fds: 数组的首地址 每个元素包含了文件描述和文件的事件和监听到返回的事件
+
+比如：你设置 fds[0].fd = listenfd, fds[0].events= POLLIN 等待poll监听到你设置的事件发生的时候，操作系统内核会给结构体的第三个参数添加对应的事件,依次来判断刚才设置是否发生了 fds[0].revents = POLLIN
+
+注意：pollfd结构体的前2个参数是设置 而第三个参数是poll发生对应的事件后,内核帮我填写的,我们可以根据这个进行判断
+
+poll函数返回值和select一样是满足总的事件的和
+
+### epoll
+
+```c
+#include <sys/epoll.h>
+int epoll_create(int size)//size：监听数目 会在内核创建一个红黑树 二叉树 返回值是二叉树的树根
+//size只是一个建议值 根据实际的用户量来设置
+  
+#include <sys/epoll.h>
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
+//op 将要监听的文件描述符添加到这颗树上 或者删除 修改
+//fd 就是需要设置的文件描述符
+  		//EPOLL_CTL_ADD (注册新的fd到epfd)，
+			//EPOLL_CTL_MOD (修改已经注册的fd的监听事件)，
+			//EPOLL_CTL_DEL (从epfd删除一个fd)
+//event 告诉内核监听文件描述符的读 写 异常等事件
+		struct epoll_event {
+			__uint32_t events; /* Epoll events */
+			epoll_data_t data; /* User data variable */
+		};
+		typedef union epoll_data {
+			void *ptr; //因为是void *，那么可以传一个函数指针 当事件发生之后之间调用该函数 非常好用
+			int fd; //就是设置时候的fd
+			uint32_t u32;
+			uint64_t u64;
+		} epoll_data_t;
+
+#include <sys/epoll.h>
+int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
+//上面两个函数只是把树根和节点配置好了，这个函数才是真正的去监听
+//events：		用来存内核得到事件的集合，他是一个数组 是一个传出参数 每一个元素都是一个结构体
+//maxevents：	告之内核这个events有多大，这个maxevents的值不能大于创建epoll_create()时的size，也就是数组大小
+//timeout：	是超时时间
+			//-1：	阻塞
+			//0：	立即返回，非阻塞
+			//>0：	指定毫秒
+//返回值：	成功返回有多少文件描述符就绪，时间到时返回0，出错返回-1 和select poll返回值一样
+```
+
+select poll epoll只要是文件描述符都可以用,不是说非得是socket才可以使用 其他的普通文件，管道等都可以使用这几个函数。
+
+
+
+epoll的触发模式
+
+我们知道在socket通信中，如果本次epoll触发后客户端发送了1000个字节，而我们只读取了比如500个字节，还有500字节在缓冲区里面。那么问题来了,epoll应该如何触发呢? 是再次触发获取剩余的数据，还是等到下次新的事件发生后再触发。 如果不及时处理缓冲区的数据，可能造成缓冲区数据越来越多,甚至管道炸裂，崩溃。
+
+为什么需要选择触发模式呢？因为epoll触发次数多了，也是会关系到程序的性能。
+
+边沿触发: epoll_ET  即使你读的慢，但是epoll不会再触发，只会等到下次有新的数据来才会再次触发
+
+水平触发：epoll_LT 发现缓冲区有数据继续触发  默认是水平触发
+
+
+
+epoll 非阻塞IO
+
+要将文件描述符设置为非阻塞使用fcntl函数来设置,epoll设置为epoll_ET边沿触发模式，这种模式是我们要掌握的方法 设置文件描述后read就不会阻塞，你想想看看epoll也阻塞 read也阻塞会导致死锁
+
+```c
+#include <stdio.h>
+#include <string.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/epoll.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+#define MAXLINE 10
+#define SERV_PORT 8000
+
+int main(void)
+{
+    struct sockaddr_in servaddr, cliaddr;
+    socklen_t cliaddr_len;
+    int listenfd, connfd;
+    char buf[MAXLINE];
+    char str[INET_ADDRSTRLEN];
+    int efd, flag;
+
+    listenfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(SERV_PORT);
+
+    bind(listenfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
+
+    listen(listenfd, 20);
+
+    ///////////////////////////////////////////////////////////////////////
+    struct epoll_event event;
+    struct epoll_event resevent[10];
+    int res, len;
+
+    efd = epoll_create(10);
+
+    event.events = EPOLLIN | EPOLLET;     /* ET 边沿触发，默认是水平触发 */
+
+    //event.events = EPOLLIN;
+    printf("Accepting connections ...\n");
+    cliaddr_len = sizeof(cliaddr);
+    connfd = accept(listenfd, (struct sockaddr *)&cliaddr, &cliaddr_len);
+    printf("received from %s at PORT %d\n",
+            inet_ntop(AF_INET, &cliaddr.sin_addr, str, sizeof(str)),
+            ntohs(cliaddr.sin_port));
+
+    flag = fcntl(connfd, F_GETFL);          /* 修改connfd为非阻塞读 */
+    flag |= O_NONBLOCK;
+    fcntl(connfd, F_SETFL, flag);
+
+    event.data.fd = connfd;
+    epoll_ctl(efd, EPOLL_CTL_ADD, connfd, &event);      //将connfd加入监听红黑树
+    while (1) {
+        printf("epoll_wait begin\n");
+        res = epoll_wait(efd, resevent, 10, -1);        //最多10个, 阻塞监听
+        printf("epoll_wait end res %d\n", res);
+
+        if (resevent[0].data.fd == connfd) {
+            while ((len = read(connfd, buf, MAXLINE/2)) >0 )    //非阻塞读, 轮询
+                write(STDOUT_FILENO, buf, len);
+        }
+    }
+
+    return 0;
+}
+```
+
+### epoll反应堆模型
+
+源于libevent库 是跨平台 代码量精炼 使用到了 epoll反应堆+epoll 非阻塞IO+函数回调机制
+
+1.epoll先监听到 -> 可读 ->读取到buf->这时候将文件描述符从树上摘下来+设置文件描述符写事件->再次监听文件描述符->可写->此时才将刚刚读到的数据，处理好写给客户端。 为什么要设置可写事件？是因为tcp协议中不是每个时刻都可以写，tcp的滑动窗口,缓冲区达满了是不可以写的,只有不满的时候才可以写
+
+
+
+2.在设置文件描述符的时候 evt[i].data.ptr = struct {int fd, void (*func)(void *arg), void *arg} 不再是设置文件描述符了
+
+最终使用这个来接受客户端请求
+
+## 心跳包
+
+心跳包 检测是否在线
+
+兵乓包   比如评论功能的小红点
+
+tcp协议本身的探测分节 SO_KEEPALIVE宏 不怎么用
+
+## 线程池
+
+创建线程和销毁线程需要消耗资源
+
+如果大量的用户连链接，来不及创建线程,就会造成没有给用户回信息
+
+可以提前创建线程
+
+将select , poll, epoll交给一个server线程来进行和客户端事件进行监听 来了一个事件放在任务队列
+
+然后由线程池对这个任务对列进行处理
+
+线程池根据任务队列不为空的时候，线程池来取数据 使用条件变量pthread_cond_wait任务队列不为空
+
+还需要一个条件变量 任务队列不为满 server停下来接受客户端发送的信息
+
+也可以使用信号量sem来做  任务队列是共享资源需要加锁
+
+生产者消费者模型
+
+​	从任务队列来看  server是生产者 生产任务 线程池是消费者 消费任务
+
+​	从客户端连接来看   客户端的事件是生产者， server是消费者
+
+还需要一个管理者线程专门招募线程 和辞退线程
+
+## UDP
+
+无连接不可靠的报文
+
+udp发送包的时候，有可能发送的包后到,原因是没有网络通道，每个数据包走的路线不一样，不管多少包都会收到 回丢包 借助setsocket函数改变接受缓冲区的大小。缓冲区才不容易被填满
+
+tcp有连接可靠报文 tcp一旦连接后，数据大部分都是通过连接后的那一条通道传输 
+
+tcp通过标志位判断包是否读到，没读到是可以重发的，保证不丢包 。 
+
+滑动窗口缓冲区保证了读写快慢的问题，当滑动窗口没达到缓冲区时，是写不了的，读也是一样的， 代码上epoll反应堆模型 监听写事件的时候就是为了判断是否可写（这里面就是为了解决滑动窗口）滑动窗口保证了每次发的数据包大小一样（1500）数据是稳定的 速率是稳定的 流量是稳定的
+
+
+
+tcp使用场景：大文件、重要文件传输
+
+udp使用场景：对实时性要求较高的，视频会议、视频电话、聊天
+
+腾讯：TCP----TCP+UDP --- UDP+应用层自定义协议弥补UDP的丢包
+
+
+
+UDP不需要多线程或者多进程,epoll,select,poll，默认就支持并发。因为UDP只管接受和发送，不需要连接。只不过缓冲区数据可能被覆盖。
+
+
+
+## 广播
+
+​	IP: 192.169.42.255(255是广播地址)
+
+​	IP: 192.169.42.1(网关)
+
+​	这两个地址在个人机器上是不能设置的
+
+​	广播局域网使用udp，广播需要把数据发送到广播地址上交换机,交给广播地址交换机发送给所有连接的客户端
+
+​	需要setsockopt设置socket赋予广播权限，才能广播
+
+​	setsockopt(confd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &group, sizeof(group));/*设置client 加入多播组 */
+
+​	在广播的时候此时客户端的端口就很重要，而服务器的端口就不那么重要
+
+## 组播
+
+​	广播是向所有的连接的客户端发送，但是有个需求就是将其中某几个分成一组，我指向这个组里面的客户端进行发送消息，这就是组播
+
+## 本地套接字 进程间通信
+
+domain
+
+unlink删除文件
+
+# libevent使用
+
+1. ./configura  检查当前主机环境是否适合安装 -- makefile
+2. make
+3. sudo make install
+4. 实在不行就看 README README.md 
+5. .libs 是生成的动态库和静态库的地方
+6. sample是例子
+
+
+
+libevent深入浅出
+
+libevent参考手册(中文版).pdf
+
+libevent源码分析 解读源码一般从最出的版本去看
+
+
+
+1. 库中所有的函数(接口)都是底层socket函数封装。(select/bind/listen/accept/connect/setsockopt)
+2. 一组函数 建立socket连接所采用思想----epoll反应堆 一组函数完成一个功能 和mysql一组函数完成一个功能类似
+3. 查看一个结构体 grep -r "struct eventop {" ./ -n
+
+```c
+//事件循环: event_base_loop 简化一下 event_base_dispatch(永久循环机制)
+//打破这个循环使用event_base_loopbreak和event_base_loopexit 这两个函数放在回到函数里面因为当回调函数处理某个逻辑时,需要退出时可以使用这两个函数
+
+//事件是libevent操作的基本单元
+//事件对象: base,被监听的对象事件描述符fd, fd的读写事件状态、callback函数、void *arg
+//事件的初始化状态-> even_add添加到base中监听 -> dispatch监听事件发生了回调注册的callback函数
+//event_new 新建一个事件
+//evsignal_new 新建一个信号事件
+//event_priority_set设置事件的优先级
+//event_add 添加事件到base中
+//event_del 取消事件
+
+//获取事件相关内容
+/*
+evutil_socket_t event_get_fd(const struct event *ev);
+struct event_base *event_get_base(const struct event *ev);
+short event_get_events(const struct event *ev);
+event_callback_fn event_get_callback(const struct event *ev);
+void *event_get_callback_arg(const struct event *ev);
+int event_get_priority(const struct event *ev);
+*/
+
+
+//Bufferevent描述 本质上也是一个事件
+//Bufferevent带缓冲区的事件,和之前的事件一样，只不过它里面是带了缓冲区 有两个缓冲区 读缓冲区 写缓冲区,
+//一般设置时,两者选其一，不会同时搞 要么读缓冲区打开，写缓冲区关闭，要么写缓冲区打开，读缓冲区关闭
+
+//读缓冲区低水位
+//evBuffer读缓冲区有一个最低限度(默认为0)，超过这个最低限度的字节数,就会触发设置的读回调函数
+//也就是说Bufferevent这个回调函数不会直接触发,而是等到evBuffer读缓冲区大于等于一个最低限度才触发回调函数
+//小于的时候是不会调用,好处就是增强了程序的执行效率,不然每次都回调很不好
+//内部实现应该是,先recv读取客户端发送过来的数据,放到缓冲区里面,等到读缓冲区字节数到达了最低限度就回调
+//由于默认的缓冲区0，所以一读到数据就会触发回调,一直会触发
+
+//读缓冲区高水位，设置一个最大限度的字节数 默认大小是无限
+//客户端发消息,服务器就是一直读,然后放到缓冲区里面,当达到缓冲区设置的高水位,就停止读取，直到缓冲区里面的数据被抽走，小于这个高水位时，才再次读取数据。
+//为什么要这么设计？因为tcp的滑动窗口,不可能无限的写,因为滑动窗口的缓冲区大小满了,是不能写的。
+//由于高水位默认是无限的，所以永远不会因为缓冲区的大小而停止读取
+
+
+//写缓冲区低水位
+	//往外面写数据,第一步是自己的写缓冲区里面的数据写给socket内核缓冲区 ，再由操作系统发给客户端，
+	//这个自己写缓冲区就是evBuffer的写缓冲区
+	//evBuffer写缓冲区的左边设置一条线就是低水位,等到整个缓冲区的数据小于等于这个低水位的字节数,才触发写回调函数，否则不会触发,也就是说这个写缓冲区的里面的数据越来越少,少到低于这跟线,才会触发写回调函数
+	//默认是0，也就是这个写缓冲区为空的时候,一个字节的数据的都没有，才会调用写回调函数
+
+//写缓冲区高水位 暂时忽略
+
+//Bufferevent使用
+struct bufferevent *bufferevent_socket_new(struct event_base *base,evutil_socket_t fd,
+    enum bufferevent_options options); //新建一个套接字的Bufferevent事件
+
+typedef void (*bufferevent_data_cb)(struct bufferevent *bev, void *ctx);//读写回调函数类型
+typedef void (*bufferevent_event_cb)(struct bufferevent *bev,
+    short events, void *ctx); //异常回调函数类型
+
+void bufferevent_setcb(struct bufferevent *bufev,
+    bufferevent_data_cb readcb, bufferevent_data_cb writecb,
+    bufferevent_event_cb eventcb, void *cbarg); //设置回调函数
+
+void bufferevent_getcb(struct bufferevent *bufev,
+    bufferevent_data_cb *readcb_ptr,
+    bufferevent_data_cb *writecb_ptr,
+    bufferevent_event_cb *eventcb_ptr,
+    void **cbarg_ptr); //获取回调函数
+
+struct evbuffer *bufferevent_get_input(struct bufferevent *bufev);//这个是提取读缓冲数据看看是什么样子
+struct evbuffer *bufferevent_get_output(struct bufferevent *bufev);//这个是提取写缓冲数据看看是什么样子
+
+int bufferevent_write(struct bufferevent *bufev,const void *data, size_t size);
+int bufferevent_write_buffer(struct bufferevent *bufev,struct evbuffer *buf);
+
+size_t bufferevent_read(struct bufferevent *bufev, void *data, size_t size);
+int bufferevent_read_buffer(struct bufferevent *bufev,struct evbuffer *buf);
+
+int bufferevent_flush(struct bufferevent *bufev,short iotype, enum bufferevent_flush_mode state);//清空缓冲区 刷新
+
+void bufferevent_free(struct bufferevent *bev);//释放bufferevent操作
+	
+```
+
+
+
+bufferevent和zlib发送和接收的数据,在过滤器中压缩和解压缩
+
+libevent的http接口
+
+参考memcached搭建基于libevent的c++线程池框架
+
+## 调试命令
+
+nc 127.0.0.1 6666 没有客户单时可以使用nc命令来测试一把
+
+netstat -apn | grep 6666 查看网络端口的状态
