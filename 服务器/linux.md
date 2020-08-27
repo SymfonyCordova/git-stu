@@ -11654,7 +11654,7 @@ int main(int argc, char const *argv[])
 
    - pthread_cond_t cond;  创建一个条件变量
 
-4. 主要函数
+4. 主要函数 
 
    - 初始化一个条件变量
 
