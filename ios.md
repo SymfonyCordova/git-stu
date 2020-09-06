@@ -1,6 +1,6 @@
 https://www.bilibili.com/video/av69033036/?spm_id_from=333.788.b_636f6d6d656e74.8
 
-p11
+p27
 
 # OC基础语法
 
@@ -101,18 +101,69 @@ p11
     - 空类型
       - void
     - typedef自定义类型
+    
   - BOOL类型
     - 可以存储YES或者NO中的任意1个数据
     - 一般情况下BOOL类型的变量用来存储条件表达式的结果。
     - 本质是有符号的char变量 
     - YES实际上是 1 
     - NO实际上是 0
+    
   - Boolean类型
     - Boolean类型的变量可以存储true和false
     - 一般情况下BOOL类型的变量用来存储条件表达式的结果。
-    - 本质**typedef** **unsigned** **char** Boolean;
+    - 本质 **typedef** **unsigned** **char** Boolean;
+    
   - class 类型
+
+    - 类的声明
+
+      @interface 类名 : NSObject
+
+      {
+
+      ​	这类事物具有的共同特征，将他们定义为变量
+
+      ​	规范:  类的属性以下划线_开头命名
+
+      ​	默认的访问权限是@private
+
+      }
+
+      功能就是方法，将方法的声明写在这里
+
+      \- (返回值类型) 方法名称;
+
+      @end 
+
+    - 类的实现
+
+      @implementation 类名
+
+      将方法的实现写在这里
+
+      \- (返回值类型) 方法名称{
+
+      ​	//方法代码
+
+      }
+
+      @end 
+
+    - 对象的创建
+
+      类名 *对象名 = [类名 new]; //返回的是指针
+
+      对象名->属性名 
+
+      (*对象名).属性名 
+
+      [对象名 方法名]
+
   - id类型 万能指针
+
   - nil 与NULL差不多
+
   - SEL 方法选择器
+
   - block 代码段

@@ -1378,6 +1378,54 @@ ffmpeg -i http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8 -c copy laliu.m3u8
 
 - C调Java的方法
 
+  - FindClass
+  - GetMethodID      GetFieldID
+  - NewObject
+  - Call\<Type\> Method    [G/S]et\<Type\>Field 
+    - Type是返回值类型
+
+- 编译安卓下的ffmpeg
+
+  - 编译脚本
+
+    https://blog.csdn.net/qq_39756073/article/details/99837603
+
+    ```shell
+    #!/bin/bash
+    mkdir ../temp
+    export TMPDIR=../temp
+    SYSROOT=$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64/sysroot
+    PLATFORM=$NDK_HOME/toolchains/llvm/prebuilt/darwin-x86_64
+    function build
+    {
+       ./configure \
+           --prefix=$PREFIX \
+           --target-os=android \
+           --arch=$CPU \
+           --enable-shared \
+           --disable-static \
+           --disable-doc \
+           --disable-ffmpeg \
+           --disable-ffplay \
+           --disable-ffprobe \
+           --disable-avdevice \
+           --disable-symver \
+           --enable-cross-compile \
+           --sysroot=$SYSROOT \
+           --cross-prefix-clang=$PLATFORM/bin/armv7a-linux-androideabi16- \
+           --extra-cflags="-I$SYSROOT/usr/include" \
+           --extra-ldflags="-L$SYSROOT/usr/lib"
+           make clean
+           make -j4
+           make install
+    }
+    CPU=armv7-a
+    PREFIX=../android-ffmpeg
+    build
+    ```
+
+    
+
 - 实战-Android下的播放器
 
 ## IOS下使用ffmpeg
@@ -1393,11 +1441,221 @@ ffmpeg -i http://ivi.bupt.edu.cn/hls/cctv1hd.m3u8 -c copy laliu.m3u8
 
 # OpenCV计算机视觉
 
+- ubuntu下安装opencv
+  - sudo apt-get install build-essential
+  - sudo apt-get install cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+  - sudo apt-get install python-dev python-numpy libtbb2 litbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev libgphoto2-dev
+  - git clone https://github.com/opencv/opencv.git
+  - sudo apt-get install make-gui
+  - sudo apt-get install libcanberra-gtk-module
+  - 注意: cmake的时候需要 ippicv_linux_20151201.tgz文件（文件大小36.5MB，下载链接：https://raw.githubusercontent.com/Itseez/opencv_3rdparty/81a676001ca8075ada498583e4166079e5744668/ippicv/ippicv_linux_20151201.tgz），下载后放到 ‘/opencv-3.2.0/3rdparty/ippicv/downloads/linux-808b791a6eac9ed78d32a7666804320e/' 文件夹下再重新cmake就行了。
+  
+- 卸载
 
+  - cat install_manifest.txt | sudo xargs rm
 
+- ubuntu 安装QT
 
+  - sudo apt-get install g++ make
+  - sudo apt-get install libgl1-mesa-dev
 
-# 第二部分 ffmpeg开发播放器
+- Mat类
+
+  - Mat mat(3000, 4000, CV_8UC3) //3个unsigned char  就是3个字节 分别对应rgb
+
+  - mat.create(rows, cols, CV_8UC1) 
+
+  - release或者析构
+
+    - 引用计数为1时释放
+
+  - 3x3RGB 图像存放方式(连续)
+
+    <img src="./img/124.jpg" alt="124" style="zoom:50%;" />
+
+  - isContinuous 判断空间是否是连续的
+
+  - 如果不连续 通过step记录
+
+  - 直接地址访问连续空间
+
+    - int size = mat.rows\*mat.cols\*mat.elemSize()
+
+    - for(int i = 0; i < size; i+=3){
+
+      ​	mat.data[i] = 0;		//B
+
+      ​	mat.data[i+1] = 0;	//G
+
+      ​	mat.data[i+2] = 0; 	//R
+
+      }
+    
+  - 直接地址访问不连续空间
+  
+    - for(int i = 0; i < mat.rows; i++){
+  
+      ​	for(int j = 0; j < mat.cols; j++){
+  
+      ​		(&mat.data[i*mat.step])[j\*3] = 255; //B
+  
+      ​		(&mat.data[i*mat.step])[j\*3 + 1] = 255; //G
+  
+      ​		(&mat.data[i*mat.step])[j\*3 + 2] = 1; //R
+  
+      ​	}
+  
+      }
+  
+  - 通过ptr接口遍历Mat(模版函数)
+  
+    - 性能基本等同于地址访问
+    - mat.ptr(Vec3b)(row);//返回的指针
+    - mat.ptr(Vectorized3b)(row, col);
+    
+  - 通过at接口遍历Mat(模版函数)
+  
+    - 接口最简单的遍历方法
+    - mat.at<\Vec3b>(row, col)[0] = 255;
+    - mat.at<\Vec3b>(row, col)[1] = 0;
+    - mat.at<\Vec3b>(row, col)[2] = 255;
+  
+  - 通过迭代器遍历Mat
+  
+    - 可以不用管mat的行列
+  
+      auto it = mr.begin<\Vec3b>();
+  
+      auto it_end = mr.end<\Vec3b>();
+  
+      for(;it != it_end; ++it){
+  
+      ​	(*it).val[0] = 0;
+  
+      ​	(*it).val[0] = 222;
+  
+      ​	(*it).val[0] = 0;
+  
+      }
+  
+- ROI感兴趣区域
+
+  - cv::Rect rect(100, 100, 300, 300) //前2个是坐标 后2个是宽高
+
+- 像素格式和灰度图
+
+  - RGB, YUV, GRAY(灰度图)
+    - 灰度图占用的字节比YUV更小
+  - cvColor(src, img, COLOR_BGR2GRAY)
+  
+- 二值化和阈值
+
+  - 二值化 本质是图片的存储方式 只有两种情况 一个白色一个是黑色
+  - 二值化通过阈值来得到
+  - THRESH_BINARY 二进制阈值
+  - THRESH_BINARY_INV 反二进制阈值化
+
+- 改变图片的对比度和亮度
+
+  - g(i,j) = a*f(i,j) + b
+  - a 1.0~ 3.0(对比) b 0 ~ 100(亮度)
+  - saturate_cast<unchar\> 防止溢出
+  
+- 图像尺寸调整
+
+  - INTER_NEAREST 近邻算法
+
+    - int sx,sy = 0; //原图对应的坐标
+
+    - float fy = float(src.rows)/out.rows;
+
+    - float fx = float(src.cols)/out.cols;
+
+    - for(int y = 0; y < out.rows; y++){
+
+      ​	sy = fy*y+0.5;
+
+      ​	for(int x = 0; x < out.cols; x++){
+
+      ​		sx = fx * x + 0.5;
+
+      ​		out.at\<Vec3b>(y,x) = src.at\<Vec3b>(sy, sx);
+
+      ​	}
+
+      }
+
+  - CV_INTER_LINEAR - 双线性插值(缺省使用)
+
+    - 滤波
+      - 输入图像中像素的小领域来产生输出图像的方法，在信号处理中这种方法称为滤波
+      - 其中最常见的是线性滤波
+      - 输出像素是输入邻域像素的加权和
+    - 双线性内插值
+      - 是由原图像位置在它附近的2 * 2区域4个邻近像素的值通过加权平均计算得出的
+      - 低通滤波性质, 使高频分量受损,图像轮廓可能会有一点模糊 
+
+  - 图像金字塔
+
+    - 高斯金字塔
+      - 用来向下采样
+      - 整个分辨率降低缩小 对图像进行缩小 原来的四分之一
+      - 获取G(i + 1) 将G(i)与高斯内核卷积
+      - 将所有的偶数行和列去除
+    - 拉普拉斯金字塔
+      - 用来从金字塔低层图像重建上层未采样图像
+      - 整个分辨率增多增大 对图像进行放大
+      - 用来从金字塔低层图像重建上层未采样图像
+      - 首先，将图像扩大两倍，新增以0填充 
+      - 高斯内核(乘以4)与放大后的图像卷积
+  
+- 两幅图像混合(blending)
+
+  - dst = src1\*a+src2\*(1-a)+gamma;
+  - a = [0~1]
+  - 画面叠化效果
+  - addWeighted(src1, a, src2, 1-a, 0.0, dst);
+
+- 图像的旋转和镜像
+
+  - cv::rotate(src, dst, type)
+    - ROTATE_180
+    - ROTATE_90_CLOCKWISE
+    - ROTATE_90_COUNTERCLOCKWISE
+  - cv::flip(src, dst, type); 
+    - type = 0 x轴镜像
+    - type = 1 y轴镜像
+    - -1 两种都镜像
+  
+- 通过ROI图像的合并
+
+- 打开摄像头接口说明和源码分析
+
+  - VideoCapture
+  - bool open(int index)
+  - VideoCapture cap(index)
+  - bool open(int cameraNum, int apiPreference)
+
+- 打开视频流文件
+
+  - bool open(const String & filename)
+  - VideoCapture cap(const String & file)
+  - bool open(const String & file, int apiPreference)
+
+- VideoCapture
+
+  - 关闭和空间释放
+  - ~VideoCapture()
+  - release() 主动释放 最终释放是看引用计数
+
+- 读取一帧视频
+
+  - bool read(OutputArray image)
+    - bool grab() 读取并解码 其实就是ffmpeg avframe_read
+    - virtual bool retrieve(OutputArray image, int flag = 0) 图像色彩转换 ffmpeg的sws_scale的转换
+    - vc >> mat
+
+# ffmpeg开发播放器
 
 ## 音视频基础知识
 
